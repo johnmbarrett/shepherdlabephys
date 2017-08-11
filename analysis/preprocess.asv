@@ -1,0 +1,44 @@
+function [filteredAverageTrace,averageFilteredTrace,filteredTraces,averageTrace,baselineSubtractedTraces,baseline] = preprocess(traces,sampleRate,varargin)
+    % TODO : this function needs a better name
+    parser = inputParser;
+    
+    % TODO : more options
+    parser.addParameter('Start',0,@(x) validateattributes(x,{'numeric'},{'scalar' 'real' 'finite'}));
+    parser.addParameter('Window',0,@(x) validateattributes(x,{'numeric'},{'scalar' 'real' 'finite' 'nonnegative'}));
+    parser.addParameter('AverageFun',@nanmean,@(x) isa(x,'function_handle'));
+    parser.addParameter('FilterLength',3,@(x) validateattributes(x,{'numeric'},{'scalar' 'real' 'finite' 'positive' 'integer'}));
+    parser.addParameter('FilterFun',@nanmedian,@(x) isa(x,'function_handle'));
+    parser.addParameter('FilterLength',3,@(x) validateattributes(x,{'numeric'},{'scalar' 'real' 'finite' 'positive' 'integer'}));
+    parser.addParameter('PreFilterFun',@nanmedian,@(x) isa(x,'function_handle'));
+    parser.addParameter('FilterLength',3,@(x) validateattributes(x,{'numeric'},{'scalar' 'real' 'finite' 'positive' 'integer'}));
+    parser.addParameter('FilterFun',@nanmedian,@(x) isa(x,'function_handle'));
+    parser.parse(varargin{:});
+
+    average = parser.Results.AverageFun; % TODO : do we ever want a different function to calculate the baseline and to average the traces?
+    
+    if parser.Results.Window > 0
+        % TODO : this or something very similar is in a lot of functions.
+        % Introduce method?
+        startIndex = max(1,parser.Results.Start*sampleRate);
+        endIndex = startIndex + max(0,parser.Results.Window*sampleRate);
+    
+        baseline = average(traces(startIndex:endIndex,:,:),1);
+    
+    % Subtract baseline from traces
+        baselineSubtractedTraces = bsxfun(@minus,traces,baseline);
+    else
+        baseline = 0;
+        baselineSubtractedTraces = traces;
+    end
+    
+    % Compute average trace
+    averageTrace = average(baselineSubtractedTraces,2);
+    
+    filteredTraces = colfilt(baselineSubtractedTraces,[parser.Results.FilterLength,1],'sliding',parser.Results.FilterFun);
+
+    averageFilteredTrace = average(filteredTraces,2);
+    
+    % Median filter average trace
+    % TODO : do we always want colfilt here?
+    filteredAverageTrace = colfilt(averageTrace,[parser.Results.FilterLength,1],'sliding',parser.Results.FilterFun);
+end

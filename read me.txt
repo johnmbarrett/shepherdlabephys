@@ -1,0 +1,28 @@
+Shepherd Lab Electrophys Data Analysis Code Repository
+======================================================
+
+--- v0.0.01 John Barrett 2017/08/09 ----
+
+This is my attempt at pulling people's (mostly Naoki's and Karl's) code into a common library of functions that are intended to be reusable and maintainable.  This document will eventually serve as an introduction to the library, a description of the philosophy behind it, a guide to using the library, as well as documentation of known issues and plans for future development.
+
+Philosophy
+----------
+
+None of the following is particularly revolutionary.  Indeed, most of the points after the first are fairly standard software engineering practice as I understand it, but most scientists aren't software engineers.  If future maintainers of this repository disagree with any of the below, they're welcome to change it.
+
+1) This code is intended to be used in the procedural style.  While other paradigms (e.g. OOP) might also make sense, procedural is arguably the easiest for non-programmers to pick up and ends up being how a lot of scientific data analysis gets written anyway, so why fight it?
+
+2) Functions should be small.  Ideally they should do one thing or, failing that, a bunch of similar things that end up looking much the same code-wise.  If a function gets much bigger than the algorithmic complexity justifies, it can probably be split into smaller functions.  Especially given the next point:
+
+3) Code redundancy should be minimised.  If you find yourself writing very similar code over and over, maybe you can factor some of it out into a function.
+
+4) Code should be readable.  This isn't the 60s and Matlab isn't Perl.  Functions and (most) variables should have meaningful names and abbreviations/initialisms should be avoided unless they're extremely standard or things start getting really unweildly.
+
+5) Functions should have as few required, positional arguments as possible.  Everything else should be name-value pairs.  This makes them both easier to use (as you don't have to remember a long list of arguments, many of which you don't care about, and the order they come in) and easier to code (as you can push all the arg checking into inputParser).  For example, a lot of these functions operate on arrays of traces, so do they really *need* anything more than a data argument and maybe a sampling rate parameter?
+
+6) Data extraction, analysis, and visualisation should be separated as much as possible.  This is related to and possibly entirely subsumed by point 2.  Historically our lab has used Ephus, right now we're (very) slowly transitioning to Wavesurfer, and who knows what the future will bring?  Hence analysis functions in particular will be more useful moving forward and require less maintenance if they make as few assumptions about the underlying data format as possible.
+
+Conventions
+-----------
+
+1) At present, the data extraction export traces as and the trace analysis functions assume traces are stored as three-dimensional matrices with time as the first dimension, sweep as the the second, and channel as the third.  
