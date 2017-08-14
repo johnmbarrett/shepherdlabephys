@@ -20,4 +20,4 @@ function [amplitude,width,start,number,interval] = extractEphusSquarePulseTrainP
     interval = stimData.squarePulseTrainISI;
     number = stimData.squarePulseTrainNumber;
     amplitude = stimData.amplitude;
-end
+end 
