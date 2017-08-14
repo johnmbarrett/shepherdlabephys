@@ -1,4 +1,4 @@
-function [amplitude,width,start,number,interval] = extractEphusSquarePulseTrainParameters(dataFile,stimIndex)
+function [amplitude,width,start,number,interval] = extractEphusSquarePulseTrainParameters(dataFile,stimIndex,varargin)
     if nargin < 2
         stimIndex = 1;
     end
@@ -6,8 +6,14 @@ function [amplitude,width,start,number,interval] = extractEphusSquarePulseTrainP
     if ischar(dataFile)
         dataFile = load(dataFile,'-mat');
     end
+    
+    parser = inputParser;
+    parser.addParameter('Program','stimulator',@(x) any(strcmpi(x,{'ephys' 'stimulator'})));
+    parser.parse(varargin{:});
    
-    stimData = dataFile.header.stimulator.stimulator.pulseParameters{1,stimIndex};
+    program = lower(parser.Results.Program);
+    
+    stimData = dataFile.header.(program).(program).pulseParameters{1,stimIndex};
     
     start = stimData.squarePulseTrainDelay;
     width = stimData.squarePulseTrainWidth;
