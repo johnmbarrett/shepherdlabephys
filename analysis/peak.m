@@ -45,7 +45,11 @@ function [p,idx] = peak(A,dim,nanflag)
         nanflag = 'omitnan';
     end
     
-    [p,idx] = max(abs(A),[],dim,nanflag);
+    if verLessThan('matlab','2015a')
+        [p,idx] = max(abs(A),[],dim);
+    else
+        [p,idx] = max(abs(A),[],dim,nanflag);
+    end
     
     p = p.*sign(A(idx));
 end

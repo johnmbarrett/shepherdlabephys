@@ -1,4 +1,4 @@
-function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10IndexRising,peak90IndexRising,peak90IndexFalling,peak10IndexFalling,peak50IndexRising,peak50IndexFalling] = calculateTemporalParameters(traces,sampleRate,varargin)
+function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10IndexRising,peak90IndexRising,peak90IndexFalling,peak10IndexFalling,peak50IndexRising,peak50IndexFalling,fallIntercept] = calculateTemporalParameters(traces,sampleRate,varargin)
     parser = inputParser;
     
     if verLessThan('matlab','2013b')
@@ -56,7 +56,7 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
     for ii = 1:prod(sizeTraces(2:end))
         baseline = polyfit(baselineTime,baselineTraces(:,ii),1);
         
-        peak10 = 0.1*(peaks(ii)-baseline(2))+baseline(2); % actually use 50% of the peak
+        peak10 = 0.1*(peaks(ii)-baseline(2))+baseline(2);
         peak90 = 0.9*(peaks(ii)-baseline(2))+baseline(2);
 
         peak10IndexRising(ii) = defaultIfEmpty(1,find(compareRising(traces(:,ii),peak10),1,'first'));
@@ -64,20 +64,20 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
         
         riseLine = polyfit((peak10IndexRising(ii):peak90IndexRising(ii))',traces(peak10IndexRising(ii):peak90IndexRising(ii),ii),1);
 
-        xIntercept = (riseLine(2)-baseline(2))/(-riseLine(1));
+        riseIntercept = (riseLine(2)-baseline(2))/(-riseLine(1));
 
-        latencies(ii) = xIntercept/sampleRate; % latency in ms
+        latencies(ii) = riseIntercept/sampleRate; % latency in ms
         
-        riseTimes(ii) = (peakIndices(ii)-xIntercept)/sampleRate;
+        riseTimes(ii) = (peakIndices(ii)-riseIntercept)/sampleRate;
 
         peak90IndexFalling(ii) = defaultIfEmpty(1,find(compareFalling(traces(peakIndices(ii):end,ii),peak90),1,'first'))+peakIndices(ii)-1;
         peak10IndexFalling(ii) = defaultIfEmpty(1,find(compareFalling(traces(peak90IndexFalling(ii):end,ii),peak10),1,'first'))+peak90IndexFalling(ii)-1;
         
         fallLine = polyfit((peak90IndexFalling(ii):peak10IndexFalling(ii))',traces(peak90IndexFalling(ii):peak10IndexFalling(ii),ii),1);
 
-        xIntercept = (fallLine(2)-baseline(2))/(-fallLine(1));
+        fallIntercept = (fallLine(2)-baseline(2))/(-fallLine(1));
 
-        fallTimes(ii) = (xIntercept-peakIndices(ii))/sampleRate;
+        fallTimes(ii) = (fallIntercept-peakIndices(ii))/sampleRate;
         
         peak50 = 0.5*peaks(ii);
         
