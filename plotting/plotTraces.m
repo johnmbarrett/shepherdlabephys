@@ -1,11 +1,5 @@
 function ax = plotTraces(ax,data,sampleRate,varargin)
-    if verLessThan('matlab','2014b')
-        isAxGraphics = isa(ax,'axes');
-    else
-        isAxGraphics = isgraphics(ax);
-    end
-    
-    if ~isAxGraphics
+    if ~ishandle(ax);
         if nargin > 2
             varargin = [{sampleRate} varargin];
         end
