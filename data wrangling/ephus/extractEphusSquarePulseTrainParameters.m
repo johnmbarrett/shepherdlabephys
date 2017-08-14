@@ -7,10 +7,6 @@ function [amplitude,width,start,number,interval] = extractEphusSquarePulseTrainP
         dataFile = load(dataFile,'-mat');
     end
     
-    if verLessThan('matlab','2013b')
-        addParameter = @(varargin) addParamValue(varargin{:});
-    end
-    
     parser = inputParser;
     addParameter(parser,'Program','stimulator',@(x) any(strcmpi(x,{'ephys' 'stimulator'})));
     parser.parse(varargin{:});

@@ -3,17 +3,17 @@ function [filteredAverageTrace,averageFilteredTrace,filteredTraces,averageTrace,
     parser = inputParser;
     
     % TODO : more options
-    parser.addParameter('Start',0,@(x) validateattributes(x,{'numeric'},{'scalar' 'real' 'finite'}));
-    parser.addParameter('Window',0,@(x) validateattributes(x,{'numeric'},{'scalar' 'real' 'finite' 'nonnegative'}));
-    parser.addParameter('AverageFun',@nanmean,@(x) isa(x,'function_handle'));
-    parser.addParameter('FilterLength',3,@(x) validateattributes(x,{'numeric'},{'scalar' 'real' 'finite' 'positive' 'integer'}));
-    parser.addParameter('FilterFun',@nanmedian,@(x) isa(x,'function_handle'));
-    parser.addParameter('PreFilter',false,@(x) islogical(x) && isscalar(x));
-    parser.addParameter('PreFilterLength',NaN,@(x) validateattributes(x,{'numeric'},{'scalar' 'real' 'finite' 'positive' 'integer'}));
-    parser.addParameter('PreFilterFun',NaN,@(x) isa(x,'function_handle'));
-    parser.addParameter('PostFilter',true,@(x) islogical(x) && isscalar(x));
-    parser.addParameter('PostFilterLength',NaN,@(x) validateattributes(x,{'numeric'},{'scalar' 'real' 'finite' 'positive' 'integer'}));
-    parser.addParameter('PostFilterFun',NaN,@(x) isa(x,'function_handle'));
+    addParameter(parser,'Start',0,@(x) validateattributes(x,{'numeric'},{'scalar' 'real' 'finite'}));
+    addParameter(parser,'Window',0,@(x) validateattributes(x,{'numeric'},{'scalar' 'real' 'finite' 'nonnegative'}));
+    addParameter(parser,'AverageFun',@nanmean,@(x) isa(x,'function_handle'));
+    addParameter(parser,'FilterLength',3,@(x) validateattributes(x,{'numeric'},{'scalar' 'real' 'finite' 'positive' 'integer'}));
+    addParameter(parser,'FilterFun',@nanmedian,@(x) isa(x,'function_handle'));
+    addParameter(parser,'PreFilter',false,@(x) islogical(x) && isscalar(x));
+    addParameter(parser,'PreFilterLength',NaN,@(x) validateattributes(x,{'numeric'},{'scalar' 'real' 'finite' 'positive' 'integer'}));
+    addParameter(parser,'PreFilterFun',NaN,@(x) isa(x,'function_handle'));
+    addParameter(parser,'PostFilter',true,@(x) islogical(x) && isscalar(x));
+    addParameter(parser,'PostFilterLength',NaN,@(x) validateattributes(x,{'numeric'},{'scalar' 'real' 'finite' 'positive' 'integer'}));
+    addParameter(parser,'PostFilterFun',NaN,@(x) isa(x,'function_handle'));
     parser.parse(varargin{:});
 
     average = parser.Results.AverageFun; % TODO : do we ever want a different function to calculate the baseline and to average the traces?

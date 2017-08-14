@@ -4,9 +4,9 @@ function Rs = calculateSeriesResistance(traces,sampleRate,varargin)
     % TODO : a lot of these parameters in these functions are very similar,
     % can we factor out the common code?
     isRealFiniteNonnegativeNumericScalar = @(x) validateattributes(x,{'numeric'},{'real' 'finite' 'nonnegative' 'scalar'});
-    parser.addParameter('Start',0,isRealFiniteNonnegativeNumericScalar);
-    parser.addParameter('Window',0.05,isRealFiniteNonnegativeNumericScalar);
-    parser.addParameter('VoltageStep',-5,@(x) validateattributes(x,{'numeric'},{'real' 'finite' 'scalar'}));
+    addParameter(parser,'Start',0,isRealFiniteNonnegativeNumericScalar);
+    addParameter(parser,'Window',0.05,isRealFiniteNonnegativeNumericScalar);
+    addParameter(parser,'VoltageStep',-5,@(x) validateattributes(x,{'numeric'},{'real' 'finite' 'scalar'}));
     parser.parse(varargin{:});
     
     startIndex = max(1,parser.Results.Start*sampleRate);

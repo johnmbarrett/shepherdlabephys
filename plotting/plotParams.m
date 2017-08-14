@@ -12,15 +12,15 @@ function ax = plotParams(ax,data,varargin)
 
     parser = inputParser;
     isRealFiniteVector = @(x) validateattributes(x,{'numeric'},{'real' 'finite' 'vector'});
-    parser.addParameter('Abcissa',NaN,isRealFiniteVector);
-    parser.addParameter('Ordinate',NaN,isRealFiniteVector);
-    parser.addParameter('UnityLine',NaN,isRealFiniteVector);
-    parser.addParameter('Title','',@ischar);
-    parser.addParameter('XLabel','',@ischar);
-    parser.addParameter('YLabel','',@ischar);
+    addParameter(parser,'Abcissa',NaN,isRealFiniteVector);
+    addParameter(parser,'Ordinate',NaN,isRealFiniteVector);
+    addParameter(parser,'UnityLine',NaN,isRealFiniteVector);
+    addParameter(parser,'Title','',@ischar);
+    addParameter(parser,'XLabel','',@ischar);
+    addParameter(parser,'YLabel','',@ischar);
     isLims = @(x) isnumeric(x) && isvector(x) && all(isreal(x) & isfinite(x)) && isequal(size(x),[1 2]) && x(1) < x(2);
-    parser.addParameter('XLim',NaN,isLims);
-    parser.addParameter('YLim',NaN,isLims);
+    addParameter(parser,'XLim',NaN,isLims);
+    addParameter(parser,'YLim',NaN,isLims);
     parser.parse(varargin{:});
     
     hold(ax,'on');

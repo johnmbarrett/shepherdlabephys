@@ -1,12 +1,12 @@
 function [peaks,peakIndices,pairedPulseRatio] = findPeaks(traces,sampleRate,isMaxPeak,varargin)
     parser = inputParser;
     
-    parser.addParameter('Start',0,@(x) isnumeric(x) && isscalar(x) && isreal(x) && isfinite(x) && x >= 0 && x <= size(traces,1)/sampleRate);
+    addParameter(parser,'Start',0,@(x) isnumeric(x) && isscalar(x) && isreal(x) && isfinite(x) && x >= 0 && x <= size(traces,1)/sampleRate);
     
     % TODO : add TimeBefore and TimeAfter as well?
     isRealFinitePositiveScalarInteger = @(x) validateattributes(x,{'numeric'},{'real' 'finite' 'positive' 'scalar' 'integer'});
-    parser.addParameter('PointsBefore',5,isRealFinitePositiveScalarInteger);
-    parser.addParameter('PointsAfter',5,isRealFinitePositiveScalarInteger);
+    addParameter(parser,'PointsBefore',5,isRealFinitePositiveScalarInteger);
+    addParameter(parser,'PointsAfter',5,isRealFinitePositiveScalarInteger);
     parser.parse(varargin{:});
 
     if isMaxPeak

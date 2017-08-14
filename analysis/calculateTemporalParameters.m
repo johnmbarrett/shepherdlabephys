@@ -1,9 +1,13 @@
 function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10IndexRising,peak90IndexRising,peak90IndexFalling,peak10IndexFalling,peak50IndexRising,peak50IndexFalling] = calculateTemporalParameters(traces,sampleRate,varargin)
     parser = inputParser;
     
+    if verLessThan('matlab','2013b')
+        addParameter = @(varargin) addParamValue(varargin{:});
+    end
+    
     isRealFinitePositiveNumericScalar = @(x) validateattributes(x,{'numeric'},{'real' 'finite' 'nonnegative' 'scalar'});
-    parser.addParameter('Start',0,isRealFinitePositiveNumericScalar);
-    parser.addParameter('Window',size(traces,1)/sampleRate,isRealFinitePositiveNumericScalar);
+    addParameter(parser,'Start',0,isRealFinitePositiveNumericScalar);
+    addParameter(parser,'Window',size(traces,1)/sampleRate,isRealFinitePositiveNumericScalar);
     parser.parse(varargin{:});
     
     startIndex = max(1,parser.Results.Start*sampleRate);

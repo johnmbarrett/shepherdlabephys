@@ -15,11 +15,11 @@ function ax = plotTraces(ax,data,sampleRate,varargin)
     % TODO : Peaks and PeakIndices could really be any points of interest,
     % and maybe StimStart can just be abcissa?  can we factor out common
     % code between this and plotParams
-    parser.addParameter('Peaks',NaN,@(x) validateattributes(x,{'numeric'},{'real finite vector'}));
-    parser.addParameter('PeakIndices',NaN,@(x) validateattributes(x,{'numeric'},{'real finite positive integer vector'}));
-    parser.addParameter('StimStart',NaN,@(x) validateattributes(x,{'numeric'},{'real finite scalar'}));
-    parser.addParameter('RecordingMode','VC',@(x) ismember(x,{'VC' 'IC'}));
-    parser.addParameter('Title','',@ischar);
+    addParameter(parser,'Peaks',NaN,@(x) validateattributes(x,{'numeric'},{'real finite vector'}));
+    addParameter(parser,'PeakIndices',NaN,@(x) validateattributes(x,{'numeric'},{'real finite positive integer vector'}));
+    addParameter(parser,'StimStart',NaN,@(x) validateattributes(x,{'numeric'},{'real finite scalar'}));
+    addParameter(parser,'RecordingMode','VC',@(x) ismember(x,{'VC' 'IC'}));
+    addParameter(parser,'Title','',@ischar);
     parser.parse(varargin{:});
     
     hold(ax,'on');
