@@ -5,4 +5,3 @@ function addParameter(parser,varargin)
         parser.addParameter(varargin{:});
     end
 end
-    
