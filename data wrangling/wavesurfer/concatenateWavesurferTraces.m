@@ -1,4 +1,33 @@
 function [data,sampleRate,traceNames] = concatenateWavesurferTraces(files,sweeps,channels)
+%CONCATENATEWAVESURFERTRACES    Concatenate traces from WaveSurfer files
+%   DATA = CONCATENATEWAVESURFERTRACES(FILES) extracts every trace from
+%   every channel in the WaveSurfer-exported HDF5 files specified by the
+%   cell array of filename strings FILES and concatenates them into an 
+%   NxMxP matrix DATA, where N is the length of each trace, M is the total
+%   number of sweeps, and P is the number of channels.  FILES must be a
+%   cell array of strings containing the path to each file.
+%
+%   [DATA,SAMPLERATE] = CONCATENATEWAVESURFERTRACES(FILES) also returns the
+%   rate at which the data was sampled in Hz.
+%
+%   [DATA,SAMPLERATE,TRACENAMES] = CONCATENATEWAVESURFERTRACES(FILES) also
+%   returns a 1xMxP cell array containing a human-readable name for each
+%   trace, including the name of the file each trace was extracted from,
+%   the sweep number, and he channel.
+%
+%   [...] = CONCATENATEWAVESURFERTRACES(FILES,SWEEPS) extracts only those
+%   traces specifed in the vector of sweep numbers SWEEPS.  Any sweep
+%   numbers not found in any of the files are silently ignored.  If SWEEPS
+%   is empty or contains any NaN values, all sweeps in all files are
+%   returned.
+%
+%   [...] = CONCATENATEWAVESURFERTRACES(FILES,SWEEPS,CHANNELS) extracts the
+%   sweeps specifed in SWEEPS from the channels specified in CHANNELS.
+%   CHANNELS must be a vector of integers in the range [1,P].  If CHANNELS
+%   is empty or contains any NaN values, all channels are included.
+
+%   Written by John Barrett 2017-07-28 12:11 CDT
+%   Last updated John Barrett 2017-08-15 17:34 CDT
     if ischar(files)
         files = {files};
     end

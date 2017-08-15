@@ -1,4 +1,32 @@
 function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseTrainParameters(dataFile,sweeps,channels)
+%EXTRACTWAVESURFERSQUAREPULSETRAINPARAMETERS  Extract square pulse train
+%parameters.
+%   AMPLITUDE = EXTRACTWAVESURFERSQUAREPULSETRAINPARAMETERS(DATAFILE)
+%   returns the AMPLITUDE of the square pulse train presented on the first 
+%   sweep of the first channel recorded in DATAFILE, which should be a
+%   struct of the kind returned by ws.loadDataFile.
+%   
+%   [AMPLITUDE,WIDTH,START,NUMBER,INTERVAL] =
+%   EXTRACTWAVESURFERSQUAREPULSETRAINPARAMETERS(...) additionally returns with
+%   the WIDTH, START, NUMBER and inter-stimulus INTERVAL of the square 
+%   pulse train (all scalar, all in seconds apart from NUMBER, which is
+%   dimensionless).
+%
+%   [...] = EXTRACTWAVESURFERSQUAREPULSETRAINPARAMETERS(DATAFILE,SWEEPS)
+%   returns the stimulus paramters for the sweeps specified in the array of
+%   sweep indices SWEEPS.  If SWEEPS is empty or contains an NaN values,
+%   only the stimulus parameters on the first sweep are returned.
+%
+%   [...] = EXTRACTWAVESURFERSQUAREPULSETRAINPARAMETERS(DATAFILE,SWEEPS,...
+%   CHANNELS) returns the stimulus paramters on each channel specified in
+%   CHANNELS, which may be an array of channel indices or a cell array of
+%   channel names.  In the latter case, channel names that are not found
+%   are silently ignored.
+
+%   Written by John Barrett 2017-07-28 14:36 CDT
+%   Last updated John Barrett 2017-08-15 17:41 CDT
+
+    % TODO : allow passing in a filename
     stimulusLibrary = dataFile.header.Stimulation.StimulusLibrary;
     
     if nargin < 2 || isempty(sweeps) || any(isnan(sweeps(:)))

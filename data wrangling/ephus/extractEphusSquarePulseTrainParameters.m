@@ -1,4 +1,28 @@
 function [amplitude,width,start,number,interval] = extractEphusSquarePulseTrainParameters(dataFile,stimIndex,varargin)
+%EXTRACTEPHUSSQUAREPULSETRAINPARAMETERS  Extract square pulse train
+%parameters.
+%   AMPLITUDE = EXTRACTEPHUSSQUAREPULSETRAINPARAMETERS(DATAFILE,STIMINDEX)
+%   returns the AMPLITUDE of the STIMINDEXth stimulator stimulus in the xsg
+%   file DATAFILE.  The stimulus is assumed to be a square pulse train.
+%   DATAFILE maybe specified as a filename string or as a struct containing
+%   the header from a previously loaded xsg file.  AMPLITUDE is a scalar
+%   with arbitrary dimensionality.
+%   
+%   [AMPLITUDE,WIDTH,START,NUMBER,INTERVAL] =
+%   EXTRACTEPHUSSQUAREPULSETRAINPARAMETERS(...) additionally returns the
+%   WIDTH, START, NUMBER and inter-stimulus INTERVAL of the square pulse
+%   train (all scalar, all in seconds apart from NUMBER, which is
+%   dimensionless).
+%
+%   [...] = EXTRACTEPHUSSQUAREPULSETRAINPARAMETERS(...,PARAM,VAL,...) 
+%   specifies one or more of the following name/value pairs:
+%
+%       'Program'   Specifies which Ephus program to extract the stimulus
+%                   parameters from.  Must be one of 'ephys' or
+%                   'stimulator'.  Default is 'stimulator'.
+
+%   Written by John Barrett 2017-07-28 11:42 CDT
+%   Last updated John Barrett 2017-08-15 17:16 CDT
     if nargin < 2
         stimIndex = 1;
     end

@@ -1,4 +1,22 @@
 function [data,sampleRate,traceNames] = concatenateEphusTraces(files)
+%CONCATENATEEPHUSTRACES Concatenate traces from .xsg files
+%   DATA = CONCATENATEEPHUSTRACES(FILES) extracts the first trace from each
+%   xsg file in the cell array of filename strings FILES and concatenates 
+%   them into an NxM matrix DATA, where N is the length of the longest 
+%   trace and M equals numel(FILES).  Traces shorter than the longest trace
+%   are NaN-padded.
+%
+%   [DATA,SAMPLERATE] = CONCATENATEEPHUSTRACES(FILES) also returns the
+%   rate at which the data was sampled in Hz.
+%
+%   [DATA,SAMPLERATE,TRACENAMES] = CONCATENATEEPHUSTRACES(FILES) also
+%   returns a 1xM cell array containing a human-readable name for each
+%   trace, including the name of the file each trace was extracted from and
+%   the name of the amplifier used for recording.  (Currently this function
+%   only retrieves data from one ephys channel.)
+
+%   Written by John Barrett 2017-07-27 14:14 CDT
+%   Last updated John Barrett 2017-08-15 16:56 CDT
     missing = false(1,numel(files));
     traceNames = cell(1,numel(files));
     
