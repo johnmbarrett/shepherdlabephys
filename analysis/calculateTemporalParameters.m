@@ -1,4 +1,68 @@
 function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10IndexRising,peak90IndexRising,peak90IndexFalling,peak10IndexFalling,peak50IndexRising,peak50IndexFalling,fallIntercept] = calculateTemporalParameters(traces,sampleRate,varargin)
+%CALCULATETEMPORALPARAMETERS    Calculate temporal parameters
+%   [PEAKS,PEAKINDICES,LATENCIES,RISETIMES,FALLTIMES,HALFWIDTHS,...
+%   PEAK10INDEXRISING,PEAK90INDEXRISING,PEAK90INDEXFALLING,...
+%   PEAK10INDEXFALLING,PEAK50INDEXRISING,PEAK50INDEXFALLING, ...
+%   FALLINTERCEPT] = CALCULATETEMPORALPARAMETERS(TRACES,SAMPLERATE)
+%   calculates various temporal parameters of a response to a stimulus from
+%   the electrophysiological data contained in TRACES, which is a matrix
+%   where each column represents a recording of the response to one
+%   stimulus, sampled at SAMPLERATE Hz.  Each returned value is a row 
+%   vector (one element per column of TRACES) containing the following:
+%
+%       PEAKS               The amplitude of the response at the largest
+%                           absolute deflection from baseline.
+%       PEAKINDICES         The index of the sample containing the peak 
+%                           response.
+%       LATENCIES           The time of response onset.  This is calculated
+%                           by finding when then reponse crosses 10% and
+%                           90% of peak deviation from baseline, drawing a
+%                           line through those points, and finding where
+%                           that line intercepts the baseline.
+%       RISETIMES           The time taken for the response to rise from
+%                           10% to 90% of the peak deviation from baseline.
+%       FALLTIMES           The time taken for the response to fall from
+%                           90% to 10% of the peak deviation from baseline.
+%       HALFWIDTHS          The full width at half maximum of the response,
+%                           i.e. the time taken for the response to rise
+%                           above 50% of the peak deviation from baseline,
+%                           reach its peak, then fall back below this
+%                           value.
+%       PEAK10INDEXRISING   The index of the first sample greater than 10%
+%                           of the peak deviation from baseline.
+%       PEAK90INDEXRISING   The index of the first sample after 
+%                           PEAK10INDEXRISING greater than 90% of the peak 
+%                           deviation from baseline.
+%       PEAK90INDEXFALLING  The index of the first sample after PEAKINDICES
+%                           less than 90% of the peak deviation from
+%                           baseline.
+%       PEAK10INDEXFALLING  The index of the first sample after 
+%                           PEAK90INDEXFALLING less than 10% of the peak 
+%                           deviation from baseline.
+%       PEAK50INDEXRISING   The index of the first sample greater than 50%
+%                           of the peak deviation from baseline.
+%       PEAK50INDEXFALLING  The index of the first sample after PEAKINDICES
+%                           less than 50% of the peak deviation from
+%                           baseline.
+%       FALLINTERCEPT       The index at which a line passing through
+%                           PEAK90INDEXFALLING and PEAK10INDEXFALLING
+%                           crosses the baseline.
+%
+%   The above descriptions assume the peak is greater than the baseline.
+%   For the case where the peak is below the baseline, swap 'greater than'
+%   and 'less than' in the above.
+%
+%   [...] = CALCULATETEMPORALPARAMETERS(...,PARAM1,VAL1,PARAM2,VAL2,...) 
+%   specifies one or more of the following name/value pairs:
+%
+%      'Start'          Scalar specifying the start of the window for
+%                       calculating the baseline.  Default is 0.
+%      'Window'         Scalar specifying the length of the window for
+%                       calculating the baseline.  Default is
+%                       size(TRACES,1)/SAMPLERATE.
+
+%   Written by John Barrett 2017-07-27 19:01 CDT
+%   Last updated John Barrett 2017-08-15 15:44 CDT
     parser = inputParser;
     
     if verLessThan('matlab','2013b')
@@ -82,7 +146,7 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
         peak50 = 0.5*peaks(ii);
         
         peak50IndexRising(ii) = defaultIfEmpty(1,find(compareRising(traces(:,ii),peak50),1,'first'));
-        peak50IndexFalling(ii) = defaultIfEmpty(1,find(compareFalling(traces(peak50IndexRising(ii):end,ii),peak50),1,'first')-1+peak50IndexRising(ii));
+        peak50IndexFalling(ii) = defaultIfEmpty(1,find(compareFalling(traces(peakIndices(ii):end,ii),peak50),1,'first')-1+peak50IndexRising(ii));
         halfWidths(ii) = (peak50IndexFalling(ii)-peak50IndexRising(ii))/sampleRate;
     end
     

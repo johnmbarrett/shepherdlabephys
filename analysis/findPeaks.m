@@ -1,4 +1,5 @@
 function [peaks,peakIndices,pairedPulseRatio] = findPeaks(traces,sampleRate,isMaxPeak,varargin)
+% DEPRECATED: use PEAK or CALCULATETEMPORALPARAMETERS instead.
     parser = inputParser;
     
     addParameter(parser,'Start',0,@(x) isnumeric(x) && isscalar(x) && isreal(x) && isfinite(x) && x >= 0 && x <= size(traces,1)/sampleRate);
@@ -20,6 +21,7 @@ function [peaks,peakIndices,pairedPulseRatio] = findPeaks(traces,sampleRate,isMa
     [~,peakIndices] = extremeFun(traces(startIndex:end,:));
     peakIndices = peakIndices + startIndex - 1;
     
+    % TODO : include this as an option in calculateTemporalParameters
     peaks = arrayfun(@(idx) median(traces(max(1,idx-parser.Results.PointsBefore):min(size(traces,1),idx+parser.Results.PointsBefore))),peakIndices);
     
     pairedPulseRatio = abs(peaks/peaks(1));

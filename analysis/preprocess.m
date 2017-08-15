@@ -1,4 +1,66 @@
 function [filteredAverageTrace,averageFilteredTrace,filteredTraces,averageTrace,baselineSubtractedTraces,baseline] = preprocess(traces,sampleRate,varargin)
+%PREPROCESS Preprocess electrophysiology data
+%   [FILTEREDAVERAGETRACE,AVERAGEFILTEREDTRACE,FILTEREDTRACES,...
+%   AVERAGETRACE,BASELINESUBTRACTEDTRACES,BASELINE] = PREPROCESS(TRACES,...
+%   SAMPLERATE) baseline-subtraces, filters, and averages a series of
+%   electrophysiological recordings contained in the columns of the matrix
+%   TRACES, sampled at SAMPLERATE Hz.  Returns a row vector BASELINE
+%   containing the baseline value for each column of traces; matrices
+%   BASELINESUBTRACTEDTRACES and FILTEREDTRACES the same size as TRACES
+%   containing the baseline-subtracted traces before and after filtering,
+%   respectively; and column vectors AVERAGETRACE, AVERAGEFILTEREDTRACE,
+%   and FILTEREDAVERAGETRACE representing the average trace without
+%   filtering, where the filtering is applied before averaging, and where
+%   the filtering is applied after averaging, respectively.
+%
+%   [...] = PREPROCESS(...,PARAM1,VAL1,PARAM2,VAL2,...) 
+%   specifies one or more of the following name/value pairs:
+%
+%       'Start'             Scalar specifying the start of the window for
+%                           calculating the baseline.  Default is 0.
+%       'Window'            Scalar specifying the length of the window for
+%                           calculating the baseline.  Default is
+%                           size(TRACES,1)/SAMPLERATE.
+%       'AverageFun'        Function to use for averaging, taken as a
+%                           function handle.  Must take a matrix as its
+%                           first argument and a dimension to average along
+%                           as its second argument (currently preprocess
+%                           always averages along the second dimension).
+%                           Default is @nanmean.
+%       'FilterLength'      Size of the filter in samples.  Default is 3.
+%       'FilterFun'         Function handle to a function to be passed to
+%                           COLFILT in order to filter the data.  Default
+%                           is @nanmedian.
+%       'PreFilter'         Logical indicating whether or not to filter
+%                           before averaging.  If false, FILTEREDTRACES is
+%                           equal to BASELINESUBTRACTEDTRACES. Default is 
+%                           false.
+%       'PreFilterLength'   Size of the filter applied before averaging in
+%                           samples.  If unspecified and PreFilter is true,
+%                           the value of FilterLength is used instead.
+%       'PreFilterFun'      Function to be passed to colfilt for filtering
+%                           before averaging.  If unspecified and PreFilter
+%                           is true, the value of FilterFun is used instead.
+%       'PostFilter'        Logical indicating whether or not to filter
+%                           after averaging.  If false,
+%                           FILTEREDAVERAGETRACE is equal to AVERAGETRACE.
+%                           Default is true.  If both PreFilter and 
+%                           PostFilter are true, each filter is applied
+%                           separately and the results returned in
+%                           AVERAGEFILTEREDTRACE (for the pre-filter) and
+%                           FILTEREDAVERAGETRACE (for the post-filter) - no
+%                           return value contains the result of filtering
+%                           before and after averaging.
+%       'PreFilterLength'   Size of the filter applied after averaging in
+%                           samples.  If unspecified and PreFilter is true,
+%                           the value of FilterLength is used instead.
+%       'PreFilterFun'      Function to be passed to colfilt for filtering
+%                           after averaging.  If unspecified and PreFilter
+%                           is true, the value of FilterFun is used instead.
+
+%   Written by John Barrett 2017-07-27 15:42 CDT
+%   Last updated John Barrett 2017-08-15 16:09 CDT
+
     % TODO : this function needs a better name
     parser = inputParser;
     
