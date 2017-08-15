@@ -1,4 +1,39 @@
 function ax = plotParams(ax,data,varargin)
+%PLOTPARAMS Plot extracted parameters
+%   PLOTPARAMS(DATA) produces a scatter plot of the data contained in DATA.
+%   This function is intended for plotting scalar parameters calculated by
+%   analysing ephys traces, for example the series resistance or response
+%   latency on each trace.
+%
+%   AX = PLOTPARAMS(DATA) returns a handle, AX, to the resulting plot.
+%
+%   PLOTPARAMS(AX,...) plots the data into the axes handle AX instead of
+%   creating a new figure.
+%
+%   PLOTPARAMS(...,PARAM1,VAL1,PARAM2,VAL2,...)  specifies one or more of 
+%   the following name/value pairs:
+%
+%       'Abcissa'   Plots dashed vertical lines at the specified X-axis
+%                   value(s).  Default is no lines.
+%       'Ordinate'  Plots dashed horizontal lines at the specified Y-axis
+%                   value(s).  Default is no lines.
+%       'UnityLine' Plots dashed diagonal lines with the slope(s)
+%                   specified.  Default is no lines.
+%       'Title'     Gives the plot the specified title.  Default is no
+%                   title.
+%       'XLabel'    Gives the plot the specified X-axis label.  Default is
+%                   no label.
+%       'YLabel'    Gives the plot the specified X-axis label.  Default is
+%                   no label.
+%       'XLim'      Two-element monotonically increasing vector specifying
+%                   the X-axis limits.  Default is to MATLAB to determine
+%                   the limits automatically.
+%       'YLim'      Two-element monotonically increasing vector specifying
+%                   the X-axis limits.  Default is to MATLAB to determine
+%                   the limits automatically.
+
+%   Written by John Barrett 2017-07-28 17:35 CDT
+%   Last updated John Barrett 2017-08-15 18:17 CDT
     if isnumeric(ax) && ~isscalar(ax) % TODO : this isn't exactly right but close enough unless you want to plot a single datapoint without specifying a handle
         if nargin > 1
             varargin = [{data} varargin];

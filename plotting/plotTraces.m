@@ -1,4 +1,33 @@
 function ax = plotTraces(ax,data,sampleRate,varargin)
+%PLOTTRACES Plot electrophysiology traces
+%   PLOTPARAMS(DATA,SAMPLERATE) plots the electrophysiology traces in the
+%   matrix DATA (one per column, sampled at SAMPLERATE).
+%
+%   AX = PLOTPARAMS(DATA) returns a handle, AX, to the resulting plot.
+%
+%   PLOTPARAMS(AX,...) plots the data into the axes handle AX instead of
+%   creating a new figure.
+%
+%   PLOTPARAMS(...,PARAM1,VAL1,PARAM2,VAL2,...)  specifies one or more of 
+%   the following name/value pairs:
+%
+%       'Peaks'         Vector specifying Y-axis values of points of 
+%                       interest (e.g. peak response) to be highlighted on 
+%                       the plot with circles.  Default is no points.
+%       'PeakIndices'   Vector specifying Y-axis values of points of 
+%                       interest (e.g. peak response) to be highlighted on 
+%                       the plot with circles.  Default is no points.
+%       'StimStart'     Draws a dashed vertical line at the time(s)
+%                       specified.  Default is no line.
+%       'RecordingMode' Specifies the Y-axis label.  Options are 'IC' for
+%                       current-clamp mode, i.e. Y-axis label is mV, or
+%                       'VC' for voltage-clamp mode, i.e. Y-axis label is
+%                       pA.
+%       'Title'         Gives the plot the specified title.  Default is no
+%                       title.
+
+%   Written by John Barrett 2017-08-14 11:42 CDT
+%   Last updated John Barrett 2017-08-15 18:24 CDT
     if ~ishandle(ax);
         if nargin > 2
             varargin = [{sampleRate} varargin];
@@ -34,6 +63,7 @@ function ax = plotTraces(ax,data,sampleRate,varargin)
         case 'IC'
             ylabel('mV');
         otherwise
+            % TODO : this should throw an error, or at least a warning
             disp('Check the recordMode field');
     end
     
