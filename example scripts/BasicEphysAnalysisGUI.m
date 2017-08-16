@@ -21,11 +21,15 @@ classdef BasicEphysAnalysisGUI < handle
         DataAxis
     end
     
-    properties
+    properties(Hidden=true)
         AllTraces
         TraceNames
         SelectedTraceIndices
+    end
+    
+    properties
         SelectedTraces
+        SelectedTraceNames
         Baseline
         BaselineSubtractedTraces
         AverageTrace
@@ -87,7 +91,7 @@ classdef BasicEphysAnalysisGUI < handle
                 'String',   'Choose Traces...',                      ...
                 'Units',    'normalized',                           ...
                 'Position', [100/figureWidth 465/figureHeight 85/figureWidth 25/figureHeight],        ...
-                'Callback', @(varargin) errordlg('DON''T TOUCH ME!!!')            ...
+                'Callback', @(varargin) self.chooseTraces()            ...
                 );
             
             uicontrol(self.Figure,                                  ...
@@ -95,7 +99,7 @@ classdef BasicEphysAnalysisGUI < handle
                 'String',   'Save Data...',                         ...
                 'Units',    'normalized',                           ...
                 'Position', [10/figureWidth 435/figureHeight 85/figureWidth 25/figureHeight],        ...
-                'Callback', @(varargin) errordlg('DON''T TOUCH ME!!!')            ...
+                'Callback', @(varargin) self.saveData()            ...
                 );
             
             uicontrol(self.Figure,                                  ...
@@ -103,7 +107,7 @@ classdef BasicEphysAnalysisGUI < handle
                 'String',   'Save Figure...',                       ...
                 'Units',    'normalized',                           ...
                 'Position', [100/figureWidth 435/figureHeight 85/figureWidth 25/figureHeight],        ...
-                'Callback', @(varargin) errordlg('DON''T TOUCH ME!!!')            ...
+                'Callback', @(varargin) self.saveFigure()            ...
                 );
             
             uicontrol(self.Figure,                                  ...
@@ -461,6 +465,42 @@ classdef BasicEphysAnalysisGUI < handle
             delete(self.Figure)
         end
         
+        function chooseTraces(self)
+            [~,longestStringIndex] = max(cellfun(@numel,self.TraceNames));
+            
+            longestString = self.TraceNames(longestStringIndex);
+            
+            fig = figure('Visible','off');
+            h = uicontrol('Style','text','String',longestString,'Visible','off');
+            longestStringPixels = get(h,'Extent');
+            longestStringPixels = longestStringPixels(3);
+            close(fig);
+            
+            % TODO : what if MANY traces or REALLY LONG name?
+            figureWidth = 20+50+20+longestStringPixels;
+            figureHeight = 20+50+10+5+30*numel(self.TraceNames);
+            
+            chooseTracesFigure = figure('Units','pixels','Position',[100 100 figureWidth figureHeight]);
+            
+            choiceModeButtonGroup = uibuttongroup(...
+                'Units',                'pixels',                               ...
+                'Position',             [10 figureHeight-60 figureWidth-20 50], ...
+                'SelectionChangedFcn',  @(varargin) errordlg('FUCK YOU')        ...
+                );
+            
+            uibuttongroup('Units','pixels','Position',[10 10 figureWidth-20 figureHeight-80]);
+            
+            for ii = 1:numel(self.AllTraces)
+                uicontrol(...
+                    'Style',            'checkbox',                                     ...
+                    'Units',            'pixels',                                       ...
+                    'Position',         [20 figureHeight-70-30*ii figureWidth-40 25],   ...
+                    'String',           self.TraceNames{ii},                            ...
+                    'Tag',              sprintf('trace%dcheckbox',ii)                   ...
+                    );
+            end
+        end
+        
         function loadFiles(self)
             self.Filenames = uigetfile('*.xsg;*.h5','MultiSelect','on'); % TODO : will we ever want to combine files from multiple folders?  Might make sense to switch to uipickfiles
     
@@ -477,6 +517,8 @@ classdef BasicEphysAnalysisGUI < handle
             self.SelectedTraceIndices = 1:(size(self.AllTraces,2)*size(self.AllTraces,3));
             
             self.SelectedTraces = self.AllTraces(:,self.SelectedTraceIndices);
+            
+            self.SelectedTraceNames = self.TraceNames(self.SelectedTraceIndices);
             
             for ii = 1:numel(self.TraceNames)
                 disp(self.TraceNames{ii});
@@ -537,6 +579,49 @@ classdef BasicEphysAnalysisGUI < handle
             xlim(self.DataAxis,[start start+max(window,1/self.SampleRate)]);
         end
         
+        function saveData(self)
+            mc = metaclass(self);
+            
+            fields = mc.PropertyList;
+            
+            fieldsToSave = {fields(strcmpi('public',{fields.SetAccess}) & ~[fields.Constant] & ~[fields.Hidden]).Name};
+            
+            structToSave = struct([]);
+            
+            for ii = 1:numel(fieldsToSave)
+                structToSave(1).(fieldsToSave{ii}) = self.(fieldsToSave{ii});
+            end
+            
+            [saveFile,savePath] = uiputfile('*.mat');
+            
+            if ~ischar(saveFile)
+                return
+            end
+            
+            save([savePath saveFile],'-struct','structToSave');
+        end
+        
+        function saveFigure(self)
+            fig = figure;
+            ax = axes(fig);
+            pos = get(ax,'Position');
+            delete(ax);
+            
+            ax = copyobj(self.DataAxis,fig);
+            
+            set(ax,'Position',pos);
+            
+            [saveFile,savePath] = uiputfile({'*.fig' '*.bmp' '*.emf' '*.eps' '*.hdf' '*.pbm' '*.pcx' '*.pdf' '*.pgm' '*.png' '*.ps' '*.svg' '*.tif'}');
+            
+            if ~ischar(saveFile)
+                return
+            end
+            
+            saveas(ax,[savePath saveFile]);
+            
+            close(fig);
+        end
+        
         function data = selectData(self,selection)
             switch selection
                 case 1
@@ -560,7 +645,7 @@ classdef BasicEphysAnalysisGUI < handle
                 case 10
                     data = self.MembraneCapacitance;
                 case 11
-                    data = self.ChargeTransferred
+                    data = self.ChargeTransferred;
                 case 12
                     data = self.selectData(get(findobj(self.Figure,'Tag','tpdatasourcepopupmenu'),'Value')); % LOLrecursion
             end
