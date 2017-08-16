@@ -45,7 +45,11 @@ function AUC = calculateAUC(data,sampleRate,varargin)
     baselineSize = size(data);
     baselineSize = baselineSize(2:end);
     
-    assert(isscalar(baseline) || isequal(size(squeeze(baseline)),baselineSize),'ShepherdLab:calculateAUC:InvalidBaselineSize','Baseline must be a scalar or a matrix with one value for every sweep in data');
+    if isscalar(baselineSize)
+        baselineSize(2) = 1;
+    end
+    
+    assert(isscalar(baseline) || isequal(size(shiftdim(baseline)),baselineSize),'ShepherdLab:calculateAUC:InvalidBaselineSize','Baseline must be a scalar or a matrix with one value for every sweep in data');
     
     if ~isscalar(baseline)
         baseline = reshape(baseline,[1 baselineSize]);
@@ -53,9 +57,9 @@ function AUC = calculateAUC(data,sampleRate,varargin)
     
     data = bsxfun(@minus,data,baseline);
     
-    data = bsxfun(@times,data,sign(peak(data)));
+    data = bsxfun(@times,data,sign(peak(data,1)));
     
     data = max(parser.Results.Threshold,data);
     
-    AUC = trapz(data)/sampleRate;
+    AUC = trapz(data,1)/sampleRate;
 end
