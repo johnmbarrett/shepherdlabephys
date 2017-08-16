@@ -16,8 +16,10 @@ function AUC = calculateAUC(data,sampleRate,varargin)
 %       'WindowLength'  Scalar specifying the length of window over which
 %                       to calculate the AUC.  Default is the entire length
 %                       of the trace.
-%       'Baseline'      Scalar value which will be subtracted from the
-%                       trace before calculating the AUC.  Default is 0.
+%       'Baseline'      Value which will be subtracted from each trace 
+%                       before calculating the AUC.  May be a scalar or a
+%                       matrix with one value for every sweep in DATA.  The
+%                       default is 0.
 %       'Threshold'     Values less than this after baseline subtraction
 %                       (and sign-reversal for negative peaks) will 
 %                       truncated to zero.
@@ -29,15 +31,27 @@ function AUC = calculateAUC(data,sampleRate,varargin)
     isRealFiniteNumericScalar = @(x) validateattributes(x,{'numeric'},{'real' 'finite' 'scalar'});
     addParameter(parser,'WindowStart',0,isRealFiniteNumericScalar);
     addParameter(parser,'WindowLength',Inf,isRealFiniteNumericScalar);
-    addParameter(parser,'Baseline',0,isRealFiniteNumericScalar);
+    addParameter(parser,'Baseline',0,@(x) validateattributes(x,{'numeric'},{'real' 'finite'}));
     addParameter(parser,'Threshold',0,isRealFiniteNumericScalar);
     parser.parse(varargin{:});
     
     [startIndex,endIndex] = getWindowIndices(parser.Results.WindowStart,parser.Results.WindowLength,sampleRate,size(data,1));
     
-    data = data(startIndex:endIndex,:,:);
+    colons = repmat({':'},1,ndims(data)-1);
     
-    data = data-parser.Results.Baseline;
+    data = data(startIndex:endIndex,colons{:});
+    
+    baseline = parser.Results.Baseline;
+    baselineSize = size(data);
+    baselineSize = baselineSize(2:end);
+    
+    assert(isscalar(baseline) || isequal(size(squeeze(baseline)),baselineSize),'ShepherdLab:calculateAUC:InvalidBaselineSize','Baseline must be a scalar or a matrix with one value for every sweep in data');
+    
+    if ~isscalar(baseline)
+        baseline = reshape(baseline,[1 baselineSize]);
+    end
+    
+    data = bsxfun(@minus,data,baseline);
     
     data = bsxfun(@times,data,sign(peak(data)));
     
