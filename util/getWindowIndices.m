@@ -17,5 +17,5 @@ function [startIndex,endIndex] = getWindowIndices(start,length,sampleRate,maxLen
         startIndex = max(1,min(maxLength,round(start*sampleRate)));
     end
     
-    endIndex = max(1,min(maxLength,round(startIndex+length*sampleRate));
+    endIndex = max(1,min(maxLength,round(startIndex+length*sampleRate)));
 end
