@@ -1,4 +1,4 @@
-function [Rs,Ri,tau,Cm] = calculateCellParameters(data,voltageStep,sampleRate,varargin)
+function [Rs,Ri,tau,Cm,steadyState] = calculateCellParameters(data,voltageStep,sampleRate,varargin)
 %CALCULATECELLPARAMETERS    Calculate various cell parameters
 %   [RS,RI,TAU,CM] = CALCULATECELLPARAMETERS(DATA,VOLTAGESTEP,SAMPLERATE)
 %   calculates the series resistance, RS, the input resistance, RI, the
