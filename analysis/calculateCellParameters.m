@@ -54,13 +54,12 @@ function [Rs,Ri,tau,Cm] = calculateCellParameters(data,voltageStep,sampleRate,va
     
     steadyState = parser.Results.AverageFun(data(steadyStateStartIndex:steadyStateEndIndex,:));
 
-    Rs = voltageStep/peakResponse; % V/pA = TOhm
-    Ri = voltageStep/steadyState-Rs;
+    Rs = voltageStep./peakResponse; % V/pA = TOhm
+    Ri = voltageStep./steadyState-Rs;
 
     steadyStateSubtractedData = bsxfun(@minus,data,steadyState);
 
     tau = zeros(size(peakResponse));
-    Cm = zeros(size(peakResponse));
     
     for ii = 1:numel(tau)
         if peakResponse(ii) < 0
@@ -70,8 +69,9 @@ function [Rs,Ri,tau,Cm] = calculateCellParameters(data,voltageStep,sampleRate,va
         end
         
         tau(ii) = time(find(compare(steadyStateSubtractedData(peakIndex(ii):end,ii),(peakResponse(ii)-steadyState(ii))/exp(1)),1));
-        Cm(ii) = (Rs + Ri) * tau / (Rs * Ri); % TOhm*s/(TOhm^2) = pF
     end
+    
+    Cm = (Rs + Ri) .* tau ./ (Rs .* Ri); % TOhm*s/(TOhm^2) = pF
     
     Rs = Rs*10^6; % convert to MOhms
     Ri = Ri*10^6; % convert to MOhms
@@ -82,7 +82,7 @@ function [startIndex,endIndex] = getWindowIndices(start,length,sampleRate,maxLen
     if start < 0
         startIndex = max(1,round(maxLength-start*sampleRate));
     else
-        startIndex = min(maxLength,round(start*sampleRate));
+        startIndex = max(1,min(maxLength,round(start*sampleRate)));
     end
     
     endIndex = min(maxLength,round(startIndex+length*sampleRate));
