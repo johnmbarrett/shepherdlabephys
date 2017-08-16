@@ -26,7 +26,7 @@ function [Rs,Ri,tau,Cm] = calculateCellParameters(data,voltageStep,sampleRate,va
 %                           averaging traces.  Default is @mean.
 
 %   Written by John Barrett 2017-08-16 11:45 CDT
-%   Last updated John Barrett 2017-08-15 11:47 CDT
+%   Last updated John Barrett 2017-08-16 13:36 CDT
 %   Based on code written by Gordon Shepherd 2008-03-08
 
     parser = inputParser;
@@ -75,15 +75,4 @@ function [Rs,Ri,tau,Cm] = calculateCellParameters(data,voltageStep,sampleRate,va
     
     Rs = Rs*10^6; % convert to MOhms
     Ri = Ri*10^6; % convert to MOhms
-end
-
-% TODO : useful for other functions?
-function [startIndex,endIndex] = getWindowIndices(start,length,sampleRate,maxLength)
-    if start < 0
-        startIndex = max(1,round(maxLength-start*sampleRate));
-    else
-        startIndex = max(1,min(maxLength,round(start*sampleRate)));
-    end
-    
-    endIndex = min(maxLength,round(startIndex+length*sampleRate));
 end

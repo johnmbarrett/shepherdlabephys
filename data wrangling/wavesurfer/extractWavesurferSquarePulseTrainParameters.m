@@ -86,10 +86,16 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
                 columnIndex = jj;
             end
 
-            stimulus = map.Stimuli.(sprintf('element%d',channelIndices(jj)));
+            if isfield(map,'Stimuli')
+                stimulus = map.Stimuli.(sprintf('element%d',channelIndices(jj)));
+            else
+                % TODO : test this for multiple stimuli
+                stimulus = stimulusLibrary.Stimuli.(sprintf('element%d',map.IndexOfEachStimulusInLibrary.(sprintf('element%d',1))));
+            end
 
             if ~strncmpi(stimulus.TypeString,'SquarePulse',11)
-                warning('Stimulus %s on channel %s during sweep %d is not a square pulse train\n',stimulus.Name,map.ChannelNames(channelIndices(jj)),ii);
+                % TODO : fix warning
+                warning('fuck you'); %Stimulus %s on channel %s during sweep %d is not a square pulse train\n',stimulus.Name,map.ChannelNames(channelIndices(jj)),ii);
             end
 
             % TODO : what if one of these evaluates to a non-scalar?
