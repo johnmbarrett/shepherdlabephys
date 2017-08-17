@@ -91,7 +91,7 @@ classdef BasicEphysAnalysisGUI < handle
                 'String',   'Choose Traces...',                      ...
                 'Units',    'normalized',                           ...
                 'Position', [100/figureWidth 465/figureHeight 85/figureWidth 25/figureHeight],        ...
-                'Callback', @(varargin) self.chooseTraces()            ...
+                'Callback', @(varargin) self.openChooseTracesDialog()            ...
                 );
             
             uicontrol(self.Figure,                                  ...
@@ -465,40 +465,46 @@ classdef BasicEphysAnalysisGUI < handle
             delete(self.Figure)
         end
         
-        function chooseTraces(self)
-            [~,longestStringIndex] = max(cellfun(@numel,self.TraceNames));
+        function chooseTraces(self,fig)
+            boxes = self.getTraceChoiceCheckBoxes(fig);
             
-            longestString = self.TraceNames(longestStringIndex);
-            
-            fig = figure('Visible','off');
-            h = uicontrol('Style','text','String',longestString,'Visible','off');
-            longestStringPixels = get(h,'Extent');
-            longestStringPixels = longestStringPixels(3);
-            close(fig);
-            
-            % TODO : what if MANY traces or REALLY LONG name?
-            figureWidth = 20+50+20+longestStringPixels;
-            figureHeight = 20+50+10+5+30*numel(self.TraceNames);
-            
-            chooseTracesFigure = figure('Units','pixels','Position',[100 100 figureWidth figureHeight]);
-            
-            choiceModeButtonGroup = uibuttongroup(...
-                'Units',                'pixels',                               ...
-                'Position',             [10 figureHeight-60 figureWidth-20 50], ...
-                'SelectionChangedFcn',  @(varargin) errordlg('FUCK YOU')        ...
-                );
-            
-            uibuttongroup('Units','pixels','Position',[10 10 figureWidth-20 figureHeight-80]);
-            
-            for ii = 1:numel(self.AllTraces)
-                uicontrol(...
-                    'Style',            'checkbox',                                     ...
-                    'Units',            'pixels',                                       ...
-                    'Position',         [20 figureHeight-70-30*ii figureWidth-40 25],   ...
-                    'String',           self.TraceNames{ii},                            ...
-                    'Tag',              sprintf('trace%dcheckbox',ii)                   ...
-                    );
+            if numel(boxes) == 1
+                selectedIndices = find(get(boxes,'Value'));
+            else
+                % TODO : is flipud always right?  better to pull the index out
+                % of the tag
+                selectedIndices = find(flipud(cell2mat(get(boxes,'Value'))));
             end
+            
+            firstTag = get(boxes(1),'Tag');
+            
+            if firstTag(1) == 't'
+                self.SelectedTraceIndices = selectedIndices;
+            else
+                if firstTag(1) == 'c'
+                    colIndices = repmat((1:size(self.AllTraces,2))',numel(selectedIndices),1);
+                    pagIndices = kron(selectedIndices,ones(size(self.AllTraces,2),1));
+                elseif firstTag(1) == 's'
+                    colIndices = repmat(selectedIndices,size(self.AllTraces,3),1);
+                    pagIndices = kron((1:size(self.AllTraces,3))',ones(numel(selectedIndices),1));
+                else
+                    errordlg('This should never happen');
+                    return
+                end
+                
+                if isempty(colIndices) || isempty(pagIndices)
+                    self.SelectedTraceIndices = [];
+                else
+                    self.SelectedTraceIndices = sub2ind([size(self.AllTraces,2) size(self.AllTraces,3)],colIndices,pagIndices);
+                end
+            end
+            
+            self.SelectedTraces = self.AllTraces(:,self.SelectedTraceIndices);
+            self.SelectedTraceNames = self.TraceNames(1,self.SelectedTraceIndices);
+            
+            close(fig)
+            
+            self.updatePreprocessing();
         end
         
         function loadFiles(self)
@@ -525,6 +531,153 @@ classdef BasicEphysAnalysisGUI < handle
             end
             
             self.updatePreprocessing();
+        end
+        
+        function openChooseTracesDialog(self)
+            if ~iscell(self.TraceNames)
+                warndlg('No traces to choose from.  Try loading some files first.');
+                return
+            end
+            
+            [~,longestStringIndex] = max(cellfun(@numel,self.TraceNames));
+            
+            longestString = self.TraceNames(longestStringIndex);
+            
+            fig = figure('Visible','off');
+            h = uicontrol('Style','text','String',longestString,'Visible','off');
+            longestStringPixels = get(h,'Extent');
+            longestStringPixels = longestStringPixels(3);
+            close(fig);
+            
+            % TODO : what if MANY traces or REALLY LONG name?
+            figureWidth = max(20+10*4+100*3,20+50+20+longestStringPixels);
+            figureHeight = 20+50+10+5+30*max([numel(self.TraceNames) size(self.AllTraces,2) size(self.AllTraces,3)])+30;
+            
+            chooseTracesFigure = figure('Units','pixels','Position',[100 100 figureWidth figureHeight]);
+            
+            choiceModeButtonGroup = uibuttongroup(chooseTracesFigure,           ...
+                'Units',                'pixels',                               ...
+                'Position',             [10 figureHeight-60 figureWidth-20 50]  ...
+                );
+            
+            uicontrol(choiceModeButtonGroup,...
+                'Style',                'text',                          ...
+                'Units',                'pixels',                               ...
+                'Position',             [5 30 200 15],             ...
+                'HorizontalAlignment',  'left',                     ...
+                'String',               'Choose Traces By:'                        ...
+                );
+            
+            uicontrol(choiceModeButtonGroup,...
+                'Style',                'radiobutton',                          ...
+                'Units',                'pixels',                               ...
+                'Position',             [10 5 100 25],             ...
+                'String',               'Trace Name',                        ...
+                'Callback',             @(varargin) self.createAllTracesChoicePanel(chooseTracesFigure)   ...
+                );
+            
+            uicontrol(choiceModeButtonGroup,...
+                'Style',                'radiobutton',                          ...
+                'Units',                'pixels',                               ...
+                'Position',             [120 5 100 25],            ...
+                'String',               'Sweep Number',                      ...
+                'Callback',             @(varargin) self.createSweepsChoicePanel(chooseTracesFigure)   ...
+                );
+            
+            uicontrol(choiceModeButtonGroup,...
+                'Style',                'radiobutton',                          ...
+                'Units',                'pixels',                               ...
+                'Position',             [230 5 100 25],            ...
+                'String',               'Channel Name',                           ...
+                'Callback',             @(varargin) self.createChannelsChoicePanel(chooseTracesFigure)   ...
+                );
+            
+            uibuttongroup(chooseTracesFigure,'Units','pixels','Position',[10 40 figureWidth-20 figureHeight-110]);
+            
+            self.createAllTracesChoicePanel(chooseTracesFigure);
+            
+            uicontrol(chooseTracesFigure,...
+                'Style',                'pushbutton',                           ...
+                'Units',                'pixels',                               ...
+                'Position',             [figureWidth-60 10 50 25],              ...
+                'String',               'OK',                                   ...
+                'Callback',             @(varargin) self.chooseTraces(chooseTracesFigure)   ...
+                );
+        end
+        
+        function boxes = getTraceChoiceCheckBoxes(~,fig)
+            boxes = findobj(fig,'-regexp','Tag','(trace|sweep|channel)[0-9]+checkbox');
+        end
+            
+        function createAllTracesChoicePanel(self,fig)
+            delete(self.getTraceChoiceCheckBoxes(fig));
+            
+            figurePosition = get(fig,'Position');
+            figureWidth = figurePosition(3);
+            figureHeight = figurePosition(4);
+            
+            for ii = 1:numel(self.TraceNames)
+                uicontrol(fig,...
+                    'Style',            'checkbox',                                     ...
+                    'Units',            'pixels',                                       ...
+                    'Position',         [20 figureHeight-70-30*ii figureWidth-40 25],   ...
+                    'String',           self.TraceNames{ii},                            ...
+                    'Tag',              sprintf('trace%dcheckbox',ii),                  ...
+                    'Value',            ismember(self.TraceNames{1,ii},self.SelectedTraceNames)                                               ...
+                    );
+            end
+        end
+        
+        function createSweepsChoicePanel(self,fig)
+            delete(self.getTraceChoiceCheckBoxes(fig));
+            
+            figurePosition = get(fig,'Position');
+            figureWidth = figurePosition(3);
+            figureHeight = figurePosition(4);
+            
+            for ii = 1:size(self.TraceNames,2)
+                traceName = self.TraceNames{1,ii,1};
+                
+                if ~isempty(strfind(traceName,'.xsg'))
+                    regex = 'Trace (.+)\.xsg';
+                else
+                    regex = '(sweep [0-9]+)';
+                end
+                
+                sweepName = regexp(traceName,regex,'tokens');
+                
+                uicontrol(fig,...
+                    'Style',            'checkbox',                                     ...
+                    'Units',            'pixels',                                       ...
+                    'Position',         [20 figureHeight-70-30*ii figureWidth-40 25],   ...
+                    'String',           sweepName{1}{1},                                ...
+                    'Tag',              sprintf('sweep%dcheckbox',ii),                  ...
+                    'Value',            ismember(self.TraceNames{1,ii,1},self.SelectedTraceNames)                                               ...
+                    );
+            end
+        end
+        
+        function createChannelsChoicePanel(self,fig)
+            delete(self.getTraceChoiceCheckBoxes(fig));
+            
+            figurePosition = get(fig,'Position');
+            figureWidth = figurePosition(3);
+            figureHeight = figurePosition(4);
+            
+            for ii = 1:size(self.TraceNames,3)
+                traceName = self.TraceNames{1,1,ii};
+                
+                sweepName = regexp(traceName,'channel (.+)','tokens');
+                
+                uicontrol(fig,...
+                    'Style',            'checkbox',                                     ...
+                    'Units',            'pixels',                                       ...
+                    'Position',         [20 figureHeight-70-30*ii figureWidth-40 25],   ...
+                    'String',           sweepName{1}{1},                                ...
+                    'Tag',              sprintf('channel%dcheckbox',ii),                  ...
+                    'Value',            ismember(self.TraceNames{1,1,ii},self.SelectedTraceNames)                                               ...
+                    );
+            end
         end
         
         function refreshData(self)

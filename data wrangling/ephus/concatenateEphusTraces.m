@@ -55,4 +55,5 @@ function [data,sampleRate,traceNames] = concatenateEphusTraces(files)
     end
     
     data(:,missing) = [];
+    traceNames(:,missing) = [];
 end

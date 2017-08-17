@@ -66,6 +66,7 @@ function [data,sampleRate,traceNames] = concatenateWavesurferTraces(files,sweeps
     end
     
     data = permute(data,[1 3 2]); % time, sweep, channel
+    traceNames = permute(traceNames,[1 3 2]);
     
     if nargin < 3 || isempty(channels) || any(isnan(channels))
         return
@@ -74,4 +75,5 @@ function [data,sampleRate,traceNames] = concatenateWavesurferTraces(files,sweeps
     % we have to load all the data in anyway, so probably just quicker to
     % throw them away at the end
     data = data(:,:,channels);
+    traceNames = traceNames(:,:,channels);
 end
