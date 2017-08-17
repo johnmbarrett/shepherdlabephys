@@ -1691,4 +1691,5 @@ classdef mapalyzer < handle
                 set(hObject,'BackgroundColor','white');
             end
         end
+    end
 end
