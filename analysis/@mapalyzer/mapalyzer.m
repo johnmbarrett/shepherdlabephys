@@ -73,6 +73,8 @@ classdef mapalyzer < dynamicprops
             end
             
             set(findobj(self.Figure,'Tag','lstbxTraceType'),'Callback',@self.setLoadMethodFromTraceType);
+            
+            set(get(findobj(self.Figure,'Tag','Help'),'Children'),'Callback',@self.help);
         end
         
         function out = getCheckboxValue(~,checkbox)
@@ -92,6 +94,22 @@ classdef mapalyzer < dynamicprops
         
         function setUIControlValue(~,varargin)
             error('ShepherdLab:mapalyzer:CantSetUIDependentPropery','You can not set a property whose value is dependent on a uicontrol');
+        end
+        
+        function help(~,menuItem,varargin)
+            tag = get(menuItem,'Tag');
+            
+            if strncmpi(tag,'help',4)
+                helpFile = tag;
+            elseif strcmp(tag,'dataMFiles');
+                helpFile = 'helpDataMFiles';
+            elseif strcmp(tag,'General')
+                helpFile = 'helpMapAnalysis';
+            else
+                error('ShepherdLab:mapalyzer:UnknownHelpOption','Unknown help option %s\n',tag);
+            end
+            
+            type([fileparts(which('mapalyzer')) '\helpFiles\' helpFile]);
         end
 
         function setLoadMethodFromTraceType(self,hObject,varargin)
@@ -267,59 +285,9 @@ classdef mapalyzer < dynamicprops
 
         function pbGenericBrowse_Callback(hObject, eventdata, handles)
             traceBrowserGeneric(handles);
-
-            % --- HELP -----------------------------------------------------------------
         end
-
-        function helpOverview_Callback(hObject, eventdata, handles)
-            type helpOverview;
-        end
-
-        function helpLoading_Callback(hObject, eventdata, handles)
-            type helpLoading;
-        end
-
-        function helpVideo_Callback(hObject, eventdata, handles)
-            type helpVideo;
-        end
-
-        function helpParameters_Callback(hObject, eventdata, handles)
-            type helpParameters;
-        end
-
-        function helpInformation_Callback(hObject, eventdata, handles)
-            type helpInformation;
-        end
-
-        function helpInputMapAnalysis_Callback(hObject, eventdata, handles)
-            type helpInputMapAnalysis;
-        end
-
-        function helpExcitationProfile_Callback(hObject, eventdata, handles)
-            type helpExcitationProfile;
-        end
-
-        function helpDisplay_Callback(hObject, eventdata, handles)
-            type helpDisplay;
-        end
-
-        function helpGeneric_Callback(hObject, eventdata, handles)
-            type helpGeneric;
-        end
-
-        function helpCurrentFrequencyAnalysis_Callback(hObject, eventdata, handles)
-            type helpCurrentFrequencyAnalysis;
-        end
-
-        function dataMFiles_Callback(hObject, eventdata, handles)
-            type helpDataMFiles;
-        end
-
-        function General_Callback(hObject, eventdata, handles)
-            type helpMapAnalysis;
-
-            % ========== Current-Frequency Analysis =================================
-        end
+        
+        % ========== Current-Frequency Analysis =================================
 
         function specifyWhichTraces_Callback(hObject, eventdata, handles)
             tracesToAnalyze = inputdlg('Enter Matlab-format vector of which traces to analyze. Example: [1:6]');
