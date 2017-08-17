@@ -29,15 +29,20 @@ classdef mapalyzer < dynamicprops
         FigurePath = [fileparts(which('mapalyzer')) '\mapalyzer.fig'];
     end
     
-    properties
-        Figure;
-        avgLaserIntensity;
+    properties % TODO : attributes
+        Figure
+        avgLaserIntensity
+        colorOrder
+        defaultDataDir
+        defaultDataMFileDir
         mapAvg = struct('rseries',[],'rmembrane',[],'cmembrane',[],'synThreshpAmV',[],'baselineSD',[],'spontEventRate',[]);
     end
     
     methods
         function self = mapalyzer(varargin)
             self.Figure = open(mapalyzer.FigurePath); % TODO : figure out a neat way to do the singleton pattern
+            
+            self.initializeAnalysisParameters();
             
             uicontrols = findobj(self.Figure,'Style','listbox','-or','Style','popupmenu','-or','Style','checkbox','-or','Style','edit');
             

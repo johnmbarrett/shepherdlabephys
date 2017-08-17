@@ -1,293 +1,215 @@
-function handles = initializeAnalysisParameters(handles)
-% initializeAnalysisParameters
+function initializeAnalysisParameters(self)
+% INITIALIZEANALYSISPARAMETERS  Initialises mapalyzer analysis parameters
 
+% Created by John Barrett 2017-08-17 17:41 CDT
+% Last Modified by John Barrett 2017-08-17 17:39 CDT
 % gs april 2005
 % -------------------------------------------------
 
 % LOAD -------------------------------------------------
 
-% lstbxTraceType
+% TODO : hard coded paths???? where's the config file????????????
+self.defaultDataDir = 'C:\_Data\Gordon';
 
-% lstbxSelectionType
-
-% default data directory
-handles.data.analysis.defaultDataDir = 'C:\_Data\Gordon';
-
-% default data m-file directory:
-handles.data.analysis.defaultDataMFileDir = 'C:\_Cartography\matlab\expts';
+self.defaultDataMFileDir = 'C:\_Cartography\matlab\expts';
 
 % FILTERING -------------------------------------------------
 
-% chkFilter
+set(findobj(self.Figure,'Tag','popFilterType'),'Value',1); % = 'mean'
 
-% popFilterType
-set(handles.popFilterType, 'Value', 1); % = 'mean'
-str = get(handles.popFilterType, 'String');
-val = get(handles.popFilterType, 'Value');
-handles.data.analysis.popFilterType = str{val};
-
-% filterValue
-handles.data.analysis.filterValue = 11;
-set(handles.filterValue, 'String', num2str(handles.data.analysis.filterValue));
+% TODO : this would be so much easier with a config file.  Might be time to
+% break out the perl
+set(findobj(self.Figure,'Tag','filterValue'),'String',num2str(11));
 
 % BASELINE SUBTRACTION -------------------------------------------------
 
-% chkBaselineSubtract
+set(findobj(self.Figure,'Tag','bsBaselineStart'),'String',num2str(0.001));
 
-% baseline settings
-handles.data.analysis.bsBaselineStart = 0.001;
-set(handles.bsBaselineStart, 'String', num2str(handles.data.analysis.bsBaselineStart));
-
-handles.data.analysis.bsBaselineEnd = 0.099;
-set(handles.bsBaselineEnd, 'String', num2str(handles.data.analysis.bsBaselineEnd));
+set(findobj(self.Figure,'Tag','bsBaselineEnd'),'String',num2str(0.099));
 
 % CELL PARAMETERS -------------------------------------------------
 
 % test pulse start
-handles.data.analysis.rstepOn = .6;
-set(handles.rstepOn, 'String', num2str(handles.data.analysis.rstepOn));
+set(findobj(self.Figure,'Tag','rstepOn'),'String',num2str(0.6));
 
 % test pulse dur
-handles.data.analysis.rstepDur = .05;
-set(handles.rstepDur, 'String', num2str(handles.data.analysis.rstepDur));
+set(findobj(self.Figure,'Tag','rstepDur'),'String',num2str(0.05));
 
 % test pulse amp
-handles.data.analysis.rstepAmp = -5;
-set(handles.rstepAmp, 'String', num2str(handles.data.analysis.rstepAmp));
+set(findobj(self.Figure,'Tag','rstepAmp'),'String',num2str(-5));
 
 % skip val
-handles.data.analysis.RsSkipVal = 8;
-set(handles.RsSkipVal, 'String', num2str(handles.data.analysis.RsSkipVal));
+set(findobj(self.Figure,'Tag','RsSkipVal'),'String',num2str(9));
 
 % Rs
-handles.data.map.mapAvg.rseriesAvg = [];
-set(handles.rseriesAvg, 'String', num2str(handles.data.map.mapAvg.rseriesAvg));
+set(findobj(self.Figure,'Tag','rseriesAvg'),'String','');
 
 % Ri (= Rm)
-handles.data.map.mapAvg.rmembraneAvg = [];
-set(handles.rmembraneAvg, 'String', num2str(handles.data.map.mapAvg.rmembraneAvg));
+set(findobj(self.Figure,'Tag','rmembraneAvg'),'String','');
 
 % Cm
-handles.data.map.mapAvg.cmembraneAvg = [];
-set(handles.cmembraneAvg, 'String', num2str(handles.data.map.mapAvg.cmembraneAvg));
+set(findobj(self.Figure,'Tag','cmembraneAvg'),'String','');
 
 % tau
-handles.data.map.mapAvg.tauAvg = [];
-set(handles.tauAvg, 'String', num2str(handles.data.map.mapAvg.tauAvg));
+set(findobj(self.Figure,'Tag','tauAvg'),'String','');
 
 % INFO -------------------------------------------------
 
 % cellType
-handles.data.analysis.cellType = 'neuron';
-set(handles.cellType, 'String', handles.data.analysis.cellType);
+set(findobj(self.Figure,'Tag','cellType'),'String','neuron');
 
 % Vrest
-handles.data.analysis.Vrest = [];
-set(handles.Vrest, 'String', num2str(handles.data.analysis.Vrest));
+set(findobj(self.Figure,'Tag','Vrest'),'String','');
 
 % Vhold
-handles.data.analysis.Vhold = [];
-set(handles.Vhold, 'String', num2str(handles.data.analysis.Vhold));
+set(findobj(self.Figure,'Tag','Vhold'),'String','');
 
 % animalAge
-handles.data.analysis.animalAge = [];
-set(handles.animalAge, 'String', num2str(handles.data.analysis.animalAge));
+set(findobj(self.Figure,'Tag','animalAge'),'String','');
 
 % exptCondition
-handles.data.analysis.exptCondition = '';
-set(handles.exptCondition, 'String', handles.data.analysis.exptCondition);
+set(findobj(self.Figure,'Tag','exptCondition'),'String','');
 
 % notes
-handles.data.analysis.notes = '';
-set(handles.notes, 'String', handles.data.analysis.notes);
+set(findobj(self.Figure,'Tag','notes'),'String','');
 
 % fieldAName
-handles.data.analysis.fieldAName = 'fieldA';
-set(handles.fieldAName, 'String', handles.data.analysis.fieldAName);
+set(findobj(self.Figure,'Tag','fieldAName'),'String','fieldA');
 
 % fieldAVal
-handles.data.analysis.fieldAVal = '';
-set(handles.fieldAVal, 'String', handles.data.analysis.fieldAVal);
+set(findobj(self.Figure,'Tag','fieldAVal'),'String','');
 
 % fieldBName
-handles.data.analysis.fieldBName = 'fieldB';
-set(handles.fieldBName, 'String', handles.data.analysis.fieldBName);
+set(findobj(self.Figure,'Tag','fieldBName'),'String','fieldB');
 
 % fieldBVal
-handles.data.analysis.fieldBVal = '';
-set(handles.fieldBVal, 'String', handles.data.analysis.fieldBVal);
+set(findobj(self.Figure,'Tag','fieldBVal'),'String','');
 
 % fieldCName
-handles.data.analysis.fieldCName = 'fieldC';
-set(handles.fieldCName, 'String', handles.data.analysis.fieldCName);
+set(findobj(self.Figure,'Tag','fieldCName'),'String','fieldC');
 
 % fieldCVal
-handles.data.analysis.fieldCVal = '';
-set(handles.fieldCVal, 'String', handles.data.analysis.fieldCVal);
+set(findobj(self.Figure,'Tag','fieldCVal'),'String','');
 
 % fieldDName
-handles.data.analysis.fieldDName = 'fieldD';
-set(handles.fieldDName, 'String', handles.data.analysis.fieldDName);
+set(findobj(self.Figure,'Tag','fieldDName'),'String','fieldD');
 
 % fieldDVal
-handles.data.analysis.fieldDVal = '';
-set(handles.fieldDVal, 'String', handles.data.analysis.fieldDVal);
+set(findobj(self.Figure,'Tag','fieldDVal'),'String','');
 
 % fieldEName
-handles.data.analysis.fieldEName = 'fieldE';
-set(handles.fieldEName, 'String', handles.data.analysis.fieldEName);
+set(findobj(self.Figure,'Tag','fieldEName'),'String','fieldE');
 
 % fieldEVal
-handles.data.analysis.fieldEVal = '';
-set(handles.fieldEVal, 'String', handles.data.analysis.fieldEVal);
+set(findobj(self.Figure,'Tag','fieldEVal'),'String','');
 
 % fieldFName
-handles.data.analysis.fieldFName = 'fieldF';
-set(handles.fieldFName, 'String', handles.data.analysis.fieldFName);
+set(findobj(self.Figure,'Tag','fieldFName'),'String','fieldF');
 
 % fieldFVal
-handles.data.analysis.fieldFVal = '';
-set(handles.fieldFVal, 'String', handles.data.analysis.fieldFVal);
+set(findobj(self.Figure,'Tag','fieldFVal'),'String','');
 
 % fieldGName
-handles.data.analysis.fieldGName = 'fieldG';
-set(handles.fieldGName, 'String', handles.data.analysis.fieldGName);
+set(findobj(self.Figure,'Tag','fieldGName'),'String','fieldG');
 
 % fieldGVal
-handles.data.analysis.fieldGVal = '';
-set(handles.fieldGVal, 'String', handles.data.analysis.fieldGVal);
+set(findobj(self.Figure,'Tag','fieldGVal'),'String','');
 
 % fieldHName
-handles.data.analysis.fieldHName = 'fieldH';
-set(handles.fieldHName, 'String', handles.data.analysis.fieldHName);
+set(findobj(self.Figure,'Tag','fieldHName'),'String','fieldH');
 
 % fieldHVal
-handles.data.analysis.fieldHVal = '';
-set(handles.fieldHVal, 'String', handles.data.analysis.fieldHVal);
+set(findobj(self.Figure,'Tag','fieldHVal'),'String','');
 
 % INPUT MAP -------------------------------------------------
 
 % traceMapShowStart
-handles.data.analysis.traceMapShowStart = .099;
-set(handles.traceMapShowStart, 'String', num2str(handles.data.analysis.traceMapShowStart));
+set(findobj(self.Figure,'Tag','traceMapShowStart'),'String',num2str(0.099));
 
 % traceMapShowStop
-handles.data.analysis.traceMapShowStop = .25;
-set(handles.traceMapShowStop, 'String', num2str(handles.data.analysis.traceMapShowStop));
+set(findobj(self.Figure,'Tag','traceMapShowStop'),'String',num2str(0.25));
 
 % traceMapYFactor
-handles.data.analysis.traceMapYFactor = 100;
-set(handles.traceMapYFactor, 'String', num2str(handles.data.analysis.traceMapYFactor));
+set(findobj(self.Figure,'Tag','traceMapYFactor'),'String',num2str(100));
 
 % stimOn
-handles.data.analysis.stimOn = .1;
-set(handles.stimOn, 'String', num2str(handles.data.analysis.stimOn));
+set(findobj(self.Figure,'Tag','stimOn'),'String',num2str(0.1));
 
 % baselineStart
-handles.data.analysis.baselineStart = .001;
-set(handles.baselineStart, 'String', num2str(handles.data.analysis.baselineStart));
+set(findobj(self.Figure,'Tag','baselineStart'),'String',num2str(0.001));
 
 % baselineEnd
-handles.data.analysis.baselineEnd = .1;
-set(handles.baselineEnd, 'String', num2str(handles.data.analysis.baselineEnd));
+set(findobj(self.Figure,'Tag','baselineEnd'),'String',num2str(0.1));
 
 % directWindowStart
-handles.data.analysis.directWindowStart = .1;
-set(handles.directWindowStart, 'String', num2str(handles.data.analysis.directWindowStart));
+set(findobj(self.Figure,'Tag','directWindowStart'),'String',num2str(0.1));
 
 % directWindow
-handles.data.analysis.directWindow = .007;
-set(handles.directWindow, 'String', num2str(handles.data.analysis.directWindow));
+set(findobj(self.Figure,'Tag','directWindow'),'String',num2str(0.007));
 
 % synapticWindowStart
-handles.data.analysis.synapticWindowStart = handles.data.analysis.directWindow;
-set(handles.synapticWindowStart, 'String', num2str(handles.data.analysis.synapticWindowStart));
+set(findobj(self.Figure,'Tag','synapticWindowStart'),'String',num2str(0.007));
 
 % synapticWindow
-handles.data.analysis.synapticWindow = .05;
-set(handles.synapticWindow, 'String', num2str(handles.data.analysis.synapticWindow));
+set(findobj(self.Figure,'Tag','synapticWindow'),'String',num2str(0.05));
 
 % synThreshold
-handles.data.analysis.synThreshold = 3;
-set(handles.synThreshold, 'String', num2str(handles.data.analysis.synThreshold));
+set(findobj(self.Figure,'Tag','synThreshold'),'String',num2str(3));
 
 % fourthInputWindowStart
-handles.data.analysis.fourthWindowStart = .1;
-set(handles.fourthWindowStart, 'String', num2str(handles.data.analysis.fourthWindowStart));
+set(findobj(self.Figure,'Tag','fourthWindowStart'),'String',num2str(0.1));
 
 % fourthInputWindow
-handles.data.analysis.fourthWindow = .003;
-set(handles.fourthWindow, 'String', num2str(handles.data.analysis.fourthWindow));
+set(findobj(self.Figure,'Tag','fourthWindow'),'String',num2str(0.003));
 
 % eventPolaritySyn
-set(handles.eventPolaritySyn, 'Value', 2); % = 'down'
-str = get(handles.eventPolaritySyn, 'String');
-val = get(handles.eventPolaritySyn, 'Value');
-handles.data.analysis.eventPolaritySyn = str{val};
+set(findobj(self.Figure,'Tag','eventPolaritySyn'),'Value',2); % = 'down'
 
 % synDuration
-handles.data.analysis.synDuration = 0.1;
-set(handles.synDuration, 'String', num2str(handles.data.analysis.synDuration));
+set(findobj(self.Figure,'Tag','synDuration'),'String',num2str(0.1));
 
 
 
 % EXCITATION PROFILE -------------------------------------------------
 
 % stimOnEP
-handles.data.analysis.stimOnEP = .1;
-set(handles.stimOnEP, 'String', num2str(handles.data.analysis.stimOnEP));
+set(findobj(self.Figure,'Tag','stimOnEP'),'String',num2str(.1));
 
 % baselineStartEP
-handles.data.analysis.baselineStartEP = .001;
-set(handles.baselineStartEP, 'String', num2str(handles.data.analysis.baselineStartEP));
+set(findobj(self.Figure,'Tag','baselineStartEP'),'String',num2str(0.001));
 
 % baselineEndEP
-handles.data.analysis.baselineEndEP = .1;
-set(handles.baselineEndEP, 'String', num2str(handles.data.analysis.baselineEndEP));
+set(findobj(self.Figure,'Tag','baselineEndEP'),'String',num2str(0.1));
 
 % responseStartEP
-handles.data.analysis.responseStartEP = .1;
-set(handles.responseStartEP, 'String', num2str(handles.data.analysis.responseStartEP));
+set(findobj(self.Figure,'Tag','responseStartEP'),'String',num2str(0.1));
 
 % responseDurEP
-handles.data.analysis.responseDurEP = .1;
-set(handles.responseDurEP, 'String', num2str(handles.data.analysis.responseDurEP));
+set(findobj(self.Figure,'Tag','responseDurEP'),'String',num2str(0.1));
 
 % apThreshold
-handles.data.analysis.apThreshold = 0.5;
-set(handles.apThreshold, 'String', num2str(handles.data.analysis.apThreshold));
+set(findobj(self.Figure,'Tag','apThreshold'),'String',num2str(0.5));
 
 % eventPolarityAP
-set(handles.eventPolarityAP, 'Value', 1); % = 'up'
-str = get(handles.eventPolarityAP, 'String');
-val = get(handles.eventPolarityAP, 'Value');
-handles.data.analysis.eventPolarityAP = str{val};
-
-% handles.data.analysis.cellAttachedCheck = 0;
-
+set(findobj(self.Figure,'Tag','eventPolarityAP'),'Value',1); % = 'up'
 
 % MISCELLANEOUS STUFF -------------------------------------------------
 
-handles.data.analysis.colorOrder = ['k'; 'b'; 'g'; 'r'; 'c'; 'm'; 'y'];
-
+self.colorOrder = ['k'; 'b'; 'g'; 'r'; 'c'; 'm'; 'y'];
 
 % GENERIC TRACE ANALYSIS -------------------------------------------------
 
 % stimOn
-handles.data.analysis.stimOnGen = .1;
-set(handles.stimOnGen, 'String', num2str(handles.data.analysis.stimOnGen));
+set(findobj(self.Figure,'Tag','stimOnGen'),'String',num2str(0.1));
 
 % CURRENT FREQUENCY ANALYSIS -------------------------------------------------
 
 % currentStepStart
-handles.data.analysis.currentStepStart = .1;
-set(handles.currentStepStart, 'String', num2str(handles.data.analysis.currentStepStart));
+set(findobj(self.Figure,'Tag','currentStepStart'),'String',num2str(0.1));
 
 % currentStepDuration
-handles.data.analysis.currentStepDuration = .5;
-set(handles.currentStepDuration, 'String', num2str(handles.data.analysis.currentStepDuration));
+set(findobj(self.Figure,'Tag','currentStepDuration'),'String',num2str(0.1));
 
 % spikeThreshold
-handles.data.analysis.spikeThreshold = 5;
-set(handles.spikeThreshold, 'String', num2str(handles.data.analysis.spikeThreshold));
+set(findobj(self.Figure,'Tag','spikeThreshold'),'String',num2str(5));
 
