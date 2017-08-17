@@ -72,7 +72,10 @@ classdef mapalyzer < dynamicprops
                 set(uicontrols(ii),'Callback','');
             end
             
+            % TODO : can I alter the figure itself to have these always be
+            % the default callbacks?
             set(findobj(self.Figure,'Tag','lstbxTraceType'),'Callback',@self.setLoadMethodFromTraceType);
+            set(findobj(self.Figure,'Tag','handles2ws'),'Callback',@self.assignDataInWorkspace)
             
             set(get(findobj(self.Figure,'Tag','Help'),'Children'),'Callback',@self.help);
         end
@@ -88,6 +91,12 @@ classdef mapalyzer < dynamicprops
 
         function out = getPopupMenuValue(~,popupmenu)
             str = get(popupmenu, 'String');
+            
+            if isempty(str)
+                out = [];
+                return
+            end
+            
             val = get(popupmenu, 'Value');
             out = str{val};
         end
@@ -152,7 +161,16 @@ classdef mapalyzer < dynamicprops
             % ================= INFO ===================================
         end
 
-        function handles2ws_Callback(hObject, eventdata, handles)
+        function assignDataInWorkspace(self,varargin)
+            handles = struct([]);
+            
+            props = cellfun(@(p) findprop(self,p),properties(self),'UniformOutput',false);
+            props = props(cellfun(@(p) isa(p,'meta.DynamicProperty'),props));
+            
+            for ii = 1:numel(props)
+                handles(1).(props{ii}.Name) = self.(props{ii}.Name);
+            end
+            
             assignin('base', 'handles', handles);
             disp('Handles variable created in workspace (or overwritten).');
 
