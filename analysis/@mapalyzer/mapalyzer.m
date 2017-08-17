@@ -31,6 +31,8 @@ classdef mapalyzer < dynamicprops
     
     properties
         Figure;
+        avgLaserIntensity;
+        mapAvg = struct('rseries',[],'rmembrane',[],'cmembrane',[],'synThreshpAmV',[],'baselineSD',[],'spontEventRate',[]);
     end
     
     methods
@@ -76,6 +78,7 @@ classdef mapalyzer < dynamicprops
             % the default callbacks?
             set(findobj(self.Figure,'Tag','lstbxTraceType'),'Callback',@self.setLoadMethodFromTraceType);
             set(findobj(self.Figure,'Tag','handles2ws'),'Callback',@self.assignDataInWorkspace)
+            set(findobj(self.Figure,'Tag','pbLoad'),'Callback',@self.loadSwitchyard);
             
             set(get(findobj(self.Figure,'Tag','Help'),'Children'),'Callback',@self.help);
         end
@@ -143,12 +146,7 @@ classdef mapalyzer < dynamicprops
             set(selectionTypeListBox,'Value',find(strcmpi(selectionType,selectionTypes)));
         end
         
-        function pbLoad_Callback(hObject, eventdata, handles)
-            handles = loadSwitchyard(handles);
-            guidata(hObject,handles);
-
-            % ================= VIDEO IMAGES ===================================
-        end
+        % ================= VIDEO IMAGES ===================================
 
         function selectVideoImage_Callback(hObject, eventdata, handles)
             handles = chooseImageFile(handles);
@@ -164,6 +162,7 @@ classdef mapalyzer < dynamicprops
         function assignDataInWorkspace(self,varargin)
             handles = struct([]);
             
+            % TODO : need some of the non-dynamic props as well
             props = cellfun(@(p) findprop(self,p),properties(self),'UniformOutput',false);
             props = props(cellfun(@(p) isa(p,'meta.DynamicProperty'),props));
             
