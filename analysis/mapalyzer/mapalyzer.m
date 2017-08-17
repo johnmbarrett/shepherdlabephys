@@ -58,10 +58,10 @@ classdef mapalyzer < dynamicprops
                         prop.GetMethod = @(varargin) self.getCheckboxValue(uicontrols(ii));
                     case 'edit'
                         prop.GetMethod = @(varargin) self.getEditValue(uicontrols(ii));
+                    case 'listbox'
+                        prop.GetMethod = @(varargin) self.getPopupMenuValue(uicontrols(ii));
                     case 'popupmenu'
                         prop.GetMethod = @(varargin) self.getPopupMenuValue(uicontrols(ii));
-                    case 'listbox'
-                        disp(get(uicontrols(ii),'Tag'));
                     otherwise
                         prop.GetMethod = @(varargin) NaN;
                 end
