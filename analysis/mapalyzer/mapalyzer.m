@@ -81,15 +81,15 @@ classdef mapalyzer < dynamicprops
             out = get(edit, 'String'); % TODO : is there a neat way of determining which ones should numeric and which should be text?
 %             out = str2double(get(edit, 'String'));
         end
-        
-        function setUIControlValue(~,varargin)
-            error('ShepherdLab:mapalyzer:CantSetUIDependentPropery','You can not set a property whose value is dependent on a uicontrol');
-        end
 
         function out = getPopupMenuValue(~,popupmenu)
             str = get(popupmenu, 'String');
             val = get(popupmenu, 'Value');
             out = str{val};
+        end
+        
+        function setUIControlValue(~,varargin)
+            error('ShepherdLab:mapalyzer:CantSetUIDependentPropery','You can not set a property whose value is dependent on a uicontrol');
         end
 
         function lstbxTraceType_Callback(hObject, eventdata, handles)
