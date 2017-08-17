@@ -508,15 +508,17 @@ classdef BasicEphysAnalysisGUI < handle
         end
         
         function loadFiles(self)
-            self.Filenames = uigetfile('*.xsg;*.h5','MultiSelect','on'); % TODO : will we ever want to combine files from multiple folders?  Might make sense to switch to uipickfiles
+            [filenames,pathname] = uigetfile('*.xsg;*.h5','MultiSelect','on'); % TODO : will we ever want to combine files from multiple folders?  Might make sense to switch to uipickfiles
     
-            if isnumeric(self.Filenames)
+            if isnumeric(filenames)
                 return
             end
 
-            if ischar(self.Filenames)
-                self.Filenames = {self.Filenames};
+            if ischar(filenames)
+                filenames = {filenames};
             end
+            
+            self.Filenames = cellfun(@(s) sprintf('%s%s',pathname,s),filenames,'UniformOutput',false);
     
             [self.AllTraces,self.SampleRate,self.TraceNames] = concatenateTraces(self.Filenames);
             
