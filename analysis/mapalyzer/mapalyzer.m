@@ -37,7 +37,7 @@ classdef mapalyzer < dynamicprops
         function self = mapalyzer(varargin)
             self.Figure = open(mapalyzer.FigurePath); % TODO : figure out a neat way to do the singleton pattern
             
-            toBeRecoloured = findobj(self.Figure,'-regexp','Style','listbox|popupmenu|checkbox|edit');
+            uicontrols = findobj(self.Figure,'Style','listbox','-or','Style','popupmenu','-or','Style','checkbox','-or','Style','edit');
             
             if ispc
                 backgroundColour = 'white';
@@ -45,20 +45,28 @@ classdef mapalyzer < dynamicprops
                 backgroundColour = get(0,'defaultUicontrolBackgroundColor');
             end
             
-            set(toBeRecoloured,'BackgroundColor',backgroundColour);
+            set(uicontrols,'BackgroundColor',backgroundColour);
             
-            edits = findobj(self.Figure,'Style','edit');
-            
-            for ii = 1:numel(edits)
-                prop = addprop(self,get(edits(ii),'Tag'));
+            for ii = 1:numel(uicontrols)
+                prop = addprop(self,get(uicontrols(ii),'Tag'));
                 
                 prop.Dependent = true;
                 prop.GetAccess = 'public';
-                prop.GetMethod = @(varargin) self.getEditValue(edits(ii));
-                prop.SetAccess = 'protected';
-                prop.SetMethod = @(varargin) self.setEditValue();
                 
-                set(edits(ii),'Callback','');
+                switch get(uicontrols(ii),'Style')
+                    case 'edit'
+                        prop.GetMethod = @(varargin) self.getEditValue(uicontrols(ii));
+                    case 'popupmenu'
+                        disp(get(uicontrols(ii),'Tag'));
+                        prop.GetMethod = @(varargin) self.getPopupMenuValue(uicontrols(ii));
+                    otherwise
+                        prop.GetMethod = @(varargin) NaN;
+                end
+                
+                prop.SetAccess = 'protected';
+                prop.SetMethod = @(varargin) self.setUIControlValue();
+                
+                set(uicontrols(ii),'Callback','');
             end
         end
         
@@ -67,8 +75,14 @@ classdef mapalyzer < dynamicprops
 %             out = str2double(get(edit, 'String'));
         end
         
-        function setEditValue(~,varargin)
+        function setUIControlValue(~,varargin)
             error('ShepherdLab:mapalyzer:CantSetUIDependentPropery','You can not set a property whose value is dependent on a uicontrol');
+        end
+
+        function out = getPopupMenuValue(~,popupmenu)
+            str = get(popupmenu, 'String');
+            val = get(popupmenu, 'Value');
+            out = str{val};
         end
 
         function lstbxTraceType_Callback(hObject, eventdata, handles)
@@ -97,14 +111,7 @@ classdef mapalyzer < dynamicprops
                 end    
             end
         end
-
-        function popFilterType_Callback(hObject, eventdata, handles)
-            str = get(handles.popFilterType, 'String');
-            val = get(handles.popFilterType, 'Value');
-            handles.data.analysis.popFilterType = str{val};
-            guidata(hObject,handles);
-        end
-
+        
         function pbLoad_Callback(hObject, eventdata, handles)
             handles = loadSwitchyard(handles);
             guidata(hObject,handles);
@@ -183,12 +190,6 @@ classdef mapalyzer < dynamicprops
 
             % ============= EXCITATION PROFILE =================
         end
-        function eventPolarityAP_Callback(hObject, eventdata, handles)
-            str = get(handles.eventPolarityAP, 'String');
-            val = get(handles.eventPolarityAP, 'Value');
-            handles.data.analysis.eventPolarityAP = str{val};
-            guidata(hObject,handles);
-        end
 
         function analyzeEP_Callback(hObject, eventdata, handles)
             set(handles.figure1,'Pointer','Watch');
@@ -231,14 +232,7 @@ classdef mapalyzer < dynamicprops
                 guidata(hObject,handles);
             end
         end
-
-        function eventPolaritySyn_Callback(hObject, eventdata, handles)
-            str = get(handles.eventPolaritySyn, 'String');
-            val = get(handles.eventPolaritySyn, 'Value');
-            handles.data.analysis.eventPolaritySyn = str{val};
-            guidata(hObject,handles);
-        end
-
+        
         function synThreshold_Callback(hObject, eventdata, handles)
             handles.data.analysis.synThreshold = str2double(get(handles.synThreshold, 'String'));
             % update corresponding pA|mV value in text box
