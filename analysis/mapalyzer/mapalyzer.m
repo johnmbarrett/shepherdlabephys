@@ -54,11 +54,14 @@ classdef mapalyzer < dynamicprops
                 prop.GetAccess = 'public';
                 
                 switch get(uicontrols(ii),'Style')
+                    case 'checkbox'
+                        prop.GetMethod = @(varargin) self.getCheckboxValue(uicontrols(ii));
                     case 'edit'
                         prop.GetMethod = @(varargin) self.getEditValue(uicontrols(ii));
                     case 'popupmenu'
-                        disp(get(uicontrols(ii),'Tag'));
                         prop.GetMethod = @(varargin) self.getPopupMenuValue(uicontrols(ii));
+                    case 'listbox'
+                        disp(get(uicontrols(ii),'Tag'));
                     otherwise
                         prop.GetMethod = @(varargin) NaN;
                 end
@@ -68,6 +71,10 @@ classdef mapalyzer < dynamicprops
                 
                 set(uicontrols(ii),'Callback','');
             end
+        end
+        
+        function out = getCheckboxValue(~,checkbox)
+            out = get(checkbox,'Value');
         end
         
         function out = getEditValue(~,edit)
