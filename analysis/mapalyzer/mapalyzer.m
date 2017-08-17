@@ -1,4 +1,4 @@
-classdef mapalyzer < handle
+classdef mapalyzer < dynamicprops
     % MAPALYZER M-file for mapalyzer.fig
     %      MAPALYZER, by itself, creates a new MAPALYZER or raises the existing
     %      singleton*.
@@ -26,11 +26,17 @@ classdef mapalyzer < handle
 
     % Begin initialization code - DO NOT EDIT
     properties(Constant=true)
-        Figure = open([fileparts(which('mapalyzer')) '\mapalyzer.fig']);
+        FigurePath = [fileparts(which('mapalyzer')) '\mapalyzer.fig'];
+    end
+    
+    properties
+        Figure;
     end
     
     methods
         function self = mapalyzer(varargin)
+            self.Figure = open(mapalyzer.FigurePath); % TODO : figure out a neat way to do the singleton pattern
+            
             toBeRecoloured = findobj(self.Figure,'-regexp','Style','listbox|popupmenu|checkbox|edit');
             
             if ispc
@@ -40,6 +46,29 @@ classdef mapalyzer < handle
             end
             
             set(toBeRecoloured,'BackgroundColor',backgroundColour);
+            
+            edits = findobj(self.Figure,'Style','edit');
+            
+            for ii = 1:numel(edits)
+                prop = addprop(self,get(edits(ii),'Tag'));
+                
+                prop.Dependent = true;
+                prop.GetAccess = 'public';
+                prop.GetMethod = @(varargin) self.getEditValue(edits(ii));
+                prop.SetAccess = 'protected';
+                prop.SetMethod = @(varargin) self.setEditValue();
+                
+                set(edits(ii),'Callback','');
+            end
+        end
+        
+        function out = getEditValue(~,edit)
+            out = get(edit, 'String'); % TODO : is there a neat way of determining which ones should numeric and which should be text?
+%             out = str2double(get(edit, 'String'));
+        end
+        
+        function setEditValue(~,varargin)
+            error('ShepherdLab:mapalyzer:CantSetUIDependentPropery','You can not set a property whose value is dependent on a uicontrol');
         end
 
         function lstbxTraceType_Callback(hObject, eventdata, handles)
@@ -76,23 +105,6 @@ classdef mapalyzer < handle
             guidata(hObject,handles);
         end
 
-        function filterValue_Callback(hObject, eventdata, handles)
-            handles.data.analysis.filterValue = str2double(get(handles.filterValue, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function bsBaselineStart_Callback(hObject, eventdata, handles)
-            handles.data.analysis.bsBaselineStart = str2double(get(handles.bsBaselineStart, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function bsBaselineEnd_Callback(hObject, eventdata, handles)
-            handles.data.analysis.bsBaselineEnd = str2double(get(handles.bsBaselineEnd, 'String'));
-            guidata(hObject,handles);
-
-            % ---------------------------------------------------------
-        end
-
         function pbLoad_Callback(hObject, eventdata, handles)
             handles = loadSwitchyard(handles);
             guidata(hObject,handles);
@@ -109,101 +121,6 @@ classdef mapalyzer < handle
             handles = displayVideoImages(handles);
 
             % ================= INFO ===================================
-        end
-
-        function somaX_Callback(hObject, eventdata, handles)
-            handles.data.acq.somaX = str2double(get(handles.somaX, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function somaY_Callback(hObject, eventdata, handles)
-            handles.data.acq.somaY = str2double(get(handles.somaY, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function somaZ_Callback(hObject, eventdata, handles)
-            handles.data.acq.somaZ = str2double(get(handles.somaZ, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function cellType_Callback(hObject, eventdata, handles)
-            handles.data.analysis.cellType = get(handles.cellType, 'String');
-            guidata(hObject,handles);
-        end
-
-        function Vrest_Callback(hObject, eventdata, handles)
-            handles.data.analysis.Vrest = str2double(get(handles.Vrest, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function Vhold_Callback(hObject, eventdata, handles)
-            handles.data.analysis.Vhold = str2double(get(handles.Vhold, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function animalAge_Callback(hObject, eventdata, handles)
-            handles.data.analysis.animalAge = str2double(get(handles.animalAge, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function exptCondition_Callback(hObject, eventdata, handles)
-            handles.data.analysis.exptCondition = get(handles.exptCondition, 'String');
-            guidata(hObject,handles);
-        end
-
-        function notes_Callback(hObject, eventdata, handles)
-            handles.data.analysis.notes = get(handles.notes, 'String');
-            guidata(hObject,handles);
-        end
-
-        function fieldAName_Callback(hObject, eventdata, handles)
-            handles.data.analysis.fieldAName = get(handles.fieldAName, 'String');
-            guidata(hObject,handles);
-        end
-
-        function fieldAVal_Callback(hObject, eventdata, handles)
-            handles.data.analysis.fieldAVal = get(handles.fieldAVal, 'String');
-            guidata(hObject,handles);
-        end
-
-        function fieldBName_Callback(hObject, eventdata, handles)
-            handles.data.analysis.fieldBName = get(handles.fieldBName, 'String');
-            guidata(hObject,handles);
-        end
-
-        function fieldBVal_Callback(hObject, eventdata, handles)
-            handles.data.analysis.fieldBVal = get(handles.fieldBVal, 'String');
-            guidata(hObject,handles);
-        end
-
-        function fieldCName_Callback(hObject, eventdata, handles)
-            handles.data.analysis.fieldCName = get(handles.fieldCName, 'String');
-            guidata(hObject,handles);
-        end
-
-        function fieldCVal_Callback(hObject, eventdata, handles)
-            handles.data.analysis.fieldCVal = get(handles.fieldCVal, 'String');
-            guidata(hObject,handles);
-        end
-
-        function fieldDName_Callback(hObject, eventdata, handles)
-            handles.data.analysis.fieldDName = get(handles.fieldDName, 'String');
-            guidata(hObject,handles);
-        end
-
-        function fieldDVal_Callback(hObject, eventdata, handles)
-            handles.data.analysis.fieldDVal = get(handles.fieldDVal, 'String');
-            guidata(hObject,handles);
-        end
-
-        function fieldEName_Callback(hObject, eventdata, handles)
-            handles.data.analysis.fieldEName = get(handles.fieldEName, 'String');
-            guidata(hObject,handles);
-        end
-
-        function fieldEVal_Callback(hObject, eventdata, handles)
-            handles.data.analysis.fieldEVal = get(handles.fieldEVal, 'String');
-            guidata(hObject,handles);
         end
 
         function handles2ws_Callback(hObject, eventdata, handles)
@@ -225,41 +142,6 @@ classdef mapalyzer < handle
             % ================= CELL PARAMETERS ========================
         end
 
-        function rstepOn_Callback(hObject, eventdata, handles)
-            handles.data.analysis.rstepOn = str2double(get(handles.rstepOn, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function rstepDur_Callback(hObject, eventdata, handles)
-            handles.data.analysis.rstepDur = str2double(get(handles.rstepDur, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function rstepAmp_Callback(hObject, eventdata, handles)
-            handles.data.analysis.rstepAmp = str2double(get(handles.rstepAmp, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function rseriesAvg_Callback(hObject, eventdata, handles)
-            handles.data.map.mapAvg.rseriesAvg = str2double(get(hObject, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function cmembraneAvg_Callback(hObject, eventdata, handles)
-            handles.data.map.mapAvg.cmembraneAvg = str2double(get(hObject, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function rmembraneAvg_Callback(hObject, eventdata, handles)
-            handles.data.map.mapAvg.rmembraneAvg = str2double(get(hObject, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function tauAvg_Callback(hObject, eventdata, handles)
-            handles.data.map.mapAvg.tauAvg = str2double(get(hObject, 'String'));
-            guidata(hObject,handles);
-        end
-
         function pbCellParameters_Callback(hObject, eventdata, handles)
             set(handles.figure1,'Pointer','Watch');
             handles.data.analysis.skipCm = 0;
@@ -269,12 +151,7 @@ classdef mapalyzer < handle
             set(handles.figure1,'Pointer','Arrow');
         end
 
-        function RsSkipVal_Callback(hObject, eventdata, handles)
-            handles.data.analysis.RsSkipVal = str2double(get(handles.RsSkipVal, 'String'));
-            guidata(hObject,handles);
-
             % ============= MAP DISPLAY =================
-        end
 
         function arrayTracesAsInputMap_Callback(hObject, eventdata, handles)
             for m = 1 : handles.data.analysis.numberOfMaps
@@ -284,21 +161,6 @@ classdef mapalyzer < handle
                 eval([string ' = handles.data.map.mapActive;']);
             end
             arrayTracesOfMultipleMaps(handles);
-        end
-
-        function traceMapShowStart_Callback(hObject, eventdata, handles)
-            handles.data.analysis.traceMapShowStart = str2double(get(handles.traceMapShowStart, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function traceMapShowStop_Callback(hObject, eventdata, handles)
-            handles.data.analysis.traceMapShowStop = str2double(get(handles.traceMapShowStop, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function traceMapYFactor_Callback(hObject, eventdata, handles)
-            handles.data.analysis.traceMapYFactor = str2double(get(handles.traceMapYFactor, 'String'));
-            guidata(hObject,handles);
         end
 
         function pbTraceBrowser_Callback(hObject, eventdata, handles)
@@ -321,39 +183,6 @@ classdef mapalyzer < handle
 
             % ============= EXCITATION PROFILE =================
         end
-
-        function stimOnEP_Callback(hObject, eventdata, handles)
-            handles.data.analysis.stimOnEP = str2double(get(handles.stimOnEP, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function baselineStartEP_Callback(hObject, eventdata, handles)
-            handles.data.analysis.baselineStartEP = str2double(get(handles.baselineStartEP, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function baselineEndEP_Callback(hObject, eventdata, handles)
-            handles.data.analysis.baselineEndEP = str2double(get(handles.baselineEndEP, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function responseStartEP_Callback(hObject, eventdata, handles)
-            handles.data.analysis.responseStartEP = str2double(get(handles.responseStartEP, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function responseDurEP_Callback(hObject, eventdata, handles)
-            handles.data.analysis.responseDurEP = str2double(get(handles.responseDurEP, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function apThreshold_Callback(hObject, eventdata, handles)
-            handles.data.analysis.apThreshold = str2double(get(handles.apThreshold, 'String'));
-            guidata(hObject,handles);
-
-            a = handles.data.analysis.apThreshold;
-        end
-        
         function eventPolarityAP_Callback(hObject, eventdata, handles)
             str = get(handles.eventPolarityAP, 'String');
             val = get(handles.eventPolarityAP, 'Value');
@@ -391,31 +220,6 @@ classdef mapalyzer < handle
             % ============= SINGLE PATCH LSPS ANALYSIS =================
         end
 
-        function stimOn_Callback(hObject, eventdata, handles)
-            handles.data.analysis.stimOn = str2double(get(handles.stimOn, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function baselineStart_Callback(hObject, eventdata, handles)
-            handles.data.analysis.baselineStart = str2double(get(handles.baselineStart, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function directWindowStart_Callback(hObject, eventdata, handles)
-            handles.data.analysis.directWindowStart = str2double(get(handles.directWindowStart, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function baselineEnd_Callback(hObject, eventdata, handles)
-            handles.data.analysis.baselineEnd = str2double(get(handles.baselineEnd, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function directWindow_Callback(hObject, eventdata, handles)
-            handles.data.analysis.directWindow = str2double(get(handles.directWindow, 'String'));
-            guidata(hObject,handles);
-        end
-
         function synapticWindowStart_Callback(hObject, eventdata, handles)
             startVal = str2double(get(handles.synapticWindowStart, 'String'));
             endVal = str2double(get(handles.synapticWindow, 'String'));
@@ -428,30 +232,10 @@ classdef mapalyzer < handle
             end
         end
 
-        function synapticWindow_Callback(hObject, eventdata, handles)
-            handles.data.analysis.synapticWindow = str2double(get(handles.synapticWindow, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function fourthWindowStart_Callback(hObject, eventdata, handles)
-            handles.data.analysis.fourthWindowStart = str2double(get(handles.fourthWindowStart, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function fourthWindow_Callback(hObject, eventdata, handles)
-            handles.data.analysis.fourthWindow = str2double(get(handles.fourthWindow, 'String'));
-            guidata(hObject,handles);
-        end
-
         function eventPolaritySyn_Callback(hObject, eventdata, handles)
             str = get(handles.eventPolaritySyn, 'String');
             val = get(handles.eventPolaritySyn, 'Value');
             handles.data.analysis.eventPolaritySyn = str{val};
-            guidata(hObject,handles);
-        end
-
-        function synDuration_Callback(hObject, eventdata, handles)
-            handles.data.analysis.synDuration = str2double(get(handles.synDuration, 'String'));
             guidata(hObject,handles);
         end
 
@@ -481,11 +265,6 @@ classdef mapalyzer < handle
             % =============== MISCELLANEOUS ====================================
 
             % ============= GENERIC TRACE ANALYSIS =================
-        end
-
-        function stimOnGen_Callback(hObject, eventdata, handles)
-            handles.data.analysis.stimOnGen = str2double(get(handles.stimOnGen, 'String'));
-            guidata(hObject,handles);
         end
 
         function pbGenericBrowse_Callback(hObject, eventdata, handles)
@@ -544,21 +323,6 @@ classdef mapalyzer < handle
             % ========== Current-Frequency Analysis =================================
         end
 
-        function currentStepStart_Callback(hObject, eventdata, handles)
-            handles.data.analysis.currentStepStart = str2double(get(handles.currentStepStart, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function currentStepDuration_Callback(hObject, eventdata, handles)
-            handles.data.analysis.currentStepDuration = str2double(get(handles.currentStepDuration, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function spikeThreshold_Callback(hObject, eventdata, handles)
-            handles.data.analysis.spikeThreshold = str2double(get(handles.spikeThreshold, 'String'));
-            guidata(hObject,handles);
-        end
-
         function specifyWhichTraces_Callback(hObject, eventdata, handles)
             tracesToAnalyze = inputdlg('Enter Matlab-format vector of which traces to analyze. Example: [1:6]');
             if ~isempty(tracesToAnalyze)
@@ -587,16 +351,6 @@ classdef mapalyzer < handle
             handles = currentFrequencyAnalysis(handles);
             guidata(hObject, handles);
             % ====================================================================
-        end
-
-        function somaXnew_Callback(hObject, eventdata, handles)
-            handles.data.acq.somaXnew = str2double(get(handles.somaXnew, 'String'));
-            guidata(hObject,handles);
-        end
-
-        function somaYnew_Callback(hObject, eventdata, handles)
-            handles.data.acq.somaYnew = str2double(get(handles.somaYnew, 'String'));
-            guidata(hObject,handles);
         end
 
         function runUserFcn_Callback(hObject, eventdata, handles)
