@@ -71,6 +71,8 @@ classdef mapalyzer < dynamicprops
                 
                 set(uicontrols(ii),'Callback','');
             end
+            
+            set(findobj(self.Figure,'Tag','lstbxTraceType'),'Callback',@self.setLoadMethodFromTraceType);
         end
         
         function out = getCheckboxValue(~,checkbox)
@@ -92,31 +94,26 @@ classdef mapalyzer < dynamicprops
             error('ShepherdLab:mapalyzer:CantSetUIDependentPropery','You can not set a property whose value is dependent on a uicontrol');
         end
 
-        function lstbxTraceType_Callback(hObject, eventdata, handles)
-            str = get(hObject, 'String');
-            val = get(hObject, 'Value');
-            if strcmp(str{val}, 'excitation profile')
-                str = get(handles.lstbxSelectionType, 'String');
-                for n = 1:size(str,1)
-                    if findstr(str{n}, 'single map')
-                        set(handles.lstbxSelectionType, 'Value', n);
-                    end
-                end    
-            elseif strcmp(str{val}, 'general physiology traces')
-                str = get(handles.lstbxSelectionType, 'String');
-                for n = 1:size(str,1)
-                    if findstr(str{n}, 'selected traces')
-                        set(handles.lstbxSelectionType, 'Value', n);
-                    end
-                end    
-            elseif strcmp(str{val}, 'input map')
-                str = get(handles.lstbxSelectionType, 'String');
-                for n = 1:size(str,1)
-                    if findstr(str{n}, 'multiple maps, select manually')
-                        set(handles.lstbxSelectionType, 'Value', n);
-                    end
-                end    
+        function setLoadMethodFromTraceType(self,hObject,varargin)
+            traceType = get(hObject, 'String');
+            chosenTraceType = get(hObject, 'Value');
+            
+            switch traceType{chosenTraceType}
+                case 'excitation profile' 
+                    selectionType = 'single map';
+                case 'general physiology traces'
+                    selectionType = 'selected traces';
+                case 'input map'
+                    selectionType = 'multiple maps, select manually';
+                otherwise
+                    return  
             end
+            
+            selectionTypeListBox = findobj(self.Figure,'Tag','lstbxSelectionType');
+            
+            selectionTypes = get(selectionTypeListBox,'String');
+            
+            set(selectionTypeListBox,'Value',find(strcmpi(selectionType,selectionTypes)));
         end
         
         function pbLoad_Callback(hObject, eventdata, handles)
