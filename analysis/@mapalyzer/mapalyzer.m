@@ -31,11 +31,34 @@ classdef mapalyzer < dynamicprops
     
     properties % TODO : attributes
         Figure
-        avgLaserIntensity
+        avgLaserIntensity = []
         colorOrder
+        dataMfile
         defaultDataDir
         defaultDataMFileDir
+        imageXrange
+        imageYrange
+        % TODO : should these be promoted to full classes?
+        mapActive = struct( ...
+            'acquirerHeader',   [], ...
+            'baseName',         [], ...
+            'directory',        [], ...
+            'filenames',        [], ...
+            'headerGUI',        [], ...
+            'imagingSysHeader', [], ...
+            'laserIntensity',   [], ...
+            'numTraces',        [], ...
+            'physHeader',       [], ...
+            'scopeHeader',      [], ...
+            'traceNumber',      [], ...
+            'uncagingHeader',   [], ...
+            'uncagingPathName', []  ...
+            );
         mapAvg = struct('rseries',[],'rmembrane',[],'cmembrane',[],'synThreshpAmV',[],'baselineSD',[],'spontEventRate',[]);
+        mapNumbers
+        maps
+        patchChannel
+        sampleRate
     end
     
     methods
@@ -62,19 +85,22 @@ classdef mapalyzer < dynamicprops
                 
                 switch get(uicontrols(ii),'Style')
                     case 'checkbox'
-                        prop.GetMethod = @(varargin) self.getCheckboxValue(uicontrols(ii));
+                        prop.GetMethod = @() self.getCheckboxValue(uicontrols(ii));
+                        prop.SetMethod = @(v) self.setCheckboxValue(uicontrols(ii),v);
                     case 'edit'
-                        prop.GetMethod = @(varargin) self.getEditValue(uicontrols(ii));
+                        prop.GetMethod = @() self.getEditValue(uicontrols(ii));
+                        prop.SetMethod = @(v) self.setEditValue(uicontrols(ii),v);
                     case 'listbox'
-                        prop.GetMethod = @(varargin) self.getPopupMenuValue(uicontrols(ii));
+                        prop.GetMethod = @() self.getPopupMenuValue(uicontrols(ii));
+                        prop.SetMethod = @(v) self.setPopupMenuValue(uicontrols(ii),v);
                     case 'popupmenu'
-                        prop.GetMethod = @(varargin) self.getPopupMenuValue(uicontrols(ii));
+                        prop.GetMethod = @() self.getPopupMenuValue(uicontrols(ii));
+                        prop.SetMethod = @(v) self.setPopupMenuValue(uicontrols(ii),v);
                     otherwise
-                        prop.GetMethod = @(varargin) NaN;
+                        prop.GetMethod = @() NaN;
                 end
                 
                 prop.SetAccess = 'protected';
-                prop.SetMethod = @(varargin) self.setUIControlValue();
                 
                 set(uicontrols(ii),'Callback','');
             end
@@ -92,9 +118,30 @@ classdef mapalyzer < dynamicprops
             out = get(checkbox,'Value');
         end
         
+        function setCheckboxValue(~,checkbox,value)
+            set(checkbox,'Value',logical(value));
+        end
+        
         function out = getEditValue(~,edit)
-            out = get(edit, 'String'); % TODO : is there a neat way of determining which ones should numeric and which should be text?
-%             out = str2double(get(edit, 'String'));
+            str = get(edit,'String');
+            num = str2double(str);
+
+            % TODO : type safety
+            if isnan(num)
+                out = str;
+            else
+                out = num;
+            end
+        end
+        
+        function setEditValue(~,edit,value)
+            if ischar(value)
+                set(edit,'String',value);
+            elseif isnumeric(value)
+                set(edit,'String',num2str(value));
+            else
+                error('ShepherdLab:mapalyzer:setEditValue:InvalidValue','Edit box %s can only contain numeric or string values',get(edit,'Tag'));
+            end
         end
 
         function out = getPopupMenuValue(~,popupmenu)
@@ -109,8 +156,14 @@ classdef mapalyzer < dynamicprops
             out = str{val};
         end
         
-        function setUIControlValue(~,varargin)
-            error('ShepherdLab:mapalyzer:CantSetUIDependentPropery','You can not set a property whose value is dependent on a uicontrol');
+        function setPopupMenuValue(~,popupmenu,value)
+            if isnumeric(value)
+                set(popupmenu,'Value',value);
+            elseif ischar(value)
+                set(popupmenu,'Value',find(ismember(get(popupmenu,'String'),value)));
+            else
+                error('ShepherdLab:mapalyzer:setPopupMenuValue:InvalidValue','Menu or list %s can only contain numeric or string values',get(popupmenu,'Tag'));
+            end
         end
         
         function help(~,menuItem,varargin)
