@@ -6,13 +6,13 @@ function p = parseINIFile(file)
     while ~feof(fin)
         s = fgetl(fin);
         
-        tokens = regexp(s,'(^[a-zA-Z][a-zA-Z_]*)=([^#]*)','tokens'); % TODO : unicode?
+        tokens = regexp(s,'(^[a-zA-Z][a-zA-Z_]*)\s*=\s*([^#]*)','tokens'); % TODO : unicode?
         
         if isempty(tokens)
             continue
         end
         
-        value = tokens{1}{2};
+        value = strtrim(tokens{1}{2});
         
         number = str2num(value); %#ok<ST2NM> str2double can't distinguish between literal NaN and a string that can't be parsed as a number
         
