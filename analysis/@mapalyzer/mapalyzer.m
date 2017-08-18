@@ -55,7 +55,6 @@ classdef mapalyzer < dynamicprops
             'uncagingPathName', []  ...
             );
         mapAvg = struct('rseries',[],'rmembrane',[],'cmembrane',[],'synThreshpAmV',[],'baselineSD',[],'spontEventRate',[]);
-        mapNumbers
         maps
         patchChannel
         sampleRate
@@ -64,8 +63,6 @@ classdef mapalyzer < dynamicprops
     methods
         function self = mapalyzer(varargin)
             self.Figure = open(mapalyzer.FigurePath); % TODO : figure out a neat way to do the singleton pattern
-            
-            self.initializeAnalysisParameters();
             
             uicontrols = findobj(self.Figure,'Style','listbox','-or','Style','popupmenu','-or','Style','checkbox','-or','Style','edit');
             
@@ -85,25 +82,30 @@ classdef mapalyzer < dynamicprops
                 
                 switch get(uicontrols(ii),'Style')
                     case 'checkbox'
-                        prop.GetMethod = @() self.getCheckboxValue(uicontrols(ii));
-                        prop.SetMethod = @(v) self.setCheckboxValue(uicontrols(ii),v);
+                        prop.GetMethod = @(~) self.getCheckboxValue(uicontrols(ii));
+                        prop.SetMethod = @(~,v) self.setCheckboxValue(uicontrols(ii),v);
                     case 'edit'
-                        prop.GetMethod = @() self.getEditValue(uicontrols(ii));
-                        prop.SetMethod = @(v) self.setEditValue(uicontrols(ii),v);
+                        prop.GetMethod = @(~) self.getEditValue(uicontrols(ii));
+                        prop.SetMethod = @(~,v) self.setEditValue(uicontrols(ii),v);
                     case 'listbox'
-                        prop.GetMethod = @() self.getPopupMenuValue(uicontrols(ii));
-                        prop.SetMethod = @(v) self.setPopupMenuValue(uicontrols(ii),v);
+                        prop.GetMethod = @(~) self.getPopupMenuValue(uicontrols(ii));
+                        prop.SetMethod = @(~,v) self.setPopupMenuValue(uicontrols(ii),v);
                     case 'popupmenu'
-                        prop.GetMethod = @() self.getPopupMenuValue(uicontrols(ii));
-                        prop.SetMethod = @(v) self.setPopupMenuValue(uicontrols(ii),v);
+                        prop.GetMethod = @(~) s.getPopupMenuValue(uicontrols(ii));
+                        prop.SetMethod = @(~,v) self.setPopupMenuValue(uicontrols(ii),v);
                     otherwise
-                        prop.GetMethod = @() NaN;
+                        % TODO : make these throw an error or at least a
+                        % warning or something c'mon
+                        prop.GetMethod = @(varargin) NaN;
+                        prop.SetMethod = @(varargin) NaN;
                 end
                 
                 prop.SetAccess = 'protected';
                 
                 set(uicontrols(ii),'Callback','');
             end
+            
+            self.initializeAnalysisParameters();
             
             % TODO : can I alter the figure itself to have these always be
             % the default callbacks?

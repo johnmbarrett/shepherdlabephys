@@ -32,42 +32,6 @@ function initializeAnalysisParameters(self)
         field = fields{ii};
         value = params.(field);
         
-        uicontrol = findobj(self.Figure,'Tag',field);
-        
-        if ~isempty(uicontrol)
-            switch get(uicontrol,'Style')
-                case 'checkbox'
-                    set(uicontrol,'Value',logical(value));
-                case 'edit'
-                    if isnumeric(value)
-                        set(uicontrol,'String',num2str(value))
-                    elseif ischar(value)
-                        set(uicontrol,'String',value)
-                    else
-                        warning('ShepherdLab:mapalyzer:initializeAnalysisParameters:InvalidParameterValue','Invalid value for parameter %s\n',field);
-                    end
-                case {'listbox' 'popupmenu'}
-                    if isnumeric(value)
-                        set(uicontrol,'Value',value)
-                    elseif ischar(value)
-                        index = find(strcmpi(value,get(uicontrol,'String')));
-                        
-                        if isempty(index)
-                            warning('ShepherdLab:mapalyzer:initializeAnalysisParameters:InvalidParameterValue','Invalid value for parameter %s\n',field);
-                            continue
-                        end
-                        
-                        set(uicontrol,'Value',index);
-                    else
-                        warning('ShepherdLab:mapalyzer:initializeAnalysisParameters:InvalidParameterValue','Invalid value for parameter %s\n',field);
-                    end
-                otherwise
-                    warning('ShepherdLab:mapalyzer:initializeAnalysisParameters:UnknownParameter','Unknown parameter %s\n',field);
-            end
-            
-            continue
-        end
-        
         prop = findprop(self,field);
           
         if isempty(prop)
