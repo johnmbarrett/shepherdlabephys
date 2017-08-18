@@ -640,13 +640,7 @@ classdef BasicEphysAnalysisGUI < handle
             for ii = 1:size(self.TraceNames,2)
                 traceName = self.TraceNames{1,ii,1};
                 
-                if ~isempty(strfind(traceName,'.xsg'))
-                    regex = 'Trace (.+)\.xsg';
-                else
-                    regex = '(sweep [0-9]+)';
-                end
-                
-                sweepName = regexp(traceName,regex,'tokens');
+                sweepName = regexp(traceName,'(sweep [0-9]+)','tokens');
                 
                 uicontrol(fig,...
                     'Style',            'checkbox',                                     ...
@@ -654,7 +648,7 @@ classdef BasicEphysAnalysisGUI < handle
                     'Position',         [20 figureHeight-70-30*ii figureWidth-40 25],   ...
                     'String',           sweepName{1}{1},                                ...
                     'Tag',              sprintf('sweep%dcheckbox',ii),                  ...
-                    'Value',            ismember(self.TraceNames{1,ii,1},self.SelectedTraceNames)                                               ...
+                    'Value',            all(ismember(self.TraceNames(1,ii,:),self.SelectedTraceNames))                                               ...
                     );
             end
         end
