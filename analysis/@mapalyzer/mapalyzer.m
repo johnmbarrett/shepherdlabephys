@@ -36,13 +36,18 @@ classdef mapalyzer < dynamicprops
         dataMfile
         defaultDataDir
         defaultDataMFileDir
+        image = struct('img',[],'imgDir','','imgName','','info',[]);
         imageXrange
         imageYrange
+        isCurrentClamp
         % TODO : should these be promoted to full classes?
         mapActive = struct( ...
             'acquirerHeader',   [], ...
             'baseName',         [], ...
+            'bsArray',          [], ...
+            'dataArray',        [], ...
             'directory',        [], ...
+            'fArray',           [], ...
             'filenames',        [], ...
             'headerGUI',        [], ...
             'imagingSysHeader', [], ...
@@ -91,7 +96,7 @@ classdef mapalyzer < dynamicprops
                         prop.GetMethod = @(~) self.getPopupMenuValue(uicontrols(ii));
                         prop.SetMethod = @(~,v) self.setPopupMenuValue(uicontrols(ii),v);
                     case 'popupmenu'
-                        prop.GetMethod = @(~) s.getPopupMenuValue(uicontrols(ii));
+                        prop.GetMethod = @(~) self.getPopupMenuValue(uicontrols(ii));
                         prop.SetMethod = @(~,v) self.setPopupMenuValue(uicontrols(ii),v);
                     otherwise
                         % TODO : make these throw an error or at least a
@@ -116,6 +121,8 @@ classdef mapalyzer < dynamicprops
             set(get(findobj(self.Figure,'Tag','Help'),'Children'),'Callback',@self.help);
         end
         
+        addMenu4DistanceMeasure(self,imgFigHandle)
+        
         function out = getCheckboxValue(~,checkbox)
             out = get(checkbox,'Value');
         end
@@ -124,12 +131,27 @@ classdef mapalyzer < dynamicprops
             set(checkbox,'Value',logical(value));
         end
         
-        function out = getEditValue(~,edit)
+        function out = getEditValue(~,edit) % TODO : type safety
             str = get(edit,'String');
-            num = str2double(str);
-
-            % TODO : type safety
-            if isnan(num)
+            
+            if isempty(str)
+                % until I can figure out a clean (or at least low-effort)
+                % way to implement type safety, this is a compromise.  In
+                % general, we can work out what type the edit box is
+                % supposed to be by what is currently in it/what we're
+                % trying to set it to.  The edge case is the empty string,
+                % which could be an empty char array or an empty numeric
+                % array.  Assuming numeric on the get side allows us to
+                % cleanly handle cases like self.X(end+1) = Y, which is
+                % common for numeric data but unlikely to happen for
+                % strings.
+                out = [];
+                return
+            end
+            
+            num = str2double(strsplit(str,','));
+            
+            if any(isnan(num))
                 out = str;
             else
                 out = num;
@@ -140,7 +162,7 @@ classdef mapalyzer < dynamicprops
             if ischar(value)
                 set(edit,'String',value);
             elseif isnumeric(value)
-                set(edit,'String',num2str(value));
+                set(edit,'String',strjoin(arrayfun(@num2str,value(:)','UniformOutput',false),','));
             else
                 error('ShepherdLab:mapalyzer:setEditValue:InvalidValue','Edit box %s can only contain numeric or string values',get(edit,'Tag'));
             end
