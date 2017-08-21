@@ -1,4 +1,4 @@
-function chooseImageFile(self)
+function chooseImageFile(self,varargin)
 % chooseImageFile
 %
 % See also addSliceImage
@@ -12,6 +12,10 @@ function chooseImageFile(self)
 % ---------------------------------------------------------------
 
     dir = self.mapActive.uncagingPathName;
+    
+    if isempty(dir)
+        dir = pwd;
+    end
     
     dirs = strsplit(dir, {'\' '/'});
     dirs = dirs(~cellfun(@isempty,dirs));

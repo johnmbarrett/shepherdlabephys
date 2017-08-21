@@ -117,6 +117,7 @@ classdef mapalyzer < dynamicprops
             set(findobj(self.Figure,'Tag','lstbxTraceType'),'Callback',@self.setLoadMethodFromTraceType);
             set(findobj(self.Figure,'Tag','handles2ws'),'Callback',@self.assignDataInWorkspace)
             set(findobj(self.Figure,'Tag','pbLoad'),'Callback',@self.loadSwitchyard);
+            set(findobj(self.Figure,'Tag','selectVideoImage'),'Callback',@self.chooseImageFile);
             
             set(get(findobj(self.Figure,'Tag','Help'),'Children'),'Callback',@self.help);
         end
@@ -226,13 +227,6 @@ classdef mapalyzer < dynamicprops
             selectionTypes = get(selectionTypeListBox,'String');
             
             set(selectionTypeListBox,'Value',find(strcmpi(selectionType,selectionTypes)));
-        end
-        
-        % ================= VIDEO IMAGES ===================================
-
-        function selectVideoImage_Callback(hObject, eventdata, handles)
-            handles = chooseImageFile(handles);
-            guidata(hObject,handles);
         end
 
         function displayVideoimages_Callback(hObject, eventdata, handles)
