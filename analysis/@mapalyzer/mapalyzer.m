@@ -129,6 +129,7 @@ classdef mapalyzer < dynamicprops
             set(findobj(self.Figure,'Tag','displayVideoimages'),'Callback',@self.displayVideoImages);
             set(findobj(self.Figure,'Tag','createDataMFile'),'Callback',@(varargin) errordlg('I can''t let you do that, Dave...'));
             set(findobj(self.Figure,'Tag','pbCellParameters'),'Callback',@self.pbCellParameters_Callback);
+            set(findobj(self.Figure,'Tag','showAutoNotes'),'Callback',@self.showAutoNotes);
             
             set(get(findobj(self.Figure,'Tag','Help'),'Children'),'Callback',@self.help);
             
@@ -429,15 +430,6 @@ classdef mapalyzer < dynamicprops
                 pname = '';
             end
             qvTrace('init', pname);
-        end
-
-        function showAutoNotes_Callback(hObject, eventdata, handles)
-            % hObject    handle to showAutoNotes (see GCBO)
-            % eventdata  reserved - to be defined in a future version of MATLAB
-            % handles    structure with handles and user data (see GUIDATA)
-            showAutoNotesForCurrentExpt(handles);
-
-            % --- Executes on selection change in headerGUIlistbox.
         end
     end
 end
