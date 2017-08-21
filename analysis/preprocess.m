@@ -112,7 +112,7 @@ function [filteredAverageTrace,averageFilteredTrace,filteredTraces,averageTrace,
             preFilterLength = parser.Results.PreFilterLength;
         end
     
-        filteredTraces = colfilt(baselineSubtractedTraces,[preFilterLength,1],'sliding',preFilterFun);
+        filteredTraces = pagefun(@colfilt,baselineSubtractedTraces,[1 2],[preFilterLength 1],'sliding',preFilterFun);
     else
         filteredTraces = baselineSubtractedTraces;
     end
@@ -134,7 +134,7 @@ function [filteredAverageTrace,averageFilteredTrace,filteredTraces,averageTrace,
         
         % Median filter average trace
         % TODO : do we always want colfilt here?
-        filteredAverageTrace = colfilt(averageTrace,[postFilterLength,1],'sliding',postFilterFun);
+        filteredAverageTrace = pagefun(@colfilt,averageTrace,[1 2],[postFilterLength 1],'sliding',postFilterFun);
     else
         filteredAverageTrace = averageTrace;
     end
