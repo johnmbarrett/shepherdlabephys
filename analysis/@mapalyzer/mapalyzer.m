@@ -119,6 +119,7 @@ classdef mapalyzer < dynamicprops
             set(findobj(self.Figure,'Tag','pbLoad'),'Callback',@self.loadSwitchyard);
             set(findobj(self.Figure,'Tag','selectVideoImage'),'Callback',@self.chooseImageFile);
             set(findobj(self.Figure,'Tag','displayVideoimages'),'Callback',@self.displayVideoImages);
+            set(findobj(self.Figure,'Tag','createDataMFile'),'Callback',@(varargin) errordlg('I can''t let you do that, Dave...'));
             
             set(get(findobj(self.Figure,'Tag','Help'),'Children'),'Callback',@self.help);
         end
@@ -243,21 +244,9 @@ classdef mapalyzer < dynamicprops
             
             assignin('base', 'handles', handles);
             disp('Handles variable created in workspace (or overwritten).');
-
-            % ============= DATA M FILE =================
         end
 
-        function createDataMFile_Callback(hObject, eventdata, handles)
-            createDataMFile(handles);
-
-            % function evalMfile_Callback(hObject, eventdata, handles)
-            % evalin('base', ['currentDataMfile = ' handles.data.analysis.experimentName]);
-            % % disp('Evaluated in workspace as ''currentDataMfile'' (contents displayed above).');
-            % % disp(' ');
-            % get weird error using this -- unable to find file
-
-            % ================= CELL PARAMETERS ========================
-        end
+        % ================= CELL PARAMETERS ========================
 
         function pbCellParameters_Callback(hObject, eventdata, handles)
             set(handles.figure1,'Pointer','Watch');
@@ -268,7 +257,7 @@ classdef mapalyzer < dynamicprops
             set(handles.figure1,'Pointer','Arrow');
         end
 
-            % ============= MAP DISPLAY =================
+        % ============= MAP DISPLAY =================
 
         function arrayTracesAsInputMap_Callback(hObject, eventdata, handles)
             for m = 1 : handles.data.analysis.numberOfMaps
