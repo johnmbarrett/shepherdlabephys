@@ -79,6 +79,7 @@ function loadTraces(self, mode)
                 'Select any trace.'); % TODO : explicit trace selection instead of assuming we want all in the folder?
             
             if isnumeric(filename)
+                self.numberOfMaps = 0;
                 return
             end
         elseif mode == 3
@@ -181,7 +182,7 @@ function loadTraces(self, mode)
                     [data,self.sampleRate] = concatenateEphusTraces(fname,[],self.aiTraceNum,'Program',self.aiProgram);
 
                     % TODO : can probably do better than this?
-                    if isempty(self.mapActive.dataArray)
+                    if jj == 1
                         self.mapActive.dataArray = data;
                     else
                         self.mapActive.dataArray(:,(end+1):(end+size(data,2))) = data;
