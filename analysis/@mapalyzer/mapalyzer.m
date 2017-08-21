@@ -40,11 +40,16 @@ classdef mapalyzer < dynamicprops
         imageXrange
         imageYrange
         isCurrentClamp
-        % TODO : should these be promoted to full classes?
+        % TODO : should these be promoted to full classes? also, the
+        % mapActive/maps interaction is extremely dirty at the moment. a
+        % better pattern would be to have all the data in the maps array
+        % and just have mapActive be an index. making them handle classes
+        % might also do the job.
         mapActive = struct( ...
             'acquirerHeader',   [], ...
             'baseName',         [], ...
             'bsArray',          [], ...
+            'cmembrane',        [], ...
             'dataArray',        [], ...
             'directory',        [], ...
             'fArray',           [], ...
@@ -54,12 +59,15 @@ classdef mapalyzer < dynamicprops
             'laserIntensity',   [], ...
             'numTraces',        [], ...
             'physHeader',       [], ...
+            'rmembrane',        [], ...
+            'rseries',          [], ...
             'scopeHeader',      [], ...
+            'tau',              [], ...
             'traceNumber',      [], ...
             'uncagingHeader',   [], ...
             'uncagingPathName', []  ...
             );
-        mapAvg = struct('rseries',[],'rmembrane',[],'cmembrane',[],'synThreshpAmV',[],'baselineSD',[],'spontEventRate',[]);
+        mapAvg = struct('baselineSD',[],'cmembrane',[],'rmembrane',[],'rseries',[],'spontEventRate',[],'synThreshpAmV',[],'tau',[]);
         maps
         patchChannel
         sampleRate
@@ -120,8 +128,11 @@ classdef mapalyzer < dynamicprops
             set(findobj(self.Figure,'Tag','selectVideoImage'),'Callback',@self.chooseImageFile);
             set(findobj(self.Figure,'Tag','displayVideoimages'),'Callback',@self.displayVideoImages);
             set(findobj(self.Figure,'Tag','createDataMFile'),'Callback',@(varargin) errordlg('I can''t let you do that, Dave...'));
+            set(findobj(self.Figure,'Tag','pbCellParameters'),'Callback',@self.pbCellParameters_Callback);
             
             set(get(findobj(self.Figure,'Tag','Help'),'Children'),'Callback',@self.help);
+            
+            set(get(self.Figure,'Children'),'Visible','on');
         end
         
         addMenu4DistanceMeasure(self,imgFigHandle)
@@ -248,13 +259,11 @@ classdef mapalyzer < dynamicprops
 
         % ================= CELL PARAMETERS ========================
 
-        function pbCellParameters_Callback(hObject, eventdata, handles)
-            set(handles.figure1,'Pointer','Watch');
-            handles.data.analysis.skipCm = 0;
-            handles = calcCellParameters(handles);
-            plotCellParameters(handles);
-            guidata(hObject,handles);
-            set(handles.figure1,'Pointer','Arrow');
+        function pbCellParameters_Callback(self,varargin)
+            set(self.Figure,'Pointer','Watch');
+            self.calcCellParameters();
+            self.plotCellParameters();
+            set(self.Figure,'Pointer','Arrow');
         end
 
         % ============= MAP DISPLAY =================
