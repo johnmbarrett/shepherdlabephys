@@ -37,6 +37,7 @@ function loadTraces(self, mode)
             numberOfMaps = inputdlg('How many maps to analyze? ');
 
             if isempty(numberOfMaps)
+                self.numberOfMaps = 0;
                 return
             end
 

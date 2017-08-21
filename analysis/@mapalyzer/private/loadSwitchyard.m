@@ -23,6 +23,11 @@ function loadSwitchyard(self,varargin)
     mode = get(findobj(self.Figure,'Tag','lstbxSelectionType'),'Value')-1; % TODO : check -1
 
     self.loadTraces(mode);
+    
+    if isempty(self.numberOfMaps) || self.numberOfMaps == 0
+        close(hWaitBar);
+        return
+    end
 
     waitbar(0.8, hWaitBar, 'Filtering and Baseline-subtracting ...');
 
