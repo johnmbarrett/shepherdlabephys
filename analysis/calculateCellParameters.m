@@ -24,6 +24,19 @@ function [Rs,Ri,tau,Cm,steadyState] = calculateCellParameters(data,voltageStep,s
 %                           state response in seconds.  Default is 0.
 %      'AverageFun'         Function handle to the function used for
 %                           averaging traces.  Default is @mean.
+%      'TauMethod'          Method for calculating the membrane decay
+%                           constant tau.  Options are:-
+%
+%                           * 'direct'  Find the first point at which the
+%                                       response drops below 1/e of the
+%                                       peak response above baseline.
+%                           * 'fit'     Fit an exponential decay function
+%                                       to the response and extract tau as
+%                                       the rate parameter.
+%
+%                           The direct method is faster but the fit method
+%                           may be more robust to noise.  Default is
+%                           'direct'.
 
 %   Written by John Barrett 2017-08-16 11:45 CDT
 %   Last updated John Barrett 2017-08-16 13:36 CDT
@@ -38,10 +51,11 @@ function [Rs,Ri,tau,Cm,steadyState] = calculateCellParameters(data,voltageStep,s
     addParameter(parser,'SteadyStateStart',-0.02,isRealFiniteNumericScalar);
     addParameter(parser,'SteadyStateLength',0.02,isRealFiniteNumericScalar);
     addParameter(parser,'AverageFun',@mean,@(x) isa(x,'function_handle'));
+    addParameter(parser,'TauMethod','direct',@(x) ismember(x,{'direct' 'fit'}));
     parser.parse(varargin{:});
 
     N = size(data,1);
-    time = (0:N-1)/sampleRate;
+    time = (0:N-1)'/sampleRate;
     
     [responseStartIndex,responseEndIndex] = getWindowIndices(parser.Results.ResponseStart,parser.Results.ResponseLength,sampleRate,N);
 
@@ -68,7 +82,17 @@ function [Rs,Ri,tau,Cm,steadyState] = calculateCellParameters(data,voltageStep,s
             compare = @le;
         end
         
-        tau(ii) = time(find(compare(steadyStateSubtractedData(peakIndex(ii):end,ii),(peakResponse(ii)-steadyState(ii))/exp(1)),1));
+        decayIndices = peakIndex(ii):responseEndIndex;
+        decayTime = time(decayIndices)-time(decayIndices(1));
+        responseAmplitude = (peakResponse(ii)-steadyState(ii));
+        
+        switch parser.Results.TauMethod
+            case 'direct'
+                tau(ii) = decayTime(find(compare(steadyStateSubtractedData(decayIndices,ii),responseAmplitude/exp(1)),1));
+            case 'fit'
+                expfit = fit(decayTime,steadyStateSubtractedData(decayIndices,ii),@(a,b,x) a*exp(-x/b),'StartPoint',[responseAmplitude 1]);
+                tau(ii) = expfit.b;
+        end 
     end
     
     Cm = (Rs + Ri) .* tau ./ (Rs .* Ri); % TOhm*s/(TOhm^2) = pF
