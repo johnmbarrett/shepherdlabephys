@@ -9,8 +9,6 @@ function loadSwitchyard(self,varargin)
 
     traceType = self.lstbxTraceType;
 
-    isLoaded = false;
-
     switch traceType
         case 'general physiology traces'
         case 'excitation profile'
@@ -18,17 +16,13 @@ function loadSwitchyard(self,varargin)
         case 'input map'
             self.traceMapYFactor = 100;
         case 'ephys traces'
-            self.loadSetOfTracesNewEphys();
-            isLoaded = true;
         otherwise
             error('ShepherdLab:mapalyzer:loadSwitchyard:UnknownTraceType','Unrecognized trace type %s\m',traceType); % or load method');
     end
 
-    if ~isLoaded
-        mode = get(findobj(self.Figure,'Tag','lstbxSelectionType'),'Value')-1; % TODO : check -1
+    mode = get(findobj(self.Figure,'Tag','lstbxSelectionType'),'Value')-1; % TODO : check -1
 
-        self.loadTraces(mode);
-    end
+    self.loadTraces(mode);
 
     waitbar(0.8, hWaitBar, 'Filtering and Baseline-subtracting ...');
 
