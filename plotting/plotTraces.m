@@ -1,4 +1,4 @@
-function ax = plotTraces(ax,data,sampleRate,varargin)
+function [ax,traceHandles,peakHandles,stimHandles] = plotTraces(ax,data,sampleRate,varargin)
 %PLOTTRACES Plot electrophysiology traces
 %   PLOTPARAMS(DATA,SAMPLERATE) plots the electrophysiology traces in the
 %   matrix DATA (one per column, sampled at SAMPLERATE).
@@ -69,9 +69,9 @@ function ax = plotTraces(ax,data,sampleRate,varargin)
     
     time = (1:size(data,1))/sampleRate;
     
-    plot(ax,time,data);
+    traceHandles = plot(ax,time,data);
     
-    plot(ax,(parser.Results.StimStart(:)*[1 1])',repmat(ylim',1,numel(parser.Results.StimStart)),'Color','k','LineStyle','-.'); % TODO : override these plot options?
+    stimHandles = plot(ax,(parser.Results.StimStart(:)*[1 1])',repmat(ylim',1,numel(parser.Results.StimStart)),'Color','k','LineStyle','-.'); % TODO : override these plot options?
     
     if all(isnan(parser.Results.Peaks(:)))
         hold(ax,'off');
@@ -87,7 +87,7 @@ function ax = plotTraces(ax,data,sampleRate,varargin)
     
     assert(numel(peaks) == numel(peakIndices),'ShepherdLab:plotTraces:PeaksPeakIndicesMismatch','The must be one PeakIndex for every peak');
     
-    plot(peakIndices(:)/sampleRate,peaks(:),'Color','k','LineStyle','none','Marker','o','MarkerSize',10);
+    peakHandles = plot(peakIndices(:)/sampleRate,peaks(:),'Color','k','LineStyle','none','Marker','o','MarkerSize',10);
     
     hold(ax,'off');
 end
