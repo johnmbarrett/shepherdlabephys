@@ -26,7 +26,7 @@ classdef mapalyzer < dynamicprops
 
     % Begin initialization code - DO NOT EDIT
     properties(Constant=true)
-        FigurePath = [fileparts(which('mapalyzer')) '\mapalyzer.fig'];
+        FigurePath = [fileparts(which('mapAnalysis.mapalyzer')) '\mapalyzer.fig'];
     end
     
     properties % TODO : attributes
@@ -71,12 +71,12 @@ classdef mapalyzer < dynamicprops
         maps
         patchChannel
         sampleRate
-        traceBrowser = struct('Axis1',[],'Figure',[],'StimHandles',[],'TraceHandles',[]);
+        traceBrowsers
     end
     
     methods
         function self = mapalyzer(varargin)
-            self.Figure = open(mapalyzer.FigurePath); % TODO : figure out a neat way to do the singleton pattern
+            self.Figure = open(mapAnalysis.mapalyzer.FigurePath); % TODO : figure out a neat way to do the singleton pattern
             
             uicontrols = findobj(self.Figure,'Style','listbox','-or','Style','popupmenu','-or','Style','checkbox','-or','Style','edit');
             
@@ -88,6 +88,13 @@ classdef mapalyzer < dynamicprops
             
             set(uicontrols,'BackgroundColor',backgroundColour);
             
+            % TODO : the way information is stored in this class is
+            % back-asswards.  a lot of the information in the uicontrols is
+            % actually specific to the current map and should be stored
+            % there (also maps should definitely be a class in their own
+            % right), with the uicontrols just reflecting what's in the
+            % current map.  also, an event-driven model would make this
+            % much easier.
             for ii = 1:numel(uicontrols)
                 prop = addprop(self,get(uicontrols(ii),'Tag'));
                 
@@ -129,8 +136,9 @@ classdef mapalyzer < dynamicprops
             set(findobj(self.Figure,'Tag','selectVideoImage'),'Callback',@self.chooseImageFile);
             set(findobj(self.Figure,'Tag','displayVideoimages'),'Callback',@self.displayVideoImages);
             set(findobj(self.Figure,'Tag','createDataMFile'),'Callback',@(varargin) errordlg('I can''t let you do that, Dave...'));
-            set(findobj(self.Figure,'Tag','pbCellParameters'),'Callback',@self.pbCellParameters_Callback);
+            set(findobj(self.Figure,'Tag','pbCellParameters'),'Callback',@self.pbCellParameters_Callback); % TODO : rename this and other _Callback methods
             set(findobj(self.Figure,'Tag','showAutoNotes'),'Callback',@self.showAutoNotes);
+            set(findobj(self.Figure,'Tag','pbTraceBrowser'),'Callback',@self.pbTraceBrowser_Callback);
             
             set(get(findobj(self.Figure,'Tag','Help'),'Children'),'Callback',@self.help);
             
@@ -280,26 +288,26 @@ classdef mapalyzer < dynamicprops
             arrayTracesOfMultipleMaps(handles);
         end
 
-        function pbTraceBrowser_Callback(hObject, eventdata, handles)
-            % traceBrowser(handles);
-            for m = 1 : handles.data.analysis.numberOfMaps
-                string = (['handles.data.map.map' num2str(m)]);
-                eval(['handles.data.map.mapActive = ' string ';']);
-                traceBrowser(handles);
-            %     eval([string ' = handles.data.map.mapActive;']); % TODO: get rid of this line?
+        function pbTraceBrowser_Callback(self,varargin)
+            theMaps = self.maps; % TODO : [self.maps self.traceAvg];
+            
+            for ii = 1:self.numberOfMaps % TODO: +1
+                % TODO : factory method?  pseudo-singleton pattern?
+                if numel(self.traceBrowsers) < ii || ~isa(self.traceBrowsers(ii),'mapAnalysis.traceBrowser')
+                    traceBrowser = mapAnalysis.traceBrowser(theMaps(ii),self);
+                    
+                    if isempty(self.traceBrowsers)
+                        self.traceBrowsers = traceBrowser;
+                    else
+                        self.traceBrowsers(ii) = traceBrowser;
+                    end
+                else
+                    self.traceBrowsers(ii).raiseFigure();
+                end
             end
-            % TODO: multi-map traceBrowser
-            % traceBrowserOfMultipleMaps(handles);
-            try
-                handles.data.map.mapActive = handles.data.map.traceAvg;
-            %     h = handles.data.map.mapActive.baseName
-                traceBrowser(handles);
-            catch
-            %     disp('mapAnalysis3p4: no trace-averaged data found for display; skipping');
-            end
-
-            % ============= EXCITATION PROFILE =================
         end
+        
+        % ============= EXCITATION PROFILE =================
 
         function analyzeEP_Callback(hObject, eventdata, handles)
             set(handles.figure1,'Pointer','Watch');

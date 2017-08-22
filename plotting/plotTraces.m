@@ -44,9 +44,9 @@ function [ax,traceHandles,peakHandles,stimHandles] = plotTraces(ax,data,sampleRa
     % TODO : Peaks and PeakIndices could really be any points of interest,
     % and maybe StimStart can just be abcissa?  can we factor out common
     % code between this and plotParams
-    addParameter(parser,'Peaks',NaN,@(x) validateattributes(x,{'numeric'},{'real finite vector'}));
-    addParameter(parser,'PeakIndices',NaN,@(x) validateattributes(x,{'numeric'},{'real finite positive integer vector'}));
-    addParameter(parser,'StimStart',NaN,@(x) validateattributes(x,{'numeric'},{'real finite scalar'}));
+    addParameter(parser,'Peaks',NaN,@(x) validateattributes(x,{'numeric'},{'real' 'finite' 'vector'}));
+    addParameter(parser,'PeakIndices',NaN,@(x) validateattributes(x,{'numeric'},{'real' 'finite' 'positive' 'integer' 'vector'}));
+    addParameter(parser,'StimStart',NaN,@(x) validateattributes(x,{'numeric'},{'real' 'finite' 'scalar'}));
     addParameter(parser,'RecordingMode','VC',@(x) ismember(x,{'VC' 'IC'}));
     addParameter(parser,'Title','',@ischar);
     parser.parse(varargin{:});
@@ -71,10 +71,11 @@ function [ax,traceHandles,peakHandles,stimHandles] = plotTraces(ax,data,sampleRa
     
     traceHandles = plot(ax,time,data);
     
-    stimHandles = plot(ax,(parser.Results.StimStart(:)*[1 1])',repmat(ylim',1,numel(parser.Results.StimStart)),'Color','k','LineStyle','-.'); % TODO : override these plot options?
+    stimHandles = plot(ax,(parser.Results.StimStart(:)*[1 1])',repmat(ylim(ax)',1,numel(parser.Results.StimStart)),'Color','k','LineStyle','-.'); % TODO : override these plot options?
     
     if all(isnan(parser.Results.Peaks(:)))
         hold(ax,'off');
+        peakHandles = [];
         return
     end
     

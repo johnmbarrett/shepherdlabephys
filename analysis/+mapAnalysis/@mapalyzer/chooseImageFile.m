@@ -1,4 +1,4 @@
-function chooseImageFile(self,varargin)
+function chooseImageFile(self,noPlot,varargin)
 % chooseImageFile
 %
 % See also addSliceImage
@@ -37,6 +37,10 @@ function chooseImageFile(self,varargin)
     self.image.imgName = name;
     self.image.img = R;
     self.image.info = imfinfo(fullname);
+    
+    if nargin > 1 && islogical(noPlot) && all(noPlot(:))
+        return
+    end
 
     fig = figure('Color', 'w');
     colormap(gray(256));
