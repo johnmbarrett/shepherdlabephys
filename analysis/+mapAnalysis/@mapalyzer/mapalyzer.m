@@ -139,6 +139,7 @@ classdef mapalyzer < dynamicprops
             set(findobj(self.Figure,'Tag','pbCellParameters'),'Callback',@self.pbCellParameters_Callback); % TODO : rename this and other _Callback methods
             set(findobj(self.Figure,'Tag','showAutoNotes'),'Callback',@self.showAutoNotes);
             set(findobj(self.Figure,'Tag','pbTraceBrowser'),'Callback',@self.pbTraceBrowser_Callback);
+            set(findobj(self.Figure,'Tag','arrayTracesAsInputMap'),'Callback',@self.arrayTracesAsInputMap_Callback);
             
             set(get(findobj(self.Figure,'Tag','Help'),'Children'),'Callback',@self.help);
             
@@ -278,14 +279,12 @@ classdef mapalyzer < dynamicprops
 
         % ============= MAP DISPLAY =================
 
-        function arrayTracesAsInputMap_Callback(hObject, eventdata, handles)
-            for m = 1 : handles.data.analysis.numberOfMaps
-                string = (['handles.data.map.map' num2str(m)]);
-                eval(['handles.data.map.mapActive = ' string ';']);
-                handles = arrayTracesAsInputMap(handles);
-                eval([string ' = handles.data.map.mapActive;']);
+        function arrayTracesAsInputMap_Callback(self,varargin)
+            for ii = 1:self.numberOfMaps
+                self.plotTracesAsInputMap(self.maps(ii),ii);
             end
-            arrayTracesOfMultipleMaps(handles);
+            
+            self.plotTracesAsInputMap(self.maps);
         end
 
         function pbTraceBrowser_Callback(self,varargin)
