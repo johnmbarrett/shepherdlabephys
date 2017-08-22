@@ -71,6 +71,7 @@ classdef mapalyzer < dynamicprops
         maps
         patchChannel
         sampleRate
+        traceBrowser = struct('Axis1',[],'Figure',[],'StimHandles',[],'TraceHandles',[]);
     end
     
     methods
