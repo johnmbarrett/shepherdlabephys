@@ -290,7 +290,7 @@ classdef mapalyzer < dynamicprops
         function pbTraceBrowser_Callback(self,varargin)
             theMaps = self.maps; % TODO : [self.maps self.traceAvg];
             
-            for ii = 1:self.numberOfMaps % TODO: +1
+            for ii = 1:numel(self.maps) % TODO: +1
                 % TODO : factory method?  pseudo-singleton pattern?
                 if numel(self.traceBrowsers) < ii || ~isa(self.traceBrowsers(ii),'mapAnalysis.traceBrowser')
                     traceBrowser = mapAnalysis.traceBrowser(theMaps(ii),self);
@@ -301,6 +301,7 @@ classdef mapalyzer < dynamicprops
                         self.traceBrowsers(ii) = traceBrowser;
                     end
                 else
+                    self.traceBrowsers(ii).Map = theMaps(ii);
                     self.traceBrowsers(ii).raiseFigure();
                 end
             end

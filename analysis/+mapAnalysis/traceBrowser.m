@@ -12,12 +12,13 @@ classdef traceBrowser < handle
 % -------------------------------------------------------------
     properties(Dependent=true)
         CurrentTrace
+        Map
     end
     
     properties(Access=protected)
         MagFactorX
         MagFactorY
-        Map
+        Map_
         Parent
     end
     
@@ -79,12 +80,7 @@ classdef traceBrowser < handle
             set(self.SliceAxis, 'Position', [0.65    0.15    0.3    0.75]);
             title('Click on axes to upload an image');
             
-            if ~isempty(self.Map.bsArray)
-                % TODO : update on changing the active map as well
-                self.plotTrace(1);
-                self.plotMap();
-                self.plotSlice();
-            end
+            self.updatePlots();
         end
     end
 
@@ -97,6 +93,12 @@ classdef traceBrowser < handle
             self.Parent = parent;
             self.createFigure();
         end
+        
+        function delete(self)
+            if isa(self.Figure,'handle') && isvalid(self.Figure)
+                delete(self.Figure);
+            end
+        end  
            
         function fig = raiseFigure(self)
             if ~isa(self.Figure,'handle') || ~isvalid(self.Figure)
@@ -115,6 +117,25 @@ classdef traceBrowser < handle
         function set.CurrentTrace(self,value)
             % TODO : bounds checking, also should this update the display?
             set(self.TraceSlider,'Value',value);
+        end
+        
+        function map = get.Map(self)
+            map = self.Map_;
+        end
+        
+        function set.Map(self,map)
+            % TODO : validation
+            self.Map_ = map;
+            
+            self.updatePlots();
+        end
+        
+        function updatePlots(self)
+            if ~isempty(self.Map.bsArray)
+                self.plotTrace();
+                self.plotMap();
+                self.plotSlice();
+            end
         end
         
         function changeTrace(self,controlOrValue,varargin)
@@ -147,6 +168,10 @@ classdef traceBrowser < handle
         end
         
         function plotTrace(self,index)
+            if nargin < 2
+                index = self.CurrentTrace;
+            end
+            
             if index < 1 || index > size(self.Map.bsArray,2)
                 warning('ShepherdLab:mapAnalysis:traceBrowser:plotTrace:InvalidTraceIndex','Invalid trace index %d: should be in the range 1-%d\n',index,size(self.Map.bsArray,2));
                 return
