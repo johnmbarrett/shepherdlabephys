@@ -303,7 +303,7 @@ classdef mapalyzer < dynamicprops
             for ii = 1:numel(self.maps) % TODO: +1
                 % TODO : factory method?  pseudo-singleton pattern?
                 if numel(self.traceBrowsers) < ii || ~isa(self.traceBrowsers(ii),'mapAnalysis.traceBrowser')
-                    traceBrowser = mapAnalysis.traceBrowser(theMaps(ii),self);
+                    traceBrowser = mapAnalysis.mapTraceBrowser(theMaps(ii),self);
                     
                     if isempty(self.traceBrowsers)
                         self.traceBrowsers = traceBrowser;
