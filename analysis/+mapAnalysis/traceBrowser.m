@@ -15,6 +15,10 @@ classdef traceBrowser < handle
         Map
     end
     
+    properties(Dependent=true,SetAccess=immutable)
+        Data
+    end
+    
     properties(Access=protected)
         Map_
         Parent
@@ -68,6 +72,10 @@ classdef traceBrowser < handle
             set(self.TraceSlider,'Value',value);
         end
         
+        function data = get.Data(self)
+            data = self.getMapData();
+        end
+        
         function map = get.Map(self)
             map = self.Map_;
         end
@@ -79,8 +87,10 @@ classdef traceBrowser < handle
             self.updatePlots();
         end
         
+        data = getMapData(self);
+        
         function updatePlots(self)
-            if ~isempty(self.Map.bsArray)
+            if ~isempty(self.Data)
                 self.plotTrace();
             end
         end
@@ -99,8 +109,8 @@ classdef traceBrowser < handle
                 end
             end
             
-            if ~isfinite(newValue) || ~isreal(newValue) || newValue < 1 || newValue > size(self.Map.bsArray,2)
-                warning('ShepherdLab:mapAnalysis:traceBrowser:changeTrace:InvalidTraceIndex','Invalid trace index %d: should be in the range 1-%d\n',newValue,size(self.Map.bsArray,2));
+            if ~isfinite(newValue) || ~isreal(newValue) || newValue < 1 || newValue > size(self.Data,2)
+                warning('ShepherdLab:mapAnalysis:traceBrowser:changeTrace:InvalidTraceIndex','Invalid trace index %d: should be in the range 1-%d\n',newValue,size(self.Data,2));
                 set(self.TraceEdit,'String',num2str(oldValue));
                 set(self.TraceSlider,'Value',oldValue);
                 return
@@ -117,8 +127,8 @@ classdef traceBrowser < handle
                 index = self.CurrentTrace;
             end
             
-            if index < 1 || index > size(self.Map.bsArray,2)
-                warning('ShepherdLab:mapAnalysis:traceBrowser:plotTrace:InvalidTraceIndex','Invalid trace index %d: should be in the range 1-%d\n',index,size(self.Map.bsArray,2));
+            if index < 1 || index > size(self.Data,2)
+                warning('ShepherdLab:mapAnalysis:traceBrowser:plotTrace:InvalidTraceIndex','Invalid trace index %d: should be in the range 1-%d\n',index,size(self.Data,2));
                 return
             end
             
@@ -140,7 +150,7 @@ classdef traceBrowser < handle
                 recordingMode = 'VC';
             end
     
-            [~,self.TraceHandles,~,self.StimHandles] = plotTraces(self.TraceAxis,self.Map.bsArray(:,index),self.Parent.sampleRate,'RecordingMode',recordingMode,'StimStart',stimOn);
+            [~,self.TraceHandles,~,self.StimHandles] = plotTraces(self.TraceAxis,self.Data(:,index),self.Parent.sampleRate,'RecordingMode',recordingMode,'StimStart',stimOn);
             % TODO : can we pass options like these through to plot traces instead?
             set(self.TraceHandles, 'Color', 'b');
             set(self.StimHandles, 'Color', 'c');

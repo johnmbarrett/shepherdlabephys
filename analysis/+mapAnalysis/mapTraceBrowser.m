@@ -44,7 +44,7 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
 
             colormap(gray(256));
             
-            numTraces = size(self.Map.bsArray,2);
+            numTraces = size(self.Data,2);
             
             self.TraceSlider = uicontrol(self.Figure, 'Tag', 'traceSlider', 'Style', 'slider', ...
                 'min', 1, 'max', numTraces, ...
@@ -79,7 +79,7 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
         function updatePlots(self)
             self.updatePlots@mapAnalysis.traceBrowser();
             
-            if ~isempty(self.Map.bsArray)
+            if ~isempty(self.Data)
                 self.plotMap();
                 self.plotSlice();
             end
@@ -89,6 +89,10 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
             self.changeTrace@mapAnalysis.traceBrowser(controlOrValue,varargin{:});
             self.highlightTrace(self.MapAxis);
             self.highlightTrace(self.SliceAxis);
+        end
+        
+        function data = getMapData(self)
+            data = self.Map.bsArray;
         end
         
         function highlightTrace(self,ax)
