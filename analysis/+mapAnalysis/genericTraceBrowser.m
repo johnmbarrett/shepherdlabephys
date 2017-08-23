@@ -106,7 +106,18 @@ classdef genericTraceBrowser < mapAnalysis.traceBrowser
         end
         
         function averageTraces(self,varargin)
-            disp('hello, world');
+            tracesToAverage = inputdlg('Enter Matlab-format vector of traces to average (e.g. [1:3 5])');
+            tracesToAverage{1} = str2num(tracesToAverage{1}); %#ok<ST2NM>
+            
+            if isempty(tracesToAverage{1})
+                tracesToAverage{1} = ':';
+            end
+
+            averageTrace = mean(self.Data(:,tracesToAverage{1}), 2);
+
+            figure;
+
+            plot(averageTrace);
         end
     end
 end
