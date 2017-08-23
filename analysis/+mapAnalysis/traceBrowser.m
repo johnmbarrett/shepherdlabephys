@@ -38,12 +38,17 @@ classdef traceBrowser < handle
     end
 
     methods
-        function self = traceBrowser(map,parent)
+        function self = traceBrowser(map,parent,noPlot)
             self.Map_ = map;
             
             assert(isa(parent,'mapAnalysis.mapalyzer'),'ShepherdLab:mapAnalysis:traceBrowser:InvalidParent','Trace browser parent must be a mapalyzer');
             
             self.Parent = parent;
+            
+            if nargin < 3 || noPlot
+                return
+            end
+            
             self.createFigure();
         end
         
@@ -136,6 +141,8 @@ classdef traceBrowser < handle
 
             % TODO : should this information be stored in the map as well?
             switch self.Parent.lstbxTraceType
+                case 'general physiology traces'
+                    stimOn = self.Parent.stimOnGen;
                 case 'excitation profile'
                     stimOn = self.Parent.stimOnEP;
                 case 'input map'

@@ -36,6 +36,7 @@ classdef mapalyzer < dynamicprops
         dataMfile
         defaultDataDir
         defaultDataMFileDir
+        genericTraceBrowser
         image = struct('img',[],'imgDir','','imgName','','info',[]);
         imageXrange
         imageYrange
@@ -140,6 +141,7 @@ classdef mapalyzer < dynamicprops
             set(findobj(self.Figure,'Tag','showAutoNotes'),'Callback',@self.showAutoNotes);
             set(findobj(self.Figure,'Tag','pbTraceBrowser'),'Callback',@self.pbTraceBrowser_Callback);
             set(findobj(self.Figure,'Tag','arrayTracesAsInputMap'),'Callback',@self.arrayTracesAsInputMap_Callback);
+            set(findobj(self.Figure,'Tag','pbGenericBrowse'),'Callback',@self.pbGenericBrowse_Callback);
             
             set(get(findobj(self.Figure,'Tag','Help'),'Children'),'Callback',@self.help);
             
@@ -383,14 +385,18 @@ classdef mapalyzer < dynamicprops
             guidata(hObject, handles);
             set(handles.figure1,'Pointer','Arrow');
             % end
-
-            % =============== MISCELLANEOUS ====================================
-
-            % ============= GENERIC TRACE ANALYSIS =================
         end
 
-        function pbGenericBrowse_Callback(hObject, eventdata, handles)
-            traceBrowserGeneric(handles);
+        function pbGenericBrowse_Callback(self,varargin)
+            self.checkForMaps();
+            
+            if isempty(self.genericTraceBrowser) || ~isa(self.genericTraceBrowser,'mapAnalysis.genericTraceBrowser')
+                self.genericTraceBrowser = mapAnalysis.genericTraceBrowser(self.mapActive,self,self.genericBrowseType);
+            else
+                self.genericTraceBrowser.raiseFigure();
+                self.genericTraceBrowser.IsBaselineSubtracted = self.genericBrowseType;
+                self.genericTraceBrowser.Map = self.mapActive;
+            end
         end
         
         % ========== Current-Frequency Analysis =================================
