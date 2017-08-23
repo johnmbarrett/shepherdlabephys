@@ -18,8 +18,6 @@ function plotTracesAsInputMap(self,maps,mapNumber,isFlipped) % TODO : get rid of
         isFlipped = false;
     end
 
-    % TODO : for some reason the data from all three maps is the same? but
-    % only sometimes.  must investigate
     data = cat(3,maps.bsArray);
     
     for ii = 1:nMaps
