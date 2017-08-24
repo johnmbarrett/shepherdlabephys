@@ -32,16 +32,15 @@ function loadTraces(self, mode)
     % determine how many maps to analyze
     switch mode
         case {0 1}
-            self.numberOfMaps = 1;
+            numberOfMaps = 1;
         case 2
             numberOfMaps = inputdlg('How many maps to analyze? ');
 
             if isempty(numberOfMaps)
-                self.numberOfMaps = 0;
                 return
             end
-
-            self.numberOfMaps = str2double(numberOfMaps{1});
+            
+            numberOfMaps = str2double(numberOfMaps{1});
         case 3
             warndlg('Saving data as code is an utterly horrifying design pattern and should be avoided at all costs.  This feature may be removed in a future release of mapalyzer.  Proceed at your own risk...');
             dataMfile = inputdlg('Enter name of data M-file (e.g. g1091P1)');
@@ -52,7 +51,7 @@ function loadTraces(self, mode)
 
             try
                 eval(['self.dataMfile = ' dataMfile{1} ';']);
-                self.numberOfMaps = numel(self.dataMfile.mapNumbers);
+                numberOfMaps = numel(self.dataMfile.mapNumbers);
                 self.dataMfile.experiment = self.dataMfile.experiment(1:6); % ??? - jmb 2017-08-17
             catch err
                 warndlg('Problem loading specified data M-file.  Don''t say I didn''t warn you...');
@@ -69,7 +68,7 @@ function loadTraces(self, mode)
 
     self.mapNumbers = [];
 
-    for ii = 1:self.numberOfMaps
+    for ii = 1:numberOfMaps
         % select the traces to load - step 1
         if mode < 3
             [filename, pathname] = uigetfile(...
@@ -79,7 +78,6 @@ function loadTraces(self, mode)
                 'Select any trace.'); % TODO : explicit trace selection instead of assuming we want all in the folder?
             
             if isnumeric(filename)
-                self.numberOfMaps = 0;
                 return
             end
         elseif mode == 3
@@ -124,19 +122,23 @@ function loadTraces(self, mode)
         [~,filename,ext] = fileparts(fullfile);
 
         traceFiles = dir([pathname '*' ext]);
-        self.mapActive.numTraces = numel(traceFiles);
-        self.mapActive.directory = pathname;
+        self.recordingActive = mapAnalysis.EphusCellRecording();
+        self.recordingActive.Directory = pathname;
 
         switch ext
             case '.mwf'
-                self.mapNumbers = [self.mapNumbers str2double(self.mapActive.directory(end-1:end))];
+                % TODO : bump mapNumbers into the Cell class.  also fix up
+                % the whole data/UI interaction, maybe into something
+                % MVC-ish
+                self.mapNumbers = [self.mapNumbers str2double(self.recordingActive.directory(end-1:end))];
             case '.xsg'
-                dirs = strsplit(self.mapActive.directory,{'/' '\'});
+                dirs = strsplit(self.recordingActive.Directory,{'/' '\'});
                 dirs = dirs(~cellfun(@isempty,dirs));
                 mapNumber = sscanf(dirs{end},'map%f');
 
                 if isempty(mapNumber)
-                    warning('ShepherdLab:mapalyzer:loadTraces:UnknownMapNumbers', 'Problem extracting map number from directory name %s\n',self.mapActive.directory);
+                    warning('ShepherdLab:mapalyzer:loadTraces:UnknownMapNumbers', 'Problem extracting map number from directory name %s\n',self.recordingActive.Directory);
+                    self.mapNumbers(end+1) = NaN;
                 else
                     self.mapNumbers(end+1) = mapNumber;
                 end
@@ -145,10 +147,10 @@ function loadTraces(self, mode)
                 return
         end
 
-        self.mapActive.uncagingPathName = pathname; % TODO : is this needed?
+        self.recordingActive.UncagingPathName = pathname; % TODO : is this needed?
 
-        self.mapActive.baseName = filename(1:end-4);
-        self.mapActive.traceNumber = str2double(filename(end-3:end));
+        self.recordingActive.BaseName = filename(1:end-4);
+        self.recordingActive.TraceNumber = str2double(filename(end-3:end));
 
         self.patchChannel = 'P1'; % default
 
@@ -160,32 +162,30 @@ function loadTraces(self, mode)
                     'Select patch channel', 'P1', 'P2', 'P1');
 
                 self.patchChannel = patchChannel;
-                self.mapActive.numTraces = self.mapActive.numTraces/2;
-                p = strfind(handles.data.map.mapActive.baseName, 'P1');
-                self.mapActive.baseName(p+1) = patchChannel(2);
+                p = strfind(handles.data.map.recordingActive.BaseName, 'P1');
+                self.recordingActive.BaseName(p+1) = patchChannel(2);
             end
         end
 
         % step 2
         if mode == 0
-            self.mapActive.filenames = selectFilesFromList(pathname, ext);
-            self.mapActive.numTraces = numel(self.mapActive.filenames);
+            self.recordingActive.Filenames = selectFilesFromList(pathname, ext);
         else %if mode == 1 || mode == 2 || mode == 3
-            self.mapActive.filenames = arrayfun(@(jj) sprintf('%s%04d%s',self.mapActive.baseName,jj,ext),1:self.mapActive.numTraces,'UniformOutput',false);
+            self.recordingActive.Filenames = arrayfun(@(jj) sprintf('%s%04d%s',self.recordingActive.BaseName,jj,ext),1:numel(traceFiles),'UniformOutput',false);
         end
 
-        for jj = 1:self.mapActive.numTraces
-            fname = [self.mapActive.uncagingPathName self.mapActive.filenames{jj}];
+        for jj = 1:numel(self.recordingActive.Filenames)
+            fname = [self.recordingActive.UncagingPathName self.recordingActive.Filenames{jj}];
 
             switch ext
                 case '.xsg'
-                    [data,self.sampleRate] = concatenateEphusTraces(fname,[],self.aiTraceNum,'Program',self.aiProgram);
+                    [traces,self.sampleRate] = concatenateEphusTraces(fname,[],self.aiTraceNum,'Program',self.aiProgram);
 
                     % TODO : can probably do better than this?
                     if jj == 1
-                        self.mapActive.dataArray = data;
+                        data = traces;
                     else
-                        self.mapActive.dataArray(:,(end+1):(end+size(data,2))) = data;
+                        data(:,(end+1):(end+size(traces,2))) = traces;
                     end
 
                     % TODO : we load it here and in concatenateEphusTraces.
@@ -194,85 +194,96 @@ function loadTraces(self, mode)
                     traceFile = load(fname,'-mat'); 
 
                     if isfield(traceFile.header, 'headerGUI')
-                        self.mapActive.headerGUI = traceFile.header.headerGUI.headerGUI;
+                        self.recordingActive.HeaderGUI = traceFile.header.headerGUI.headerGUI;
                     end
 
-                    self.mapActive.physHeader = traceFile.header.ephys.ephys;
-                    self.mapActive.uncagingHeader = traceFile.header.mapper.mapper;
-                    self.mapActive.scopeHeader = traceFile.header.scopeGui.ephysScopeAccessory; % gs 20060625
-                    self.mapActive.acquirerHeader = traceFile.header.acquirer.acquirer; % gs 20060625
-                    self.mapActive.imagingSysHeader = traceFile.header.imagingSys.imagingSys; % gs 20080627
+                    % TODO : didn't notice this the first time round, but
+                    % we load these for every file and then just throw away
+                    % the old ones?
+                    self.recordingActive.PhysHeader = traceFile.header.ephys.ephys;
+                    self.recordingActive.UncagingHeader = traceFile.header.mapper.mapper;
+                    self.recordingActive.ScopeHeader = traceFile.header.scopeGui.ephysScopeAccessory; % gs 20060625
+                    self.recordingActive.AcquirerHeader = traceFile.header.acquirer.acquirer; % gs 20060625
+                    self.recordingActive.ImagingSysHeader = traceFile.header.imagingSys.imagingSys; % gs 20080627
                     % NB -- for turbomaps, is this the correct value for the power????? i.e., was this the correctly computed value for this trace, or the prev trace?
-                    self.mapActive.laserIntensity(jj) = self.mapActive.uncagingHeader.specimenPlanePower;
+                    self.recordingActive.LaserIntensity(jj) = self.recordingActive.UncagingHeader.specimenPlanePower;
                 otherwise
                     warning('ShepherdLab:mapalyzer:loadTraces:UnknownFileFormat', 'Unknown file format %s\n',ext(2:end));
                     return
             end
         end
+        
+        if numel(self.recordingActive.UncagingHeader.mapPatternArray) == size(data,2)
+            pattern = self.recordingActive.UncagingHeader.mapPatternArray;
+        else
+            pattern = 1:size(data,2);
+        end
+        
+        self.recordingActive.Raw = mapAnalysis.Map(data',pattern);
 
         switch ext
             case '.xsg'
-                if self.mapActive.uncagingHeader.xSpacing ~= self.mapActive.uncagingHeader.ySpacing
+                if self.recordingActive.UncagingHeader.xSpacing ~= self.recordingActive.UncagingHeader.ySpacing
                     warning('ShepherdLab:mapalyzer:loadTraces:UnequalXYSpacing','Map %d has different X and Y spacing, using X spacing by default.',ii);
                 end
 
-                if isfield(self.mapActive.imagingSysHeader,'xMicrons') && isfield(self.mapActive.imagingSysHeader,'yMicrons')
-                    self.imageXrange = self.mapActive.imagingSysHeader.xMicrons;
-                    self.imageYrange = self.mapActive.imagingSysHeader.yMicrons;
+                if isfield(self.recordingActive.ImagingSysHeader,'xMicrons') && isfield(self.recordingActive.ImagingSysHeader,'yMicrons')
+                    self.imageXrange = self.recordingActive.ImagingSysHeader.xMicrons;
+                    self.imageYrange = self.recordingActive.ImagingSysHeader.yMicrons;
                 else %% TODO: implement these parameters properly
-                    if ~isfield(self.mapActive.uncagingHeader,'videoHorizontalDistance')
-                        self.mapActive.uncagingHeader.videoHorizontalDistance = 2666;
+                    if ~isfield(self.recordingActive.UncagingHeader,'videoHorizontalDistance')
+                        self.recordingActive.UncagingHeader.videoHorizontalDistance = 2666;
                         warning('ShepherdLab:mapalyzer:loadTraces:NoHorizontalDistance','No xMicrons or videoHorizontalDistance in map %d, using default value',ii);
                     end
 
-                    if ~isfield(self.mapActive.uncagingHeader,'videoVerticalDistance')
-                        self.mapActive.uncagingHeader.videoVerticalDistance = 2000;
+                    if ~isfield(self.recordingActive.UncagingHeader,'videoVerticalDistance')
+                        self.recordingActive.UncagingHeader.videoVerticalDistance = 2000;
                         warning('ShepherdLab:mapalyzer:loadTraces:NoVerticalDistance','No yMicrons or videoVerticalDistance in map %d, using default value',ii);
                     end
 
-                    self.imageXrange = self.mapActive.uncagingHeader.videoHorizontalDistance;
-                    self.imageYrange = self.mapActive.uncagingHeader.videoVerticalDistance;
+                    self.imageXrange = self.recordingActive.UncagingHeader.videoHorizontalDistance;
+                    self.imageYrange = self.recordingActive.UncagingHeader.videoVerticalDistance;
                 end
 
-                if isempty(self.mapActive.uncagingHeader.soma1Coordinates)
+                if isempty(self.recordingActive.UncagingHeader.soma1Coordinates)
                     self.somaX = '';
                     self.somaY = '';
                 else
-                    self.somaX = self.mapActive.uncagingHeader.soma1Coordinates(1);
-                    self.somaY = self.mapActive.uncagingHeader.soma1Coordinates(2);
+                    self.somaX = self.recordingActive.UncagingHeader.soma1Coordinates(1);
+                    self.somaY = self.recordingActive.UncagingHeader.soma1Coordinates(2);
                 end
 
-                if isfield(self.mapActive.uncagingHeader,'somaZ') && ~isempty(self.mapActive.uncagingHeader.somaZ)
-                    self.somaZ = num2str(self.mapActive.uncagingHeader.somaZ);
+                if isfield(self.recordingActive.UncagingHeader,'somaZ') && ~isempty(self.recordingActive.UncagingHeader.somaZ)
+                    self.somaZ = num2str(self.recordingActive.UncagingHeader.somaZ);
                 elseif ~self.retainForNextCell
                     self.somaZ = '';
                 end
 
                 % avg laser intensity
-                self.avgLaserIntensity = [self.avgLaserIntensity mean(self.mapActive.laserIntensity)];
+                self.avgLaserIntensity = [self.avgLaserIntensity mean(self.recordingActive.LaserIntensity)];
             otherwise
                 warning('ShepherdLab:mapalyzer:loadTraces:UnknownFileFormat', 'Unknown file format %s\n',ext(2:end));
                 return
         end
 
         if ii == 1 % have to do this because of silly Matlab and its silly structs
-            self.maps = self.mapActive;
+            self.recordings = self.recordingActive;
         else
-            self.maps(ii) = self.mapActive;
+            self.recordings(ii) = self.recordingActive;
         end
     end
 
     % INFO PANEL display
 
     if strcmp(ext, '.mwf')
-        k = strfind(self.mapActive.baseName, 'map');
-        self.experimentName = self.mapActive.baseName(1 : (k-1));
+        k = strfind(self.recordingActive.BaseName, 'map');
+        self.experimentName = self.recordingActive.BaseName(1 : (k-1));
     elseif strcmp(ext, '.xsg')
-        self.experimentName = self.mapActive.baseName(1 : 6);
+        self.experimentName = self.recordingActive.BaseName(1 : 6);
     end
 
-    if isfield(self.mapActive.acquirerHeader,'triggerTime') && ~isempty(self.mapActive.acquirerHeader.triggerTime)
-        triggerTime = self.mapActive.acquirerHeader.triggerTime;
+    if isfield(self.recordingActive.AcquirerHeader,'triggerTime') && ~isempty(self.recordingActive.AcquirerHeader.triggerTime)
+        triggerTime = self.recordingActive.AcquirerHeader.triggerTime;
         self.triggerTime = datestr(datenum(triggerTime), 16);
         self.experimentDate = [datestr(datenum(triggerTime), 'ddd') ', ' datestr(datenum(triggerTime), 1)];
     else
@@ -280,15 +291,15 @@ function loadTraces(self, mode)
         self.triggerTime = 'not noted';
     end
 
-    if ~isempty(self.mapActive.scopeHeader.breakInTime)
-        self.breakInTime = datestr(datenum(self.mapActive.scopeHeader.breakInTime), 16);
+    if ~isempty(self.recordingActive.ScopeHeader.breakInTime)
+        self.breakInTime = datestr(datenum(self.recordingActive.ScopeHeader.breakInTime), 16);
     else
         self.breakInTime = 'not noted';
     end
 
     % register and display clamp mode
-    if isfield(self.mapActive.physHeader,'modeString')
-        self.clampMode = self.mapActive.physHeader.modeString;
+    if isfield(self.recordingActive.PhysHeader,'modeString')
+        self.clampMode = self.recordingActive.PhysHeader.modeString;
         
         switch self.clampMode(1)
             case 'V'
@@ -304,16 +315,16 @@ function loadTraces(self, mode)
 
     self.laserIntensity = mean(self.avgLaserIntensity);
 
-    if self.mapActive.uncagingHeader.xSpacing == self.mapActive.uncagingHeader.ySpacing
-        self.mapSpacing = self.mapActive.uncagingHeader.xSpacing;
+    if self.recordingActive.UncagingHeader.xSpacing == self.recordingActive.UncagingHeader.ySpacing
+        self.mapSpacing = self.recordingActive.UncagingHeader.xSpacing;
     else
-        self.mapSpacing = [self.mapActive.uncagingHeader.xSpacing self.mapActive.uncagingHeader.ySpacing];
+        self.mapSpacing = [self.recordingActive.UncagingHeader.xSpacing self.recordingActive.UncagingHeader.ySpacing];
     end
 
-    self.mapPatternName = self.mapActive.uncagingHeader.mapPattern;
-    self.xPatternOffset = self.mapActive.uncagingHeader.xPatternOffset;
-    self.yPatternOffset = self.mapActive.uncagingHeader.yPatternOffset;
-    self.spatialRotation = self.mapActive.uncagingHeader.spatialRotation;
+    self.mapPatternName = self.recordingActive.UncagingHeader.mapPattern;
+    self.xPatternOffset = self.recordingActive.UncagingHeader.xPatternOffset;
+    self.yPatternOffset = self.recordingActive.UncagingHeader.yPatternOffset;
+    self.spatialRotation = self.recordingActive.UncagingHeader.spatialRotation;
 
     [self.somaXnew, self.somaYnew] = self.transformSomaPosition(...
         self.somaX,self.somaY,self.spatialRotation, ...
@@ -339,5 +350,5 @@ function loadTraces(self, mode)
     end
 
     % transfer the first map data set back to the active map directory:
-    self.mapActive = self.maps(1);
+    self.recordingActive = self.recordings(1);
 end

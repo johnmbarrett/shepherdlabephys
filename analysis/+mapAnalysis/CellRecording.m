@@ -8,7 +8,7 @@ classdef CellRecording < mapAnalysis.Recording
     
     methods
         function self = CellRecording()
-            self@mapAnalysis.Recording({'RawData' 'BaselineSubtractedData' 'FilteredData'});
+            self@mapAnalysis.Recording({'Raw' 'BaselineSubtracted' 'Filtered'});
         end
     end
 end
