@@ -1,4 +1,4 @@
-function plotTracesAsInputMap(self,maps,mapNumber,isFlipped) % TODO : get rid of map number param
+function plotTracesAsInputMap(self,recordings,mapNumber,isFlipped) % TODO : get rid of map number param
 % arrayTracesAsInputMap
 %
 % Plots the set of map traces as a map.
@@ -8,7 +8,7 @@ function plotTracesAsInputMap(self,maps,mapNumber,isFlipped) % TODO : get rid of
 % Editing:
 % gs april 2005 -- privatize version for new analysis software 
 % -----------------------------------------------------------------
-    nMaps = numel(maps);
+    nMaps = numel(recordings);
     
     if nMaps < 1
         return
@@ -18,10 +18,13 @@ function plotTracesAsInputMap(self,maps,mapNumber,isFlipped) % TODO : get rid of
         isFlipped = false;
     end
 
-    data = cat(3,maps.bsArray);
+    % TODO : this method can probably be done much more neatly using
+    % Map.Array and Map.Pattern
+    data = arrayfun(@(r) r.BaselineSubtracted.Data',recordings,'UniformOutput',false);
+    data = cat(3,data{:});
     
     for ii = 1:nMaps
-        mapPattern = maps(ii).uncagingHeader.mapPatternArray;
+        mapPattern = recordings(ii).BaselineSubtracted.Pattern;
         data(:,:,ii) = data(:,mapPattern,ii);
     end
 
