@@ -255,14 +255,14 @@ classdef mapalyzer < dynamicprops
 
         % ============= MAP DISPLAY =================
         
-        function checkForMaps(self)
+        function checkForRecordings(self)
             if isempty(self.recordings)
                 helpdlg('Please load some data first.');
             end
         end
         
         function arrayTracesAsInputMap_Callback(self,varargin)
-            self.checkForMaps();
+            self.checkForRecordings();
             
             for ii = 1:numel(self.recordings)
                 self.plotTracesAsInputMap(self.recordings(ii),ii);
@@ -272,7 +272,7 @@ classdef mapalyzer < dynamicprops
         end
 
         function pbTraceBrowser_Callback(self,varargin)
-            self.checkForMaps();
+            self.checkForRecordings();
             
             theMaps = self.recordings; % TODO : [self.recordings self.traceAvg];
             
@@ -362,7 +362,7 @@ classdef mapalyzer < dynamicprops
         end
 
         function pbGenericBrowse_Callback(self,varargin)
-            self.checkForMaps();
+            self.checkForRecordings();
             
             if isempty(self.genericTraceBrowser) || ~isa(self.genericTraceBrowser,'mapAnalysis.genericTraceBrowser')
                 self.genericTraceBrowser = mapAnalysis.genericTraceBrowser(self.recordingActive,self,self.genericBrowseType);
