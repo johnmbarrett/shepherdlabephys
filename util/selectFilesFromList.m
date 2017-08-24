@@ -19,18 +19,6 @@ function names = selectFilesFromList(path, type)
         type = '.tif';
     end
 
-    % TODO : I have no idea what gh.autotransformGUI is supposed to be, and
-    % also that catch block is guaranteed to throw an error
-    % if nargin == 1
-    % 	try
-    % 		filetype = get(gh.autotransformGUI.fileType, 'String');	
-    % 		value = get(gh.autotransformGUI.fileType, 'Value');
-    % 		filetype = filetype{value};
-    % 	catch
-    % 		filetype = type;
-    % 	end
-    % end
-
     d = dir(fullfile(path, ['/*' type]));
     
     if isempty(d)
@@ -45,6 +33,5 @@ function names = selectFilesFromList(path, type)
         'SelectionMode','multiple',...
         'ListString', str, 'Name', 'Select a File');
     
-    % TODO : we get the path then throw it away?  Is that right?
     names = str(s);
 end
