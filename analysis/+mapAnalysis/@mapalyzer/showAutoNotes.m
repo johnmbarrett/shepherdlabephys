@@ -4,12 +4,12 @@ function showAutoNotes(self,varargin)
 % gs march 2008
 % ---------------------------------------
 
-    if isempty(self.mapActive.uncagingPathName);
+    if isempty(self.recordingActive.UncagingPathName);
         warning('ShepherdLab:mapalyzer:showAutoNotes:NoExperimentLoaded','No experiment loaded to show auto notes for.');
         return
     end
     
-    dirs = strsplit(self.mapActive.uncagingPathName, {'\' '/'});
+    dirs = strsplit(self.recordingActive.UncagingPathName, {'\' '/'});
     dirs = dirs(~cellfun(@isempty,dirs));
     
     exptName = self.experimentName;

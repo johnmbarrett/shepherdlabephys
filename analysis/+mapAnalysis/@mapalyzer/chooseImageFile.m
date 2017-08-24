@@ -11,7 +11,7 @@ function chooseImageFile(self,noPlot,varargin)
 % rather than add them to the axes
 % ---------------------------------------------------------------
 
-    dir = self.mapActive.uncagingPathName;
+    dir = self.recordingActive.UncagingPathName;
     
     if isempty(dir)
         dir = pwd;

@@ -25,11 +25,11 @@ function plotCellParameters(self)
     ylabel('Resistance (M{\Omega})');
     legend([rsh rmh],{'Rs' 'Rm'});
 
-    if self.numberOfMaps <= 1
+    if isempty(self.recordings)
         return
     end
     
-    for ii = 1:self.numberOfMaps - 1
-        line([ii*self.numTraces ii*self.numTraces],ylim,'Color','k');
+    for ii = 1:numel(self.recordings)
+        line([ii ii]*size(self.recordings(ii).Raw.Data,1),ylim,'Color','k');
     end
 end

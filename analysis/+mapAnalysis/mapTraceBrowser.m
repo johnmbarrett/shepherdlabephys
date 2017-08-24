@@ -10,6 +10,10 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
 % gs april 2005 -- adapted for mapAnalysis3p0 
 % gs may 2006 - %GS20060524 - modified for ephus compatibility; flipud's added
 % -------------------------------------------------------------
+    properties(Dependent=true,SetAccess=immutable)
+        Map
+    end
+    
     properties(Access=protected)
         MagFactorX
         MagFactorY
@@ -38,7 +42,7 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
             set(gca, 'DataAspectRatioMode', 'auto');
             set(gca, 'PlotBoxAspectRatioMode', 'auto');
             
-            uicontrol(self.Figure, 'Style', 'text', 'String', self.Map.baseName(1:(end-4)), 'FontSize', 12, ...
+            uicontrol(self.Figure, 'Style', 'text', 'String', self.Recording.RecordingName, 'FontSize', 12, ... % TODO : non-Ephus compatibility
                 'FontWeight', 'bold', 'Units', 'normalized', 'Position', [0.03   0.93    0.5    0.05], ...
                 'BackgroundColor', 'w', 'HorizontalAlignment', 'left');
 
@@ -72,8 +76,26 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
     end
 
     methods
-        function self = mapTraceBrowser(varargin) % matlab this shouldn't be necessary :|
-            self@mapAnalysis.traceBrowser(varargin{:});
+        function self = mapTraceBrowser(recording,parent)
+            self@mapAnalysis.traceBrowser(recording,parent,false);
+        end
+        
+        function data = getData(self)
+            if isempty(self.Map)
+                data = [];
+                return
+            end
+            
+            data = self.Map.Data';
+        end
+        
+        function map = get.Map(self)
+            if isempty(self.Recording_)
+                map = [];
+                return
+            end
+            
+            map = self.Recording.BaselineSubtracted;
         end
         
         function updatePlots(self)
@@ -91,15 +113,11 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
             self.highlightTrace(self.SliceAxis);
         end
         
-        function data = getMapData(self)
-            data = self.Map.bsArray;
-        end
-        
         function highlightTrace(self,ax)
             hold(ax,'on');
-            [row,col] = find(flipud(self.Map.uncagingHeader.mapPatternArray) == self.CurrentTrace);%GS20060524
-            y = (row - 1) * self.Map.uncagingHeader.xSpacing - self.MagFactorY;
-            x = (col - 1) * self.Map.uncagingHeader.ySpacing - self.MagFactorX;
+            [row,col] = find(flipud(self.Map.Pattern) == self.CurrentTrace);%GS20060524
+            y = (row - 1) * self.Recording.UncagingHeader.xSpacing - self.MagFactorY;
+            x = (col - 1) * self.Recording.UncagingHeader.ySpacing - self.MagFactorX;
             
             % TODO : this feels dirty somehow?
             if ax == self.MapAxis
@@ -121,11 +139,11 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
         end
         
         function plotMap(self)
-            [sizeY,sizeX] = size(self.Map.uncagingHeader.mapPatternArray); % LTP corrected 
-            self.MagFactorX = (self.Map.uncagingHeader.xSpacing*(sizeX-1))/2;
-            self.MagFactorY = (self.Map.uncagingHeader.ySpacing*(sizeY-1))/2;
+            [sizeY,sizeX] = size(self.Map.Pattern); % LTP corrected 
+            self.MagFactorX = (self.Recording.UncagingHeader.xSpacing*(sizeX-1))/2;
+            self.MagFactorY = (self.Recording.UncagingHeader.ySpacing*(sizeY-1))/2;
 
-            self.MapHandle = imagesc(self.MapAxis,flipud(self.Map.uncagingHeader.mapPatternArray)); %GS20060524
+            self.MapHandle = imagesc(self.MapAxis,flipud(self.Map.Pattern)); %GS20060524
             set(self.MapHandle,'XData',[-self.MagFactorX self.MagFactorX],'YData',[-self.MagFactorY self.MagFactorY]);
             set(self.MapAxis, 'PlotBoxAspectRatio', [1 1 1], 'YDir', 'normal');%GS20060524
             axis(self.MapAxis,'tight');
@@ -136,7 +154,7 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
         end
         
         function pickTrace(self,source,eventData)
-            M = flipud(self.Map.uncagingHeader.mapPatternArray);  % GS200605024
+            M = flipud(self.Map.Pattern);  % GS200605024
 
             x = eventData.IntersectionPoint(1);
             y = eventData.IntersectionPoint(2);

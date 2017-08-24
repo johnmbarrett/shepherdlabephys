@@ -41,35 +41,9 @@ classdef mapalyzer < dynamicprops
         imageXrange
         imageYrange
         isCurrentClamp
-        % TODO : should these be promoted to full classes? also, the
-        % mapActive/maps interaction is extremely dirty at the moment. a
-        % better pattern would be to have all the data in the maps array
-        % and just have mapActive be an index. making them handle classes
-        % might also do the job.
-        mapActive = struct( ...
-            'acquirerHeader',   [], ...
-            'baseName',         [], ...
-            'bsArray',          [], ...
-            'cmembrane',        [], ...
-            'dataArray',        [], ...
-            'directory',        [], ...
-            'fArray',           [], ...
-            'filenames',        [], ...
-            'headerGUI',        [], ...
-            'imagingSysHeader', [], ...
-            'laserIntensity',   [], ...
-            'numTraces',        [], ...
-            'physHeader',       [], ...
-            'rmembrane',        [], ...
-            'rseries',          [], ...
-            'scopeHeader',      [], ...
-            'tau',              [], ...
-            'traceNumber',      [], ...
-            'uncagingHeader',   [], ...
-            'uncagingPathName', []  ...
-            );
+        recordingActive
         mapAvg = struct('baselineSD',[],'cmembrane',[],'rmembrane',[],'rseries',[],'spontEventRate',[],'synThreshpAmV',[],'tau',[]);
-        maps
+        recordings
         patchChannel
         sampleRate
         traceBrowsers
@@ -281,31 +255,31 @@ classdef mapalyzer < dynamicprops
 
         % ============= MAP DISPLAY =================
         
-        function checkForMaps(self)
-            if isempty(self.maps)
-                helpdlg('Please load some maps first.');
+        function checkForRecordings(self)
+            if isempty(self.recordings)
+                helpdlg('Please load some data first.');
             end
         end
         
         function arrayTracesAsInputMap_Callback(self,varargin)
-            self.checkForMaps();
+            self.checkForRecordings();
             
-            for ii = 1:numel(self.maps)
-                self.plotTracesAsInputMap(self.maps(ii),ii);
+            for ii = 1:numel(self.recordings)
+                self.plotTracesAsInputMap(self.recordings(ii),ii);
             end
             
-            self.plotTracesAsInputMap(self.maps);
+            self.plotTracesAsInputMap(self.recordings);
         end
 
         function pbTraceBrowser_Callback(self,varargin)
-            self.checkForMaps();
+            self.checkForRecordings();
             
-            theMaps = self.maps; % TODO : [self.maps self.traceAvg];
+            theRecordings = self.recordings; % TODO : [self.recordings self.traceAvg];
             
-            for ii = 1:numel(self.maps) % TODO: +1
+            for ii = 1:numel(self.recordings) % TODO: +1
                 % TODO : factory method?  pseudo-singleton pattern?
                 if numel(self.traceBrowsers) < ii || ~isa(self.traceBrowsers(ii),'mapAnalysis.traceBrowser')
-                    traceBrowser = mapAnalysis.mapTraceBrowser(theMaps(ii),self);
+                    traceBrowser = mapAnalysis.mapTraceBrowser(theRecordings(ii),self);
                     
                     if isempty(self.traceBrowsers)
                         self.traceBrowsers = traceBrowser;
@@ -314,7 +288,7 @@ classdef mapalyzer < dynamicprops
                     end
                 else
                     self.traceBrowsers(ii).raiseFigure();
-                    self.traceBrowsers(ii).Map = theMaps(ii);
+                    self.traceBrowsers(ii).Recording = theRecordings(ii);
                 end
             end
         end
@@ -388,14 +362,14 @@ classdef mapalyzer < dynamicprops
         end
 
         function pbGenericBrowse_Callback(self,varargin)
-            self.checkForMaps();
+            self.checkForRecordings();
             
             if isempty(self.genericTraceBrowser) || ~isa(self.genericTraceBrowser,'mapAnalysis.genericTraceBrowser')
-                self.genericTraceBrowser = mapAnalysis.genericTraceBrowser(self.mapActive,self,self.genericBrowseType);
+                self.genericTraceBrowser = mapAnalysis.genericTraceBrowser(self.recordingActive,self,self.genericBrowseType);
             else
                 self.genericTraceBrowser.raiseFigure();
                 self.genericTraceBrowser.IsBaselineSubtracted = self.genericBrowseType;
-                self.genericTraceBrowser.Map = self.mapActive;
+                self.genericTraceBrowser.Recording = self.recordingActive;
             end
         end
         

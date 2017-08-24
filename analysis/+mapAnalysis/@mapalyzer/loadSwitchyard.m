@@ -24,24 +24,27 @@ function loadSwitchyard(self,varargin)
 
     self.loadTraces(mode);
     
-    if isempty(self.numberOfMaps) || self.numberOfMaps == 0
+    if isempty(self.recordings)
         close(hWaitBar);
         return
     end
 
     waitbar(0.8, hWaitBar, 'Filtering and Baseline-subtracting ...');
 
-    for ii = 1:self.numberOfMaps
-        [~,~,self.maps(ii).fArray,~,self.maps(ii).bsArray] = preprocess(...
-            self.maps(ii).dataArray, self.sampleRate, ...
+    for ii = 1:numel(self.recordings)
+        [~,~,filteredData,~,baselineSubtractedData] = preprocess(...
+            self.recordings(ii).Raw.Data', self.sampleRate, ...
             'Start',        self.bsBaselineStart,                       ...
             'Window',       self.bsBaselineEnd-self.bsBaselineStart,    ...
             'PreFilter',    true,                                       ...
             'FilterFun',    str2func(['nan' self.popFilterType])         ...
             );
+        
+        self.recordings(ii).BaselineSubtracted = mapAnalysis.Map(baselineSubtractedData',self.recordings(ii).Raw.Pattern);
+        self.recordings(ii).Filtered = mapAnalysis.Map(filteredData',self.recordings(ii).Raw.Pattern);
     end
 
-    self.mapActive = self.maps(1);
+    self.recordingActive = self.recordings(1);
 
     self.chooseImageFile();
 
