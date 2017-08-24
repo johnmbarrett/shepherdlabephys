@@ -1,7 +1,8 @@
-classdef EphusCell < mapAnalysis.Cell
+classdef EphusCellRecording < mapAnalysis.CellRecording
     properties
         AcquirerHeader
         BaseName
+        TraceNumber
         Directory
         Filenames
         HeaderGUI
