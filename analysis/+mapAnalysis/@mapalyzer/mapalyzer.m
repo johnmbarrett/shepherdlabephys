@@ -288,7 +288,7 @@ classdef mapalyzer < dynamicprops
                     end
                 else
                     self.traceBrowsers(ii).raiseFigure();
-                    self.traceBrowsers(ii).Map = theRecordings(ii);
+                    self.traceBrowsers(ii).Recording = theRecordings(ii);
                 end
             end
         end
@@ -369,7 +369,7 @@ classdef mapalyzer < dynamicprops
             else
                 self.genericTraceBrowser.raiseFigure();
                 self.genericTraceBrowser.IsBaselineSubtracted = self.genericBrowseType;
-                self.genericTraceBrowser.Map = self.recordingActive;
+                self.genericTraceBrowser.Recording = self.recordingActive;
             end
         end
         

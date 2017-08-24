@@ -10,18 +10,18 @@ classdef traceBrowser < handle
 % gs april 2005 -- adapted for mapAnalysis3p0 
 % gs may 2006 - %GS20060524 - modified for ephus compatibility; flipud's added
 % -------------------------------------------------------------
-    properties(Dependent=true)
-        CurrentTrace
-        Map
-    end
-    
     properties(Dependent=true,SetAccess=immutable)
         Data
     end
+
+    properties(Dependent=true)
+        CurrentTrace
+        Recording
+    end
     
     properties(Access=protected)
-        Map_
         Parent
+        Recording_
     end
     
     properties
@@ -36,16 +36,20 @@ classdef traceBrowser < handle
     methods(Abstract=true,Access=protected)
         createFigure(self)
     end
+       
+    methods(Abstract=true)
+        data = getData(self);
+    end
 
     methods
-        function self = traceBrowser(map,parent,noPlot)
-            self.Map_ = map;
+        function self = traceBrowser(recording,parent,noPlot)
+            self.Recording = recording;
             
             assert(isa(parent,'mapAnalysis.mapalyzer'),'ShepherdLab:mapAnalysis:traceBrowser:InvalidParent','Trace browser parent must be a mapalyzer');
             
             self.Parent = parent;
             
-            if nargin < 3 || noPlot
+            if nargin < 2 || noPlot
                 return
             end
             
@@ -78,25 +82,27 @@ classdef traceBrowser < handle
         end
         
         function data = get.Data(self)
-            data = self.getMapData();
+            data = self.getData();
         end
-        
-        function map = get.Map(self)
-            map = self.Map_;
-        end
-        
-        function set.Map(self,map)
-            % TODO : validation
-            self.Map_ = map;
-            
-            self.updatePlots();
-        end
-        
-        data = getMapData(self);
         
         function updatePlots(self)
             if ~isempty(self.Data)
                 self.plotTrace();
+            end
+        end
+        
+        function recording = get.Recording(self)
+            recording = self.Recording_;
+        end
+        
+        function set.Recording(self,recording)
+            assert(isa(recording,'mapAnalysis.CellRecording'),'Recording must be a mapAnalysis.CellRecording');
+            
+            self.Recording_ = recording;
+            
+            % TODO : event-driven model
+            if isa(self.Figure,'handle') && isvalid(self.Figure)
+                self.updatePlots();
             end
         end
         

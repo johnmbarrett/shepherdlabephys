@@ -35,13 +35,13 @@ classdef genericTraceBrowser < mapAnalysis.traceBrowser
             set(gca, 'DataAspectRatioMode', 'auto');
             set(gca, 'PlotBoxAspectRatioMode', 'auto');
             
-            uicontrol(self.Figure, 'Style', 'text', 'String', self.Map.baseName(1:(end-4)), 'FontSize', 12, ...
+            uicontrol(self.Figure, 'Style', 'text', 'String', self.Recording.RecordingName, 'FontSize', 12, ...
                 'FontWeight', 'bold', 'Units', 'normalized', 'Position', [0.03   0.93    0.5    0.05], ...
                 'BackgroundColor', 'w', 'HorizontalAlignment', 'left');
 
             colormap(gray(256));
             
-            numTraces = size(self.Map.bsArray,2);
+            numTraces = size(self.Data,2);
             
             xLoc = 0.07;
             yLoc = 0.95;
@@ -69,8 +69,8 @@ classdef genericTraceBrowser < mapAnalysis.traceBrowser
     end
 
     methods
-        function self = genericTraceBrowser(map,parent,browseType)
-            self@mapAnalysis.traceBrowser(map,parent,true);
+        function self = genericTraceBrowser(recording,parent,browseType)
+            self@mapAnalysis.traceBrowser(recording,parent,true);
             
             if nargin < 2
                 self.IsBaselineSubtracted = true;
@@ -97,11 +97,11 @@ classdef genericTraceBrowser < mapAnalysis.traceBrowser
             end
         end
         
-        function data = getMapData(self)
+        function data = getData(self)
             if self.IsBaselineSubtracted
-                data = self.Map.bsArray;
+                data = self.Recording.BaselineSubtracted.Data';
             else
-                data = self.Map.dataArray;
+                data = self.Recording.Raw.Data';
             end
         end
         

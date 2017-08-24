@@ -3,8 +3,16 @@ classdef Recording < dynamicprops
         Maps
     end
     
+    properties(Dependent=true,SetAccess=immutable)
+        RecordingName
+    end
+    
     properties(Access=protected)
         Maps_ = struct([]);
+    end
+    
+    methods(Abstract=true)
+        name = getRecordingName(self)
     end
     
     methods(Access=protected)
@@ -42,6 +50,10 @@ classdef Recording < dynamicprops
             assert(isstruct(maps) && all(structfun(@(s) isa(s,'mapAnalysis.Map'),maps)),'ShepherdLab:mapAnalysis:Cell:InvalidMaps','Maps must be a struct where every member is a mapAnalysis.Map');
             
             self.Maps_ = maps;
+        end
+        
+        function name = get.RecordingName(self)
+            name = self.getRecordingName();
         end
     end
 end
