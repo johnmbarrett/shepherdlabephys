@@ -3,7 +3,15 @@ function [ax,traceHandles,peakHandles,stimHandles] = plotTraces(ax,data,sampleRa
 %   PLOTPARAMS(DATA,SAMPLERATE) plots the electrophysiology traces in the
 %   matrix DATA (one per column, sampled at SAMPLERATE).
 %
-%   AX = PLOTPARAMS(DATA) returns a handle, AX, to the resulting plot.
+%   PLOTPARAMS(TIME,DATA,SAMPLERATE) plots the data using TIME as the
+%   X-axis values.  TIME must have the same size as DATA or be a vector
+%   with length(TIME) == size(DATA,1).
+%
+%   AX = PLOTPARAMS(...) returns a handle, AX, to the resulting plot.
+%
+%   [AX,TH,PH,SH] = PLOTPARAMS(...) additionally returns handles to the
+%   plotted traces (TH), the specified peak values (PH), and the stim times
+%   (SH).
 %
 %   PLOTPARAMS(AX,...) plots the data into the axes handle AX instead of
 %   creating a new figure.
@@ -27,8 +35,8 @@ function [ax,traceHandles,peakHandles,stimHandles] = plotTraces(ax,data,sampleRa
 %                       title.
 
 %   Written by John Barrett 2017-08-14 11:42 CDT
-%   Last updated John Barrett 2017-08-15 18:24 CDT
-    if ~ishandle(ax);
+%   Last updated John Barrett 2017-08-25 11:13 CDT
+    if ~all(ishandle(ax));
         if nargin > 2
             varargin = [{sampleRate} varargin];
         end
@@ -38,6 +46,20 @@ function [ax,traceHandles,peakHandles,stimHandles] = plotTraces(ax,data,sampleRa
         
         figure;
         ax = axes;
+    end
+    
+    if ~isscalar(sampleRate)
+        if ((isequal(size(data),size(sampleRate))) || (isvector(data) && length(data) == size(sampleRate,1))) && isscalar(varargin{1})
+            % user must have passed in time data as well
+            time = data;
+            data = sampleRate;
+            sampleRate = varargin{1};
+            varargin = varargin(2:end);
+        else
+            error('ShepherdLab:plotTraces:InvalidSampleRate','Sample rate must be a scalar');
+        end
+    else
+        time = (1:size(data,1))/sampleRate;
     end
     
     parser = inputParser;
@@ -66,8 +88,6 @@ function [ax,traceHandles,peakHandles,stimHandles] = plotTraces(ax,data,sampleRa
             % TODO : this should throw an error, or at least a warning
             disp('Check the recordMode field');
     end
-    
-    time = (1:size(data,1))/sampleRate;
     
     traceHandles = plot(ax,time,data);
     
