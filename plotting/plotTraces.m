@@ -68,7 +68,7 @@ function [ax,traceHandles,peakHandles,stimHandles] = plotTraces(ax,data,sampleRa
     % code between this and plotParams
     addParameter(parser,'Peaks',NaN,@(x) validateattributes(x,{'numeric'},{'real' 'finite' 'vector'}));
     addParameter(parser,'PeakIndices',NaN,@(x) validateattributes(x,{'numeric'},{'real' 'finite' 'positive' 'integer' 'vector'}));
-    addParameter(parser,'StimStart',NaN,@(x) validateattributes(x,{'numeric'},{'real' 'finite' 'scalar'}));
+    addParameter(parser,'StimStart',NaN,@(x) validateattributes(x,{'numeric'},{'real' 'finite' 'vector'}));
     addParameter(parser,'RecordingMode','VC',@(x) ismember(x,{'VC' 'IC'}));
     addParameter(parser,'Title','',@ischar);
     parser.parse(varargin{:});
@@ -87,6 +87,10 @@ function [ax,traceHandles,peakHandles,stimHandles] = plotTraces(ax,data,sampleRa
         otherwise
             % TODO : this should throw an error, or at least a warning
             disp('Check the recordMode field');
+    end
+    
+    if isempty(data) % matlab is dumb and will error if this happens
+        data = nan(size(time)); 
     end
     
     traceHandles = plot(ax,time,data);

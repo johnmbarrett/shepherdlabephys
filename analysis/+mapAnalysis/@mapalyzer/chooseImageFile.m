@@ -1,4 +1,4 @@
-function chooseImageFile(self,noPlot,varargin)
+function R = chooseImageFile(self,noPlot,varargin)
 % chooseImageFile
 %
 % See also addSliceImage

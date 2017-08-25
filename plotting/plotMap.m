@@ -1,5 +1,5 @@
 function [ax,mapHandle] = plotMap(ax,map,varargin)
-    if ~ishandle(ax)
+    if ~all(ishandle(ax))
         if nargin > 1
             varargin = [{map} varargin];
         end
@@ -22,7 +22,9 @@ function [ax,mapHandle] = plotMap(ax,map,varargin)
     parser = inputParser;
     isValidXYData = @(x) isnumeric(x) && ismember(numel(x),[1 2]);
     addParameter(parser,'CLim',NaN,@(x) isnumeric(x) && numel(x) == 2 && x(1) < x(2));
+    addParameter(parser,'ColorBarText','',@(x) ischar(x));
     addParameter(parser,'ColorBarTextPosition',[1.13 -0.08],@(x) isnumeric(x) && numel(x) == 2);
+    addParameter(parser,'Title','',@(x) ischar(x));
     addParameter(parser,'TitlePosition',[0 1.05],@(x) isnumeric(x) && numel(x) == 2);
     addParameter(parser,'XData',[1 size(data,2)],isValidXYData);
     addParameter(parser,'YData',[1 size(data,2)],isValidXYData);
@@ -40,6 +42,12 @@ function [ax,mapHandle] = plotMap(ax,map,varargin)
         upperLim = max(max(data(data<inf)));
         upperLimTweaked = upperLim + 0.02*(abs(upperLim-lowerLim));
         clim = [lowerLim upperLimTweaked];
+        
+        if isempty(clim)
+            clim = [0 1];
+        elseif clim(1) == clim(2)
+            clim(2) = clim(1)*1.01;
+        end
     else
         clim = parser.Results.CLim;
     end
@@ -54,9 +62,9 @@ function [ax,mapHandle] = plotMap(ax,map,varargin)
         ylabel(parser.Results.YLabel);
     end
     
-    text(parser.Results.TitlePosition(1), parser.Results.TitlePosition(2),'Peak', ...
+    text(parser.Results.TitlePosition(1), parser.Results.TitlePosition(2),parser.Results.Title, ...
         'Units', 'Normalized', 'FontWeight', 'Bold', 'Parent', ax);
     
     colorbar('vert');
-    text(parser.Results.ColorBarTextPosition(1), parser.Results.ColorBarTextPosition(2),'pA', 'Units', 'Normalized', 'Parent', ax);
+    text(parser.Results.ColorBarTextPosition(1), parser.Results.ColorBarTextPosition(2),parser.Results.ColorBarText, 'Units', 'Normalized', 'Parent', ax);
 end

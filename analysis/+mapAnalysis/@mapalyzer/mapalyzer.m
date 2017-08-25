@@ -116,6 +116,7 @@ classdef mapalyzer < dynamicprops
             set(findobj(self.Figure,'Tag','pbTraceBrowser'),'Callback',@self.pbTraceBrowser_Callback);
             set(findobj(self.Figure,'Tag','arrayTracesAsInputMap'),'Callback',@self.arrayTracesAsInputMap_Callback);
             set(findobj(self.Figure,'Tag','pbGenericBrowse'),'Callback',@self.pbGenericBrowse_Callback);
+            set(findobj(self.Figure,'Tag','analyzeInputMap'),'Callback',@self.analyzeInputMaps);
             
             set(get(findobj(self.Figure,'Tag','Help'),'Children'),'Callback',@self.help);
             
@@ -343,13 +344,6 @@ classdef mapalyzer < dynamicprops
             newVal = handles.data.analysis.synThreshold * str2double(get(handles.baselineSD, 'String'));
             set(handles.synThreshpAmV, 'String', num2str(newVal));
             guidata(hObject,handles);
-        end
-
-        function analyzeInputMap_Callback(hObject, eventdata, handles)
-            set(handles.figure1,'Pointer','Watch');
-            handles = analysisHandler(handles);
-            guidata(hObject, handles);
-            set(handles.figure1,'Pointer','Arrow');
         end
 
         function analyzeByTraceAveraging_Callback(hObject, eventdata, handles)

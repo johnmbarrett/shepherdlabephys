@@ -100,4 +100,32 @@ classdef Map < handle
             map = mapAnalysis.Map(fun(self.Data),self.Pattern);
         end
     end
+    
+    methods(Static=true)
+        function map = reduce(fun,varargin)
+            %REDUCE Collapse multiple maps into a single map by applying a
+            %function
+            %
+            % MAP = REDUCE(FUN,MAP1,MAP2,...) creates a new MAP by
+            % concatenating the data in MAP1, MAP2, etc. and applying the
+            % function FUN.  All maps must have the same size.  The
+            % resulting map will have the same pattern as the first.  Any
+            % argument to REDUCE after the first may be an array of maps,
+            % provided that all the maps passed in can be horizontally
+            % concatenated.
+            assert(isa(fun,'function_handle'),'First argument to reduce must be a function handle.');
+            
+            if numel(varargin) == 1 && isa(varargin{1},'mapAnalysis.Map')
+                maps = varargin{1};
+            elseif all(cellfun(@(m) isa(m,'mapAnalysis.Map'),varargin))
+                maps = [varargin{:}];
+            else
+                error('ShepherdLab:mapAnalysis:Map:reduce:InvalidArgument','All arguments to reduce after the first must be mapAnalysis.Maps')
+            end
+            
+            data = [maps.Data];
+            
+            map = mapAnalysis.Map(fun(data),maps(1).Pattern);
+        end
+    end
 end
