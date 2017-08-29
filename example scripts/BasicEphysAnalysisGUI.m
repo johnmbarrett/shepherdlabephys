@@ -692,8 +692,6 @@ classdef BasicEphysAnalysisGUI < handle
         end
         
         function createChoiceSliderPanel(~,fig,nChoices,tagPrefix)
-            errordlg('If you''re seeing this message, tell John to stop using the deployment repository as a development branch');
-            
             figurePosition = get(fig,'Position');
             figureWidth = figurePosition(3);
             figureHeight = figurePosition(4);
