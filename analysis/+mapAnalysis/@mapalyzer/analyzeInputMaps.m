@@ -53,6 +53,8 @@ function analyzeInputMaps(self,varargin)
     % TODO : this whole map mapStack business is a lazy, messy workaround 
     % to get this stuff working and delete as much code as possible with 
     % minimal effort.  at some point it really needs to be tidied up
+    % TODO : (update 2017-08-29) the new Recording.average method might
+    % make this easier, or possibly allow this to be erased completely
     mapStack(1).mapAvgMin = mapAnalysis.Map.reduce(@(m) meanWithoutAnyDirectResponses(m,edStack),self.recordings.MinimumResponseAmplitude);
     mapStack(1).mapAvgMax = mapAnalysis.Map.reduce(@(m) meanWithoutAnyDirectResponses(m,edStack),self.recordings.MaximumResponseAmplitude);
     mapStack(1).mapAvgMean = mapAnalysis.Map.reduce(@(m) meanWithoutAnyDirectResponses(m,edStack),self.recordings.MeanResponseAmplitude);

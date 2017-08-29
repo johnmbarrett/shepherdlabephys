@@ -44,6 +44,7 @@ classdef mapalyzer < dynamicprops
         isCurrentClamp
         Isteps
         recordingActive
+        recordingAverage
         mapAvg = struct('baselineSD',[],'cmembrane',[],'rmembrane',[],'rseries',[],'spontEventRate',[],'synThreshpAmV',[],'tau',[]);
         recordings
         patchChannel
@@ -131,6 +132,7 @@ classdef mapalyzer < dynamicprops
             set(findobj(self.Figure,'Tag','analyzeFI'),'Callback',@self.analyzeCurrentFrequencyRelation);
             set(findobj(self.Figure,'Tag','selectUserFcn'),'Callback',@self.selectUserFcn_Callback);
             set(findobj(self.Figure,'Tag','runUserFcn'),'Callback',@self.runUserFcn_Callback);
+            set(findobj(self.Figure,'Tag','analyzeByTraceAveraging'),'Callback',@self.analyzeByTraceAveraging_Callback);
             
             set(get(findobj(self.Figure,'Tag','Help'),'Children'),'Callback',@self.help);
             
@@ -384,13 +386,14 @@ classdef mapalyzer < dynamicprops
             guidata(hObject,handles);
         end
 
-        function analyzeByTraceAveraging_Callback(hObject, eventdata, handles)
-            % if get(handles.traceAveraging, 'Value')
+        function analyzeByTraceAveraging_Callback(self,varargin)
             set(self.Figure,'Pointer','Watch');
-            handles = analysisHandlerForTraceAvg(handles);
-            guidata(hObject, handles);
-            set(self.Figure,'Pointer','Arrow');
-            % end
+            
+            self.recordingAverage = mapAnalysis.Recording.average(self.recordings);
+            
+            self.analyzeInputMap(self.recordingAverage,0,false);
+            
+            set(self.Figure,'Pointer','Watch');
         end
 
         function pbGenericBrowse_Callback(self,varargin)

@@ -123,7 +123,16 @@ classdef Map < handle
                 error('ShepherdLab:mapAnalysis:Map:reduce:InvalidArgument','All arguments to reduce after the first must be mapAnalysis.Maps')
             end
             
-            data = [maps.Data];
+            if all(cellfun(@isvector,{maps.Data}))
+                data = [maps.Data];
+            else
+                data = cat(3,maps.Data);
+            end
+            
+            if isempty(data)
+                map = mapAnalysis.Map([],[]);
+                return
+            end
             
             map = mapAnalysis.Map(fun(data),maps(1).Pattern);
         end
