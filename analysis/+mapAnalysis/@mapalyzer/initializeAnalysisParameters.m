@@ -16,7 +16,7 @@ function initializeAnalysisParameters(self)
     if exist(userINIFile,'file')
         params = parseINIFile(userINIFile);
     else
-        defaultINIFile = [fileparts(which('mapalyzer')) '\mapalyzer.ini'];
+        defaultINIFile = [self.codeFolder '\mapalyzer.ini'];
         
         if ~exist(defaultINIFile,'file')
             warning('ShepherdLab:mapalyzer:initializeAnalysisParameters:MissingINIFile','Can not find mapalyzer.ini file');
