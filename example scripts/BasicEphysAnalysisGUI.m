@@ -552,36 +552,9 @@ classdef BasicEphysAnalysisGUI < handle
             close(fig);
             
             figureWidth = max(20+10*4+100*3,20+50+20+longestStringPixels);
-            figureHeight = 20+50+10+5+30*max([numel(self.TraceNames) size(self.AllTraces,2) size(self.AllTraces,3)])+30;
+            figureHeight = 20+50+10+5+30*min(10,max([numel(self.TraceNames) size(self.AllTraces,2) size(self.AllTraces,3)]))+30;
             
             chooseTracesFigure = figure('Units','pixels','Position',[100 100 figureWidth figureHeight]);
-            
-            % TODO : this is a quick fix to make the choose trace dialog
-            % semi-useable when there are lots of sweeps.  really it would
-            % be better to implement a scrollbar and/or use inputdlg to
-            % allow them to choose traces by array indexing
-            drawnow;
-            
-            oldFigureHeight = figureHeight;
-            
-            figurePosition = get(chooseTracesFigure,'Position');
-            figureHeight = figurePosition(4);
-            
-            isChoiceByChannelOnly = oldFigureHeight ~= figureHeight;
-            
-            if isChoiceByChannelOnly
-                warndlg('Too many traces!  You can only choose traces by channel until John figures out how to implement scrollbars in Matlab...');
-                
-                enable = 'off';
-                
-                figureHeight = 20+50+10+5+30*size(self.AllTraces,3)+30;
-                
-                figurePosition(4) = figureHeight;
-                
-                set(chooseTracesFigure,'Position',figurePosition);
-            else
-                enable = 'on';
-            end
             
             choiceModeButtonGroup = uibuttongroup(chooseTracesFigure,           ...
                 'Units',                'pixels',                               ...
@@ -597,17 +570,15 @@ classdef BasicEphysAnalysisGUI < handle
                 );
             
             uicontrol(choiceModeButtonGroup,...
-                'Enable',               enable,                     ...
                 'Style',                'radiobutton',                          ...
                 'Units',                'pixels',                               ...
                 'Position',             [10 5 100 25],             ...
                 'String',               'Trace Name',                        ...
-                'Value',                ~isChoiceByChannelOnly,             ...
+                'Value',                true,             ...
                 'Callback',             @(varargin) self.createAllTracesChoicePanel(chooseTracesFigure)   ...
                 );
             
             uicontrol(choiceModeButtonGroup,...
-                'Enable',               enable,                     ...
                 'Style',                'radiobutton',                          ...
                 'Units',                'pixels',                               ...
                 'Position',             [120 5 100 25],            ...
@@ -622,17 +593,13 @@ classdef BasicEphysAnalysisGUI < handle
                 'Units',                'pixels',                               ...
                 'Position',             [230 5 100 25],            ...
                 'String',               'Channel Name',                           ...
-                'Value',                isChoiceByChannelOnly,      ...
+                'Value',                false,      ...
                 'Callback',             @(varargin) self.createChannelsChoicePanel(chooseTracesFigure)   ...
                 );
             
             uibuttongroup(chooseTracesFigure,'Units','pixels','Position',[10 40 figureWidth-20 figureHeight-110]);
             
-            if isChoiceByChannelOnly
-                self.createChannelsChoicePanel(chooseTracesFigure);
-            else
-                self.createAllTracesChoicePanel(chooseTracesFigure);
-            end
+            self.createAllTracesChoicePanel(chooseTracesFigure);
             
             uicontrol(chooseTracesFigure,...
                 'Style',                'pushbutton',                           ...
@@ -646,70 +613,53 @@ classdef BasicEphysAnalysisGUI < handle
         function boxes = getTraceChoiceCheckBoxes(~,fig)
             boxes = findobj(fig,'-regexp','Tag','(trace|sweep|channel)[0-9]+checkbox');
         end
-            
-        function createAllTracesChoicePanel(self,fig)
+        
+        function createChoicePanel(self,fig,dims,sweepNameRegex,tagPrefix)
             delete(self.getTraceChoiceCheckBoxes(fig));
             
             figurePosition = get(fig,'Position');
             figureWidth = figurePosition(3);
             figureHeight = figurePosition(4);
             
-            for ii = 1:numel(self.TraceNames)
+            for ii = 1:prod(arrayfun(@(dim) size(self.TraceNames,dim),dims))
+                % TODO : this assumes TraceNames is always 3D with first
+                % dimension of size 1, which is true for now...
+                if isscalar(dims)
+                    singleIndex = {1,1,1};
+                    singleIndex{dims} = ii;
+                    
+                    sliceIndex = {1,':',':'};
+                    sliceIndex{dims} = ii;
+                else
+                    singleIndex = {1,ii};
+                    sliceIndex = singleIndex;
+                end
+                
+                traceName = self.TraceNames(singleIndex{:});
+                
+                sweepName = regexp(traceName,sweepNameRegex,'tokens');
+                
                 uicontrol(fig,...
-                    'Style',            'checkbox',                                     ...
-                    'Units',            'pixels',                                       ...
-                    'Position',         [20 figureHeight-70-30*ii figureWidth-40 25],   ...
-                    'String',           self.TraceNames{ii},                            ...
-                    'Tag',              sprintf('trace%dcheckbox',ii),                  ...
-                    'Value',            ismember(self.TraceNames{1,ii},self.SelectedTraceNames)                                               ...
+                    'Style',            'checkbox',                                                             ...
+                    'Units',            'pixels',                                                               ...
+                    'Position',         [20 figureHeight-70-30*ii figureWidth-40 25],                           ...
+                    'String',           sweepName{1}{1},                                                        ...
+                    'Tag',              sprintf('%s%dcheckbox',tagPrefix,ii),                             ...
+                    'Value',            all(ismember(self.TraceNames(sliceIndex{:}),self.SelectedTraceNames))   ...
                     );
             end
+        end
+            
+        function createAllTracesChoicePanel(self,fig)
+            self.createChoicePanel(fig,[2 3],'(.*)','trace');
         end
         
         function createSweepsChoicePanel(self,fig)
-            delete(self.getTraceChoiceCheckBoxes(fig));
-            
-            figurePosition = get(fig,'Position');
-            figureWidth = figurePosition(3);
-            figureHeight = figurePosition(4);
-            
-            for ii = 1:size(self.TraceNames,2)
-                traceName = self.TraceNames{1,ii,1};
-                
-                sweepName = regexp(traceName,'(sweep [0-9]+)','tokens');
-                
-                uicontrol(fig,...
-                    'Style',            'checkbox',                                     ...
-                    'Units',            'pixels',                                       ...
-                    'Position',         [20 figureHeight-70-30*ii figureWidth-40 25],   ...
-                    'String',           sweepName{1}{1},                                ...
-                    'Tag',              sprintf('sweep%dcheckbox',ii),                  ...
-                    'Value',            all(ismember(self.TraceNames(1,ii,:),self.SelectedTraceNames))                                               ...
-                    );
-            end
+            self.createChoicePanel(fig,2,'(sweep [0-9]+)','sweep');
         end
         
         function createChannelsChoicePanel(self,fig)
-            delete(self.getTraceChoiceCheckBoxes(fig));
-            
-            figurePosition = get(fig,'Position');
-            figureWidth = figurePosition(3);
-            figureHeight = figurePosition(4);
-            
-            for ii = 1:size(self.TraceNames,3)
-                traceName = self.TraceNames{1,1,ii};
-                
-                sweepName = regexp(traceName,'channel (.+)','tokens');
-                
-                uicontrol(fig,...
-                    'Style',            'checkbox',                                     ...
-                    'Units',            'pixels',                                       ...
-                    'Position',         [20 figureHeight-70-30*ii figureWidth-40 25],   ...
-                    'String',           sweepName{1}{1},                                ...
-                    'Tag',              sprintf('channel%dcheckbox',ii),                  ...
-                    'Value',            all(ismember(self.TraceNames(1,:,ii),self.SelectedTraceNames))                                               ...
-                    );
-            end
+            self.createChoicePanel(fig,3,'channel (.+)','channel');
         end
         
         function refreshData(self)
