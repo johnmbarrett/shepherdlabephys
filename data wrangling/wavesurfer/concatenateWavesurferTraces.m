@@ -53,13 +53,25 @@ function [data,sampleRate,traceNames] = concatenateWavesurferTraces(files,sweeps
         
         if ii == 1
             sampleRate = getSampleRate(dataFile);
-            data = zeros([size(dataFile.(allSweeps{1}).analogScans) 0]);
+            data = nan([size(dataFile.(allSweeps{1}).analogScans) 0]);
             traceNames = cell(1,size(dataFile.(allSweeps{1}).analogScans,2),0);
         end
         
         for jj = 1:numel(sweepIndices)
             sweep = allSweeps{sweepIndices(jj)};
             traces = dataFile.(sweep).analogScans;
+            
+            traceLength = size(traces,1);
+            dataLength = size(data,1);
+            
+            if traceLength > dataLength
+                data(end+(1:(traceLength-dataLength)),:,:) = NaN;
+            end
+            
+            if traceLength < dataLength
+                traces(end+(1:(dataLength-traceLength)),:) = NaN;
+            end
+            
             data(:,:,end+1) = traces; %#ok<AGROW>
             traceNames(1,:,end+1) = cellfun(@(ch) sprintf('File %s %s channel %s',files{ii},strrep(sweep,'_',' '),ch),dataFile.header.Acquisition.ActiveChannelNames,'UniformOutput',false); %#ok<AGROW>
         end

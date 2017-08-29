@@ -88,7 +88,13 @@ function [Rs,Ri,tau,Cm,steadyState] = calculateCellParameters(data,voltageStep,s
         
         switch parser.Results.TauMethod
             case 'direct'
-                tau(ii) = decayTime(find(compare(steadyStateSubtractedData(decayIndices,ii),responseAmplitude/exp(1)),1));
+                tauII = decayTime(find(compare(steadyStateSubtractedData(decayIndices,ii),responseAmplitude/exp(1)),1));
+                
+                if isempty(tauII)
+                    tauII = NaN;
+                end
+                
+                tau(ii) = tauII;
             case 'fit'
                 expfit = fit(decayTime,steadyStateSubtractedData(decayIndices,ii),@(a,b,x) a*exp(-x/b),'StartPoint',[responseAmplitude 1]);
                 tau(ii) = expfit.b;
