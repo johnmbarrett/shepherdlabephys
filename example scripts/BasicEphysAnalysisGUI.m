@@ -466,7 +466,7 @@ classdef BasicEphysAnalysisGUI < handle
         end
         
         function chooseTraces(self,fig)
-            boxes = self.getTraceChoiceCheckBoxes(fig);
+            boxes = self.getTraceChoiceUIControls(fig);
             
             if numel(boxes) == 1
                 selectedIndices = find(get(boxes,'Value'));
@@ -610,18 +610,20 @@ classdef BasicEphysAnalysisGUI < handle
                 );
         end
         
-        function boxes = getTraceChoiceCheckBoxes(~,fig)
-            boxes = findobj(fig,'-regexp','Tag','(trace|sweep|channel)[0-9]+checkbox');
+        function boxes = getTraceChoiceUIControls(~,fig)
+            boxes = findobj(fig,'-regexp','Tag','(first|last)?(trace|sweep|channel)([0-9]+checkbox|slider|text)');
         end
         
         function createChoicePanel(self,fig,dims,sweepNameRegex,tagPrefix)
-            delete(self.getTraceChoiceCheckBoxes(fig));
+            delete(self.getTraceChoiceUIControls(fig));
             
             figurePosition = get(fig,'Position');
             figureWidth = figurePosition(3);
             figureHeight = figurePosition(4);
             
-            for ii = 1:prod(arrayfun(@(dim) size(self.TraceNames,dim),dims))
+            nChoices = prod(arrayfun(@(dim) size(self.TraceNames,dim),dims));
+            
+            for ii = 1:nChoices
                 % TODO : this assumes TraceNames is always 3D with first
                 % dimension of size 1, which is true for now...
                 if isscalar(dims)
