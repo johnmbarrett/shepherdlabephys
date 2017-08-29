@@ -474,8 +474,9 @@ classdef BasicEphysAnalysisGUI < handle
             end
             
             switch get(controls(1),'Style')
-                case 'slider'
+                case 'text'
                     errordlg('Not yet!!!');
+                    return
                 case 'checkbox'
                     selectedTraceIndices = self.chooseTracesUsingCheckboxes(controls);
                 otherwise
