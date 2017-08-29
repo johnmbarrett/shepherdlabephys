@@ -52,6 +52,8 @@ function analyzeCurrentFrequencyRelation(self,varargin)
         Isteps = Isteps(1:numTraces);
     end
     
+    % TODO : the analysis part of this could probably be moved out of
+    % mapalyzer and into the suite of generic analysis functions
     instRate1and2 = nan(numTraces,1);
     meanSpikeRate = zeros(numTraces,1);
     spikeAmplitude = cell(numTraces,1);
