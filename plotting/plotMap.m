@@ -43,10 +43,14 @@ function [ax,mapHandle] = plotMap(ax,map,varargin)
         upperLimTweaked = upperLim + 0.02*(abs(upperLim-lowerLim));
         clim = [lowerLim upperLimTweaked];
         
-        if isempty(clim)
+        if isempty(clim) || ~all(isfinite(clim))
             clim = [0 1];
         elseif clim(1) == clim(2)
             clim(2) = clim(1)*1.01;
+        end
+        
+        if clim(2) < clim(1)
+            clim = fliplr(clim);
         end
     else
         clim = parser.Results.CLim;
