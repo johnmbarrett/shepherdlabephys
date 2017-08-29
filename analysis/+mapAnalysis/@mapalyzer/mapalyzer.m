@@ -41,12 +41,14 @@ classdef mapalyzer < dynamicprops
         imageXrange
         imageYrange
         isCurrentClamp
+        Isteps
         recordingActive
         mapAvg = struct('baselineSD',[],'cmembrane',[],'rmembrane',[],'rseries',[],'spontEventRate',[],'synThreshpAmV',[],'tau',[]);
         recordings
         patchChannel
         sampleRate
         traceBrowsers
+        tracesToAnalyze
     end
     
     methods
@@ -121,6 +123,9 @@ classdef mapalyzer < dynamicprops
             set(findobj(self.Figure,'Tag','detectAPs'),'Callback',@self.detectAPs_Callback);
             set(findobj(self.Figure,'Tag','editEP'),'Callback',@self.editEP_Callback);
             set(findobj(self.Figure,'Tag','reanalyzeEP'),'Callback',@self.reanalyzeEP_Callback);
+            set(findobj(self.Figure,'Tag','specifyWhichTraces'),'Callback',@self.specifyWhichTraces_Callback);
+            set(findobj(self.Figure,'Tag','setCurrentStepFamily'),'Callback',@self.setCurrentStepFamily_Callback);
+            set(findobj(self.Figure,'Tag','analyzeFI'),'Callback',@self.analyzeCurrentFrequencyRelation);
             
             set(get(findobj(self.Figure,'Tag','Help'),'Children'),'Callback',@self.help);
             
@@ -397,35 +402,27 @@ classdef mapalyzer < dynamicprops
         
         % ========== Current-Frequency Analysis =================================
 
-        function specifyWhichTraces_Callback(hObject, eventdata, handles)
-            tracesToAnalyze = inputdlg('Enter Matlab-format vector of which traces to analyze. Example: [1:6]');
-            if ~isempty(tracesToAnalyze)
-                handles.data.analysis.currentFrequencyAnalysis.tracesToAnalyze = str2num(tracesToAnalyze{1});
-                disp(['These traces have been selected for analysis: ' ...
-                        num2str(handles.data.analysis.currentFrequencyAnalysis.tracesToAnalyze)]);
-            else
-                disp('User cancelled.');
+        function specifyWhichTraces_Callback(self,varargin)
+            traces = inputdlg('Enter Matlab-format vector of which traces to analyze. Example: [1:6]');
+            
+            if isempty(traces)
+                return
             end
-            guidata(hObject, handles);
+            
+            self.tracesToAnalyze = str2num(traces{1}); %#ok<ST2NM>
         end
 
-        function setCurrentStepFamily_Callback(hObject, eventdata, handles)
-            Isteps = inputdlg('Enter Matlab-format vector of current step amplitudes for the selected traces. Example: [0:100:500]');
-            if ~isempty(Isteps)
-                handles.data.analysis.currentFrequencyAnalysis.Isteps = str2num(Isteps{1});
-                disp(['These current steps have been selected: ' ...
-                        num2str(handles.data.analysis.currentFrequencyAnalysis.Isteps)]);
-            else
-                disp('User cancelled.');
+        function setCurrentStepFamily_Callback(self,varargin)
+            steps = inputdlg('Enter Matlab-format vector of current step amplitudes for the selected traces. Example: [0:100:500]');
+            
+            if isempty(steps)
+                return
             end
-            guidata(hObject, handles);
+            
+            self.Isteps = str2num(steps{1}); %#ok<ST2NM>
         end
-
-        function analyzeFI_Callback(hObject, eventdata, handles)
-            handles = currentFrequencyAnalysis(handles);
-            guidata(hObject, handles);
-            % ====================================================================
-        end
+        
+        % ====================================================================
 
         function runUserFcn_Callback(hObject, eventdata, handles)
             try
