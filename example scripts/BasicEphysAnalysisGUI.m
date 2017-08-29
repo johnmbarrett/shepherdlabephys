@@ -475,13 +475,36 @@ classdef BasicEphysAnalysisGUI < handle
             
             switch get(controls(1),'Style')
                 case 'text'
-                    errordlg('Not yet!!!');
-                    return
+                    selectedIndices = self.chooseTracesUsingSliders(controls);
                 case 'checkbox'
-                    selectedTraceIndices = self.chooseTracesUsingCheckboxes(controls);
+                    selectedIndices = self.chooseTracesUsingCheckboxes(controls);
                 otherwise
                     errordlg('Something went wrong.  Close the Choose Traces... dialog and try again.');
                     return
+            end
+            
+            firstTag = get(controls(1),'Tag');
+            
+            if any(strfind(firstTag,'trace'))
+                selectedTraceIndices = selectedIndices;
+            else
+                if any(strfind(firstTag,'channel'))
+                    colIndices = repmat((1:size(self.AllTraces,2))',numel(selectedIndices),1);
+                    pagIndices = kron(selectedIndices(:),ones(size(self.AllTraces,2),1));
+                elseif any(strfind(firstTag,'sweep'))
+                    colIndices = repmat(selectedIndices(:),size(self.AllTraces,3),1);
+                    pagIndices = kron((1:size(self.AllTraces,3))',ones(numel(selectedIndices),1));
+                else
+                    % TODO : better error handling/logging
+                    errordlg('Something went wrong.  Close the Choose Traces... dialog and try again.');
+                    return
+                end
+
+                if isempty(colIndices) || isempty(pagIndices)
+                    selectedTraceIndices = [];
+                else
+                    selectedTraceIndices = sub2ind([size(self.AllTraces,2) size(self.AllTraces,3)],colIndices,pagIndices);
+                end
             end
             
             self.SelectedTraceIndices = selectedTraceIndices;
@@ -493,40 +516,26 @@ classdef BasicEphysAnalysisGUI < handle
             self.updatePreprocessing();
         end
         
-        function selectedTraceIndices = chooseTracesUsingCheckboxes(self,boxes) 
+        function selectedIndices = chooseTracesUsingCheckboxes(~,boxes) 
             if numel(boxes) == 1
-                selectedTraceIndices = find(get(boxes,'Value'));
+                selectedIndices = find(get(boxes,'Value'));
                 return
             end
             
             % TODO : is flipud always right?  better to pull the index out
             % of the tag
             selectedIndices = find(flipud(cell2mat(get(boxes,'Value'))));
+        end
+        
+        function selectedIndices = chooseTracesUsingSliders(~,controls)
+            sliders = findobj(controls,'Style','slider');
             
-            firstTag = get(boxes(1),'Tag');
+            assert(numel(sliders) == 2,'Something went wrong.  Close the Choose Traces... dialog and try again.');
             
-            if firstTag(1) == 't'
-                selectedTraceIndices = selectedIndices;
-                return
-            end
+            values = get(sliders,'Value');
+            values = sort([values{:}]);
             
-            if firstTag(1) == 'c'
-                colIndices = repmat((1:size(self.AllTraces,2))',numel(selectedIndices),1);
-                pagIndices = kron(selectedIndices,ones(size(self.AllTraces,2),1));
-            elseif firstTag(1) == 's'
-                colIndices = repmat(selectedIndices,size(self.AllTraces,3),1);
-                pagIndices = kron((1:size(self.AllTraces,3))',ones(numel(selectedIndices),1));
-            else
-                % TODO : better error handling/logging
-                errordlg('Something went wrong.  Close the Choose Traces... dialog and try again.');
-                return
-            end
-
-            if isempty(colIndices) || isempty(pagIndices)
-                selectedTraceIndices = [];
-            else
-                selectedTraceIndices = sub2ind([size(self.AllTraces,2) size(self.AllTraces,3)],colIndices,pagIndices);
-            end
+            selectedIndices = values(1):values(2);
         end
         
         function loadFiles(self)
