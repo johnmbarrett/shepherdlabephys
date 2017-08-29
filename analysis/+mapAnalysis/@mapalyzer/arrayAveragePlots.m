@@ -57,8 +57,8 @@ function arrayAveragePlots(self,mapStack)
     % TODO : store these in the maps themselves?
     titles = repmat({'Peak' 'Mean' 'Onset'},1,2+self.fourthWindowMaps);
     cbarTexts = repmat({'pA' 'pA' 's'},1,2+self.fourthWindowMaps); % TODO : units
-    titles{10} = 'Events per site';
-    cbarTexts{10} = '#';
+    titles{7+3*self.fourthWindowMaps} = 'Events per site';
+    cbarTexts{7+3*self.fourthWindowMaps} = '#';
     
     hsub = gobjects(7+3*self.fourthWindowMaps,1);
     

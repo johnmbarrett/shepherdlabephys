@@ -117,6 +117,7 @@ classdef mapalyzer < dynamicprops
             set(findobj(self.Figure,'Tag','arrayTracesAsInputMap'),'Callback',@self.arrayTracesAsInputMap_Callback);
             set(findobj(self.Figure,'Tag','pbGenericBrowse'),'Callback',@self.pbGenericBrowse_Callback);
             set(findobj(self.Figure,'Tag','analyzeInputMap'),'Callback',@self.analyzeInputMaps);
+            set(findobj(self.Figure,'Tag','analyzeEP'),'Callback',@self.analyzeEP_Callback);
             
             set(get(findobj(self.Figure,'Tag','Help'),'Children'),'Callback',@self.help);
             
@@ -296,32 +297,31 @@ classdef mapalyzer < dynamicprops
         
         % ============= EXCITATION PROFILE =================
 
-        function analyzeEP_Callback(hObject, eventdata, handles)
-            set(handles.figure1,'Pointer','Watch');
-            handles = analyzeEPArray(handles);
-            guidata(hObject, handles);
-            set(handles.figure1,'Pointer','Arrow');
+        function analyzeEP_Callback(self,varargin)
+            set(self.Figure,'Pointer','Watch');
+            self.analyzeInputMap(self.recordingActive,find(self.recordings == self.recordingActive),true); %#ok<FNDSB>
+            set(self.Figure,'Pointer','Arrow');
         end
 
         function detectAPs_Callback(hObject, eventdata, handles)
-            set(handles.figure1,'Pointer','Watch');
+            set(self.Figure,'Pointer','Watch');
             handles = analyzeEPArray_detectAPs(handles);
             guidata(hObject, handles);
-            set(handles.figure1,'Pointer','Arrow');
+            set(self.Figure,'Pointer','Arrow');
         end
 
         function editEP_Callback(hObject, eventdata, handles)
-            set(handles.figure1,'Pointer','Watch');
+            set(self.Figure,'Pointer','Watch');
             handles = analyzeEPArray_editEP(handles);
             guidata(hObject, handles);
-            set(handles.figure1,'Pointer','Arrow');
+            set(self.Figure,'Pointer','Arrow');
         end
 
         function reanalyzeEP_Callback(hObject, eventdata, handles)
-            set(handles.figure1,'Pointer','Watch');
+            set(self.Figure,'Pointer','Watch');
             handles = analyzeEPArray_afterEdit(handles);
             guidata(hObject, handles);
-            set(handles.figure1,'Pointer','Arrow');
+            set(self.Figure,'Pointer','Arrow');
 
             % ============= SINGLE PATCH LSPS ANALYSIS =================
         end
@@ -348,10 +348,10 @@ classdef mapalyzer < dynamicprops
 
         function analyzeByTraceAveraging_Callback(hObject, eventdata, handles)
             % if get(handles.traceAveraging, 'Value')
-            set(handles.figure1,'Pointer','Watch');
+            set(self.Figure,'Pointer','Watch');
             handles = analysisHandlerForTraceAvg(handles);
             guidata(hObject, handles);
-            set(handles.figure1,'Pointer','Arrow');
+            set(self.Figure,'Pointer','Arrow');
             % end
         end
 

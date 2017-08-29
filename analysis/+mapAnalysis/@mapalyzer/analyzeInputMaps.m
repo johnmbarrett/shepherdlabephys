@@ -14,7 +14,7 @@ function analyzeInputMaps(self,varargin)
 
     % loop through the individual map trials
     for ii = 1:numel(self.recordings);
-        [synThreshpAmV,baselineSD,spontEventRate,histoN] = self.analyzeInputMap(self.recordings(ii),ii);
+        [synThreshpAmV,baselineSD,spontEventRate,histoN] = self.analyzeInputMap(self.recordings(ii),ii,false);
         
         if isempty(mapStack(1).mapStackLatHistoN)
             mapStack(1).mapStackLatHistoN = histoN';

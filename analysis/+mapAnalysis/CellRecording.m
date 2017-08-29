@@ -4,7 +4,13 @@ classdef CellRecording < mapAnalysis.Recording
         RMembrane
         RSeries
         Tau
-        Test mapAnalysis.Map;
+        
+        TotalNumberOfSites
+        TotalNumberOfSpikes
+        SpikesPerSite
+        NormTotalNumberOfSpikes
+        MeanWeightedDistanceFromSoma
+        FWHM
     end
     
     % maps
@@ -25,6 +31,7 @@ classdef CellRecording < mapAnalysis.Recording
         InhibitorySynapticResponseOccurence mapAnalysis.Map
         ActionPotentialNumber mapAnalysis.Map
         ActionPotentialLatency mapAnalysis.Map
+        ActionPotentialDelayArray mapAnalysis.Map % TODO : better name
         ActionPotentialOccurrence mapAnalysis.Map
         AmplitudeHistogramBaselineData mapAnalysis.Map% TODO : better names for these two as I have no idea what they're supposed to be
         AmplitudeHistogramSynapticData mapAnalysis.Map
