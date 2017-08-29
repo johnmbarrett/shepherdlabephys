@@ -26,7 +26,8 @@ classdef mapalyzer < dynamicprops
 
     % Begin initialization code - DO NOT EDIT
     properties(Constant=true)
-        FigurePath = [fileparts(which('mapAnalysis.mapalyzer')) '\mapalyzer.fig'];
+        codeFolder = fileparts(which('mapAnalysis.mapalyzer'));
+        FigurePath = [mapAnalysis.mapalyzer.codeFolder '\mapalyzer.fig'];
     end
     
     properties % TODO : attributes
@@ -205,7 +206,7 @@ classdef mapalyzer < dynamicprops
             end
         end
         
-        function help(~,menuItem,varargin)
+        function help(self,menuItem,varargin)
             tag = get(menuItem,'Tag');
             
             if strncmpi(tag,'help',4)
@@ -218,7 +219,7 @@ classdef mapalyzer < dynamicprops
                 error('ShepherdLab:mapalyzer:UnknownHelpOption','Unknown help option %s\n',tag);
             end
             
-            type([fileparts(which('mapalyzer')) '\helpFiles\' helpFile]);
+            type([self.codeFolder '\helpFiles\' helpFile]);
         end
 
         function setLoadMethodFromTraceType(self,hObject,varargin)
@@ -445,7 +446,7 @@ classdef mapalyzer < dynamicprops
         end
 
         function selectUserFcn_Callback(self,varargin)
-            filterSpec = [fileparts(which('mapAnalysis.mapalyzer')) '\userFcn\*.m'];
+            filterSpec = [self.codeFolder '\userFcn\*.m'];
             [filename, pathname] = uigetfile(filterSpec); 
             
             if ~ischar(filename)
