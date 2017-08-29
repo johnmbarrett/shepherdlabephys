@@ -32,15 +32,26 @@ function analyzeExcitationProfile(self,recording)
     [R,C,P] = size(maps);
 
     % DISTANCES ----------------------------------------------------------
+    
+    if isempty(self.somaXnew) || ischar(self.somaXnew) || any(isnan(self.somaXnew(:)))
+        somaX = self.somaX;
+    else
+        somaX = self.somaXnew;
+    end
+    
+    if isempty(self.somaYnew) || ischar(self.somaYnew) || any(isnan(self.somaYnew(:)))
+        somaY = self.somaY;
+    else
+        somaY = self.somaYnew;
+    end
 
     % arrays and vectors of distances
     spacingXY = [self.mapSpacing self.mapSpacing];
 
     [colArray,rowArray] = ndgrid(...
-        -((R-1)/2)*spacingXY(1):spacingXY(1):((R-1)/2)*spacingXY(1),    ...
-        -((C-1)/2)*spacingXY(2):spacingXY(2):((C-1)/2)*spacingXY(2)     ...
+        -((R-1)/2)*spacingXY(1):spacingXY(1):((R-1)/2)*spacingXY(1)-somaX,  ...
+        -((C-1)/2)*spacingXY(2):spacingXY(2):((C-1)/2)*spacingXY(2)-somaY   ...
         );
-
 
     distArray = sqrt(rowArray.^2 + colArray.^2);
     distances = distArray(:);

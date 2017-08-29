@@ -120,6 +120,7 @@ classdef mapalyzer < dynamicprops
             set(findobj(self.Figure,'Tag','analyzeEP'),'Callback',@self.analyzeEP_Callback);
             set(findobj(self.Figure,'Tag','detectAPs'),'Callback',@self.detectAPs_Callback);
             set(findobj(self.Figure,'Tag','editEP'),'Callback',@self.editEP_Callback);
+            set(findobj(self.Figure,'Tag','reanalyzeEP'),'Callback',@self.reanalyzeEP_Callback);
             
             set(get(findobj(self.Figure,'Tag','Help'),'Children'),'Callback',@self.help);
             
@@ -299,6 +300,8 @@ classdef mapalyzer < dynamicprops
         
         % ============= EXCITATION PROFILE =================
 
+        % TODO : the map number is wrong in all of these; it should be
+        % stored in the map itself
         function analyzeEP_Callback(self,varargin)
             set(self.Figure,'Pointer','Watch');
             self.analyzeInputMap(self.recordingActive,find(self.recordings == self.recordingActive),true); %#ok<FNDSB>
@@ -339,10 +342,13 @@ classdef mapalyzer < dynamicprops
             set(self.Figure,'Pointer','Arrow');
         end
 
-        function reanalyzeEP_Callback(hObject, eventdata, handles)
+        function reanalyzeEP_Callback(self,varargin)
             set(self.Figure,'Pointer','Watch');
-            handles = analyzeEPArray_afterEdit(handles);
-            guidata(hObject, handles);
+            
+            self.analyzeExcitationProfile(self.recordingActive);
+            
+            self.array2Dplot(self.recordingActive,find(self.recordings == self.recordingActive),true); %#ok<FNDSB>
+            
             set(self.Figure,'Pointer','Arrow');
 
             % ============= SINGLE PATCH LSPS ANALYSIS =================
