@@ -118,6 +118,8 @@ classdef mapalyzer < dynamicprops
             set(findobj(self.Figure,'Tag','pbGenericBrowse'),'Callback',@self.pbGenericBrowse_Callback);
             set(findobj(self.Figure,'Tag','analyzeInputMap'),'Callback',@self.analyzeInputMaps);
             set(findobj(self.Figure,'Tag','analyzeEP'),'Callback',@self.analyzeEP_Callback);
+            set(findobj(self.Figure,'Tag','detectAPs'),'Callback',@self.detectAPs_Callback);
+            set(findobj(self.Figure,'Tag','editEP'),'Callback',@self.editEP_Callback);
             
             set(get(findobj(self.Figure,'Tag','Help'),'Children'),'Callback',@self.help);
             
@@ -303,17 +305,37 @@ classdef mapalyzer < dynamicprops
             set(self.Figure,'Pointer','Arrow');
         end
 
-        function detectAPs_Callback(hObject, eventdata, handles)
+        function detectAPs_Callback(self,varargin)
             set(self.Figure,'Pointer','Watch');
-            handles = analyzeEPArray_detectAPs(handles);
-            guidata(hObject, handles);
+            self.analyzeInputMap(self.recordingActive,find(self.recordings == self.recordingActive),true,true); %#ok<FNDSB>
             set(self.Figure,'Pointer','Arrow');
         end
 
-        function editEP_Callback(hObject, eventdata, handles)
-            set(self.Figure,'Pointer','Watch');
-            handles = analyzeEPArray_editEP(handles);
-            guidata(hObject, handles);
+        function editEP_Callback(self,varargin)
+            set(self.Figure,'Pointer','Watch')
+            
+            prompt = {'Enter trace number:','Enter number of spikes:', 'Enter spike latency (first spike only):'};
+            dialogTitle = 'Edit spike detection for excitation profile';
+            answer = inputdlg(prompt,dialogTitle,1,{'10','5','0.03'},'on');
+
+            traceNum = str2num(answer{1}); %#ok<ST2NM>
+            numSpikes = str2num(answer{2}); %#ok<ST2NM>
+            apDelay = str2num(answer{3}); %#ok<ST2NM>
+            
+            assert(numel(traceNum) == numel(numSpikes) && numel(numSpikes) == numel(apDelay),'You must provide one value for spike number and first-spike latency for each trace you specify.');
+            
+            if isempty(self.recordingActive.ActionPotentialNumber) % TODO : this assumes that all or none are set
+                self.recordingActive.ActionPotentialNumber = self.recordingActive.Raw.derive(@(x) zeros(size(x,1),1));
+                self.recordingActive.ActionPotentialLatency = self.recordingActive.Raw.derive(@(x) zeros(size(x,1),1));
+                self.recordingActive.ActionPotentialDelayArray = self.recordingActive.Raw.derive(@(x) zeros(size(x,1),1));
+                self.recordingActive.ActionPotentialOccurrence = self.recordingActive.Raw.derive(@(x) zeros(size(x,1),1));
+            end
+
+            self.recordingActive.ActionPotentialNumber.Data(traceNum) = numSpikes;
+            self.recordingActive.ActionPotentialLatency.Data(traceNum) = apDelay;
+            self.recordingActive.ActionPotentialDelayArray.Data(traceNum,:) = apDelay;
+            self.recordingActive.ActionPotentialOccurrence.Data(traceNum) = numSpikes > 0;
+            
             set(self.Figure,'Pointer','Arrow');
         end
 

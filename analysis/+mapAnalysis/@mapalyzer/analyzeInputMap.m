@@ -1,9 +1,12 @@
-function [synThreshpAmV,baselineSD,spontEventRate,histoN] = analyzeInputMap(self,recording,mapNumber,isEP) % TODO : get rid of mapnumber
+function [synThreshpAmV,baselineSD,spontEventRate,histoN] = analyzeInputMap(self,recording,mapNumber,isEP,detectOnly) % TODO : get rid of mapnumber
 % analyzeInputMapArray     Main engine for analyzing set of traces.
 %
 %
 % gs april 2005 - Modified for mapAnalysis2p0 from old analyzeArray
 % ------------------------------------------------------------------------------
+    if nargin < 5
+        detectOnly = false;
+    end
 
     % ANALYSIS METHOD
     if isEP
@@ -169,7 +172,9 @@ function [synThreshpAmV,baselineSD,spontEventRate,histoN] = analyzeInputMap(self
         
         recording.ActionPotentialDelayArray = mapAnalysis.Map(apDelay,mapPattern);
         
-        self.analyzeExcitationProfile(recording);
+        if ~detectOnly
+            self.analyzeExcitationProfile(recording);
+        end
     else
         % MEAN
         recording.MeanResponseAmplitude = mapAnalysis.Map(mean(bsArray(stimOnInd:synEndInd,:))',mapPattern);
@@ -257,6 +262,8 @@ function [synThreshpAmV,baselineSD,spontEventRate,histoN] = analyzeInputMap(self
     %     isDelayOnset = inhibitoryLatencyOnset.*isBinary;
     end
 
-    % PLOT map stuff for this map
-    histoN = self.array2Dplot(recording,mapNumber,isEP);
+    if ~detectOnly
+        % PLOT map stuff for this map
+        histoN = self.array2Dplot(recording,mapNumber,isEP);
+    end
 end
