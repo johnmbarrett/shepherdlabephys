@@ -466,45 +466,66 @@ classdef BasicEphysAnalysisGUI < handle
         end
         
         function chooseTraces(self,fig)
-            boxes = self.getTraceChoiceUIControls(fig);
+            controls = self.getTraceChoiceUIControls(fig);
             
-            if numel(boxes) == 1
-                selectedIndices = find(get(boxes,'Value'));
-            else
-                % TODO : is flipud always right?  better to pull the index out
-                % of the tag
-                selectedIndices = find(flipud(cell2mat(get(boxes,'Value'))));
+            if isempty(controls)
+                errordlg('Something went wrong.  Close the Choose Traces... dialog and try again.');
+                return
             end
             
-            firstTag = get(boxes(1),'Tag');
-            
-            if firstTag(1) == 't'
-                self.SelectedTraceIndices = selectedIndices;
-            else
-                if firstTag(1) == 'c'
-                    colIndices = repmat((1:size(self.AllTraces,2))',numel(selectedIndices),1);
-                    pagIndices = kron(selectedIndices,ones(size(self.AllTraces,2),1));
-                elseif firstTag(1) == 's'
-                    colIndices = repmat(selectedIndices,size(self.AllTraces,3),1);
-                    pagIndices = kron((1:size(self.AllTraces,3))',ones(numel(selectedIndices),1));
-                else
-                    errordlg('This should never happen');
+            switch get(controls(1),'Style')
+                case 'slider'
+                    errordlg('Not yet!!!');
+                case 'checkbox'
+                    selectedTraceIndices = self.chooseTracesUsingCheckboxes(controls);
+                otherwise
+                    errordlg('Something went wrong.  Close the Choose Traces... dialog and try again.');
                     return
-                end
-                
-                if isempty(colIndices) || isempty(pagIndices)
-                    self.SelectedTraceIndices = [];
-                else
-                    self.SelectedTraceIndices = sub2ind([size(self.AllTraces,2) size(self.AllTraces,3)],colIndices,pagIndices);
-                end
             end
             
+            self.SelectedTraceIndices = selectedTraceIndices;
             self.SelectedTraces = self.AllTraces(:,self.SelectedTraceIndices);
             self.SelectedTraceNames = self.TraceNames(1,self.SelectedTraceIndices);
             
             close(fig)
             
             self.updatePreprocessing();
+        end
+        
+        function selectedTraceIndices = chooseTracesUsingCheckboxes(self,boxes) 
+            if numel(boxes) == 1
+                selectedTraceIndices = find(get(boxes,'Value'));
+                return
+            end
+            
+            % TODO : is flipud always right?  better to pull the index out
+            % of the tag
+            selectedIndices = find(flipud(cell2mat(get(boxes,'Value'))));
+            
+            firstTag = get(boxes(1),'Tag');
+            
+            if firstTag(1) == 't'
+                selectedTraceIndices = selectedIndices;
+                return
+            end
+            
+            if firstTag(1) == 'c'
+                colIndices = repmat((1:size(self.AllTraces,2))',numel(selectedIndices),1);
+                pagIndices = kron(selectedIndices,ones(size(self.AllTraces,2),1));
+            elseif firstTag(1) == 's'
+                colIndices = repmat(selectedIndices,size(self.AllTraces,3),1);
+                pagIndices = kron((1:size(self.AllTraces,3))',ones(numel(selectedIndices),1));
+            else
+                % TODO : better error handling/logging
+                errordlg('Something went wrong.  Close the Choose Traces... dialog and try again.');
+                return
+            end
+
+            if isempty(colIndices) || isempty(pagIndices)
+                selectedTraceIndices = [];
+            else
+                selectedTraceIndices = sub2ind([size(self.AllTraces,2) size(self.AllTraces,3)],colIndices,pagIndices);
+            end
         end
         
         function loadFiles(self)
