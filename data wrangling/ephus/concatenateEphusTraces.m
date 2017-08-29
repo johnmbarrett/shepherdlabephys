@@ -168,7 +168,7 @@ function [data,sampleRate,traceNames] = concatenateEphusTraces(files,sweeps,chan
         end
     end
     
-    if ~exist(data,'var')
+    if ~exist('data','var')
         data = [];
         traceNames = {};
         return
