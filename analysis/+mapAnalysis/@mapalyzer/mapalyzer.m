@@ -49,6 +49,8 @@ classdef mapalyzer < dynamicprops
         sampleRate
         traceBrowsers
         tracesToAnalyze
+        userFunction
+        userFunctionFolder
     end
     
     methods
@@ -126,6 +128,8 @@ classdef mapalyzer < dynamicprops
             set(findobj(self.Figure,'Tag','specifyWhichTraces'),'Callback',@self.specifyWhichTraces_Callback);
             set(findobj(self.Figure,'Tag','setCurrentStepFamily'),'Callback',@self.setCurrentStepFamily_Callback);
             set(findobj(self.Figure,'Tag','analyzeFI'),'Callback',@self.analyzeCurrentFrequencyRelation);
+            set(findobj(self.Figure,'Tag','selectUserFcn'),'Callback',@self.selectUserFcn_Callback);
+            set(findobj(self.Figure,'Tag','runUserFcn'),'Callback',@self.runUserFcn_Callback);
             
             set(get(findobj(self.Figure,'Tag','Help'),'Children'),'Callback',@self.help);
             
@@ -423,22 +427,38 @@ classdef mapalyzer < dynamicprops
         end
         
         % ====================================================================
-
-        function runUserFcn_Callback(hObject, eventdata, handles)
+        
+        function runUserFcn_Callback(self,varargin)
+            currentDir = pwd;
+            
+            cd(self.userFunctionFolder);
+            
             try
-                userFcnName = get(handles.userFcn, 'String');
-                eval(['handles = ' userFcnName '(handles);']);
-                guidata(hObject,handles);
-            catch
-                disp('Problem with userFcn.')
+                self.userFunction(self); % o.o
+
+                cd(currentDir);
+            catch err
+                cd(currentDir);
+                
+                throw(err);
             end
         end
 
-        function selectUserFcn_Callback(hObject, eventdata, handles)
-            cd([fileparts(which('mapalyzer')) '\userFcn']);
-            [f, p] = uigetfile; if f == 0; return; end
-            [fpath, fname] = fileparts([p f]);
-            set(handles.userFcn, 'String', fname);
+        function selectUserFcn_Callback(self,varargin)
+            filterSpec = [fileparts(which('mapAnalysis.mapalyzer')) '\userFcn\*.m'];
+            [filename, pathname] = uigetfile(filterSpec); 
+            
+            if ~ischar(filename)
+                return
+            end
+            
+            self.userFunctionFolder = pathname;
+            
+            [~,functionName,ext] = fileparts(filename);
+            
+            assert(strcmp(ext,'.m'),'You must choose an M-file');
+            
+            self.userFunction = str2func(functionName);
         end
 
         function qvTrace_Callback(hObject, eventdata, handles)
