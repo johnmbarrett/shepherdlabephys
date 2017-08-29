@@ -77,13 +77,13 @@ function [ax,traceHandles,peakHandles,stimHandles] = plotTraces(ax,data,sampleRa
     
     title(parser.Results.Title,'Parent',ax);
     
-    xlabel(ax,'time (s)');
+    xlabel(ax,'Time (s)');
     
     switch parser.Results.RecordingMode
         case 'VC'
-            ylabel('pA');
+            ylabel('Current (pA)');
         case 'IC'
-            ylabel('mV');
+            ylabel('Voltage (mV)');
         otherwise
             % TODO : this should throw an error, or at least a warning
             disp('Check the recordMode field');
