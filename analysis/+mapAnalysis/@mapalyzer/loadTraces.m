@@ -174,43 +174,31 @@ function loadTraces(self, mode)
             self.recordingActive.Filenames = arrayfun(@(jj) sprintf('%s%04d%s',self.recordingActive.BaseName,jj,ext),1:numel(traceFiles),'UniformOutput',false);
         end
 
-        for jj = 1:numel(self.recordingActive.Filenames)
-            fname = [self.recordingActive.UncagingPathName self.recordingActive.Filenames{jj}];
+        switch ext
+            case '.xsg'
+                fnames = cellfun(@(fname) [self.recordingActive.UncagingPathName fname],self.recordingActive.Filenames,'UniformOutput',false);
+                [data,self.sampleRate] = concatenateEphusTraces(fnames,[],self.aiTraceNum,'Program',self.aiProgram);
 
-            switch ext
-                case '.xsg'
-                    [traces,self.sampleRate] = concatenateEphusTraces(fname,[],self.aiTraceNum,'Program',self.aiProgram);
-
-                    % TODO : can probably do better than this?
-                    if jj == 1
-                        data = traces;
-                    else
-                        data(:,(end+1):(end+size(traces,2))) = traces;
-                    end
-
-                    % TODO : we load it here and in concatenateEphusTraces.
-                    % Should be an option to pass the struct directly to
-                    % concatenateEphusTraces
-                    traceFile = load(fname,'-mat'); 
-
-                    if isfield(traceFile.header, 'headerGUI')
-                        self.recordingActive.HeaderGUI = traceFile.header.headerGUI.headerGUI;
-                    end
-
-                    % TODO : didn't notice this the first time round, but
-                    % we load these for every file and then just throw away
-                    % the old ones?
-                    self.recordingActive.PhysHeader = traceFile.header.ephys.ephys;
-                    self.recordingActive.UncagingHeader = traceFile.header.mapper.mapper;
-                    self.recordingActive.ScopeHeader = traceFile.header.scopeGui.ephysScopeAccessory; % gs 20060625
-                    self.recordingActive.AcquirerHeader = traceFile.header.acquirer.acquirer; % gs 20060625
-                    self.recordingActive.ImagingSysHeader = traceFile.header.imagingSys.imagingSys; % gs 20080627
+                for jj = 1:numel(fnames)
+                    % TODO : we load every file twice.  should be able to
+                    % pass the structs directly to concatenateEphusTraces
+                    traceFile = load(fnames{end},'-mat'); 
                     % NB -- for turbomaps, is this the correct value for the power????? i.e., was this the correctly computed value for this trace, or the prev trace?
-                    self.recordingActive.LaserIntensity(jj) = self.recordingActive.UncagingHeader.specimenPlanePower;
-                otherwise
-                    warning('ShepherdLab:mapalyzer:loadTraces:UnknownFileFormat', 'Unknown file format %s\n',ext(2:end));
-                    return
-            end
+                    self.recordingActive.LaserIntensity(jj) = traceFile.header.mapper.mapper.specimenPlanePower;
+                end
+
+                if isfield(traceFile.header, 'headerGUI')
+                    self.recordingActive.HeaderGUI = traceFile.header.headerGUI.headerGUI;
+                end
+
+                self.recordingActive.PhysHeader = traceFile.header.ephys.ephys;
+                self.recordingActive.UncagingHeader = traceFile.header.mapper.mapper;
+                self.recordingActive.ScopeHeader = traceFile.header.scopeGui.ephysScopeAccessory; % gs 20060625
+                self.recordingActive.AcquirerHeader = traceFile.header.acquirer.acquirer; % gs 20060625
+                self.recordingActive.ImagingSysHeader = traceFile.header.imagingSys.imagingSys; % gs 20080627
+            otherwise
+                warning('ShepherdLab:mapalyzer:loadTraces:UnknownFileFormat', 'Unknown file format %s\n',ext(2:end));
+                return
         end
         
         if numel(self.recordingActive.UncagingHeader.mapPatternArray) == size(data,2)
