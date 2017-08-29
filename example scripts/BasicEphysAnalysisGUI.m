@@ -617,11 +617,19 @@ classdef BasicEphysAnalysisGUI < handle
         function createChoicePanel(self,fig,dims,sweepNameRegex,tagPrefix)
             delete(self.getTraceChoiceUIControls(fig));
             
+            nChoices = prod(arrayfun(@(dim) size(self.TraceNames,dim),dims));
+            
+            if nChoices > 10
+                self.createChoiceSliderPanel(fig,nChoices,dims,tagPrefix)
+            else
+                self.createChoiceCheckboxPanel(fig,nChoices,dims,sweepNameRegex,tagPrefix);
+            end
+        end
+            
+        function createChoiceCheckboxPanel(self,fig,nChoices,dims,sweepNameRegex,tagPrefix)
             figurePosition = get(fig,'Position');
             figureWidth = figurePosition(3);
             figureHeight = figurePosition(4);
-            
-            nChoices = prod(arrayfun(@(dim) size(self.TraceNames,dim),dims));
             
             for ii = 1:nChoices
                 % TODO : this assumes TraceNames is always 3D with first
@@ -650,6 +658,10 @@ classdef BasicEphysAnalysisGUI < handle
                     'Value',            all(ismember(self.TraceNames(sliceIndex{:}),self.SelectedTraceNames))   ...
                     );
             end
+        end
+        
+        function createChoiceSliderPanel(self,fig,nChoices,dims,tagPrefix)
+            errordlg('If you''re seeing this message, tell John to stop using the deployment repository as a development branch');
         end
             
         function createAllTracesChoicePanel(self,fig)
