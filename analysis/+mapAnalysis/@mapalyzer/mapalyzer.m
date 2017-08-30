@@ -109,8 +109,21 @@ classdef mapalyzer < dynamicprops
             
             self.initializeAnalysisParameters();
             
+            % TODO : doing it this way until I can figure out what's
+            % causing changes to the figure to blow up the file size in git
+            set(findobj(self.Figure,'Tag','lstbxTraceType'),'String',{...
+                'general physiology traces';    ...
+                'excitation profile';           ...
+                'input map';                    ...
+                'ephys traces';                 ...
+                'video map'                     ...
+                });
+            
             % TODO : can I alter the figure itself to have these always be
             % the default callbacks?
+            % update 2017-08-30 - actually, I've saved the figure a bunch
+            % of times and commited to the repository, so this might
+            % already be the default callbacks.  must test at some point.
             set(findobj(self.Figure,'Tag','lstbxTraceType'),'Callback',@self.setLoadMethodFromTraceType);
             set(findobj(self.Figure,'Tag','handles2ws'),'Callback',@self.assignDataInWorkspace)
             set(findobj(self.Figure,'Tag','pbLoad'),'Callback',@self.loadSwitchyard);
@@ -229,7 +242,7 @@ classdef mapalyzer < dynamicprops
             chosenTraceType = get(hObject, 'Value');
             
             switch traceType{chosenTraceType}
-                case 'excitation profile' 
+                case {'excitation profile' 'video map'}
                     selectionType = 'single map';
                 case 'general physiology traces'
                     selectionType = 'selected traces';
