@@ -9,7 +9,7 @@ classdef VideoMapRecording < mapAnalysis.Recording
     end
     
     properties(GetAccess=public,SetAccess=protected,Dependent=true)
-        Files
+        Filenames
     end
     
     properties
@@ -21,7 +21,7 @@ classdef VideoMapRecording < mapAnalysis.Recording
     
     properties(Access=protected)
         BodyParts_
-        Files_
+        Filenames_
     end
     
     methods
@@ -45,8 +45,8 @@ classdef VideoMapRecording < mapAnalysis.Recording
             self.BodyParts_ = bodyParts;
         end
         
-        function files = get.Files(self)
-            files = self.Files_;
+        function files = get.Filenames(self)
+            files = self.Filenames_;
         end
         
         [figs,tf,warpedMaps,refs] = alignHeatmapToBrainImage(self,brainImage)
@@ -61,8 +61,29 @@ classdef VideoMapRecording < mapAnalysis.Recording
         
         hs = plotTrajectories(self,l,varargin)
         
-        function name = getRecordingName(~)
-            name = 'FUCK YOU';
+        function name = getRecordingName(self)
+            if isempty(self.Filenames)
+                name = 'Unknown experiment';
+                return
+            end
+            
+            % TODO : does matlab seriously not have a builtin for this?  if
+            % so I should use it, if not I should make a util
+            dirs = strsplit(fileparts(self.Filenames{1}),{'\' '/'});
+            dirs = dirs(~cellfun(@isempty,dirs));
+            name = strjoin(dirs(end-2:end),'/');
+        end
+        
+        function directory = getDirectory(self)
+            if isempty(self.Filenames)
+                directory = '';
+            else
+                directory = fileparts(self.Filenames{1});
+            end
+        end
+        
+        function setDirectory(~,~)
+            error('ShepherdLab:mapAnalysis:VideoMapRecording:setDirectory:CannotSetDirectory','You can not set the directory of a VideoMapRecording');
         end
     end
     
@@ -115,9 +136,10 @@ classdef VideoMapRecording < mapAnalysis.Recording
             recording.MotionTubes = mapAnalysis.Map(motionTubes,pattern); % TODO : make the cell maps arrays?
             recording.PathLengths = mapAnalysis.Map(pathLengths,pattern);
             recording.Trajectories = mapAnalysis.Map(trajectories,pattern);
+            recording.ROIs = roiPositions;
             
             if exist('files','var')
-                recording.Files_ = files;
+                recording.Filenames_ = files;
             else
                 warning('ShepherdLab:mapAnalysis:VideoMapRecording:fromMATFile:FilesNotFound','Full paths were not saved in motor mapping result file %s, assuming files have standard naming and are located in the same folder as the result file.\n',matFile);
                 
@@ -127,7 +149,7 @@ classdef VideoMapRecording < mapAnalysis.Recording
                 
                 load(matFile,'map');
                 
-                recording.Files_ = arrayfun(@(ii) sprintf('%s\\VT%d.mat',path,ii-1),1:size(map,1),'UniformOutput',false);
+                recording.Filenames_ = arrayfun(@(ii) sprintf('%s\\VT%d.mat',path,ii-1),1:size(map,1),'UniformOutput',false);
             end
         end
         

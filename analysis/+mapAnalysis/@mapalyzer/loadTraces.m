@@ -1,4 +1,4 @@
-function loadTraces(self, mode)
+function loadTraces(self, mode, traceType)
     % loadTraces -- private version for mapAnalysis2p0 gui
     %
     % MODES:
@@ -19,6 +19,9 @@ function loadTraces(self, mode)
     % GUIDE style close to true OOP, but honestly I have no idea what's
     % going on here
     % --------------------------------------------------------------------
+    
+    % TODO : this method is still VERY messy - should be split into
+    % multiple (e.g. per load method, per file type, etc)
 
     % reset
     self.resetAnalysis(true);
@@ -65,17 +68,27 @@ function loadTraces(self, mode)
     %     cd(handles.data.analysis.uncagingPathName); 
     % catch
     % end
+    
+    switch traceType
+        case 'video map'
+            filterSpec = '*.mat';
+            % TODO : this gets almost immediately overwritten
+            self.recordingActive = mapAnalysis.VideoMapRecording();
+        otherwise
+            filterSpec = {
+                '*.xsg', 'Ephus traces (*.xsg)';        ...
+                '*.mwf', 'TidalWave traces (*.mwf)';    ... TODO : do we still need to support this?
+                '*.*', 'All files (*.*)'                ...
+                };
+            self.recordingActive = mapAnalysis.EphusCellRecording();
+    end
 
     self.mapNumbers = [];
 
     for ii = 1:numberOfMaps
         % select the traces to load - step 1
         if mode < 3
-            [filename, pathname] = uigetfile(...
-                {   '*.xsg', 'Ephus traces (*.xsg)'; ...
-                    '*.mwf', 'TidalWave traces (*.mwf)'; ...
-                    '*.*', 'All files (*.*)'}, ...
-                'Select any trace.'); % TODO : explicit trace selection instead of assuming we want all in the folder?
+            [filename, pathname] = uigetfile(filterSpec,'Select any trace.'); % TODO : explicit trace selection instead of assuming we want all in the folder?
             
             if isnumeric(filename)
                 return
@@ -122,60 +135,77 @@ function loadTraces(self, mode)
         [~,filename,ext] = fileparts(fullfile);
 
         traceFiles = dir([pathname '*' ext]);
-        self.recordingActive = mapAnalysis.EphusCellRecording();
-        self.recordingActive.Directory = pathname;
 
         switch ext
+            case '.mat'
+                self.mapNumbers = 1; % TODO : not really meaningful for video maps
             case '.mwf'
                 % TODO : bump mapNumbers into the Cell class.  also fix up
                 % the whole data/UI interaction, maybe into something
                 % MVC-ish
-                self.mapNumbers = [self.mapNumbers str2double(self.recordingActive.directory(end-1:end))];
+                self.mapNumbers = [self.mapNumbers str2double(pathname(end-1:end))];
             case '.xsg'
-                dirs = strsplit(self.recordingActive.Directory,{'/' '\'});
+                dirs = strsplit(pathname,{'/' '\'});
                 dirs = dirs(~cellfun(@isempty,dirs));
                 mapNumber = sscanf(dirs{end},'map%f');
 
                 if isempty(mapNumber)
-                    warning('ShepherdLab:mapalyzer:loadTraces:UnknownMapNumbers', 'Problem extracting map number from directory name %s\n',self.recordingActive.Directory);
+                    warning('ShepherdLab:mapalyzer:loadTraces:UnknownMapNumbers', 'Problem extracting map number from directory name %s\n',pathname);
                     self.mapNumbers(end+1) = NaN;
                 else
                     self.mapNumbers(end+1) = mapNumber;
+                end
+                
+                self.recordingActive.UncagingPathName = pathname; % TODO : is this needed?
+
+                self.recordingActive.BaseName = filename(1:end-4);
+                self.recordingActive.TraceNumber = str2double(filename(end-3:end));
+
+                self.patchChannel = 'P1'; % default
+
+                if mode == 1 || mode == 2
+                    lastFile = traceFiles(numel(traceFiles));
+
+                    if ~isempty(strfind(lastFile.name, 'P2')) % i.e., there must be P2 traces ...
+                        patchChannel = questdlg('Choose patch channel to process', ...
+                            'Select patch channel', 'P1', 'P2', 'P1');
+
+                        self.patchChannel = patchChannel;
+                        p = strfind(handles.data.map.recordingActive.BaseName, 'P1');
+                        self.recordingActive.BaseName(p+1) = patchChannel(2);
+                    end
                 end
             otherwise
                 warning('ShepherdLab:mapalyzer:loadTraces:UnknownFileFormat', 'Unknown file format %s\n',ext(2:end));
                 return
         end
 
-        self.recordingActive.UncagingPathName = pathname; % TODO : is this needed?
-
-        self.recordingActive.BaseName = filename(1:end-4);
-        self.recordingActive.TraceNumber = str2double(filename(end-3:end));
-
-        self.patchChannel = 'P1'; % default
-
-        if mode == 1 || mode == 2
-            lastFile = traceFiles(numel(traceFiles));
-
-            if ~isempty(strfind(lastFile.name, 'P2')) % i.e., there must be P2 traces ...
-                patchChannel = questdlg('Choose patch channel to process', ...
-                    'Select patch channel', 'P1', 'P2', 'P1');
-
-                self.patchChannel = patchChannel;
-                p = strfind(handles.data.map.recordingActive.BaseName, 'P1');
-                self.recordingActive.BaseName(p+1) = patchChannel(2);
-            end
-        end
-
         % step 2
         if mode == 0
-            self.recordingActive.Filenames = selectFilesFromList(pathname, ext);
+            filenames = selectFilesFromList(pathname, ext);
+        elseif strcmp(traceType,'video map')
+            if mode ~= 1
+                % TODO : disable these options in the UI
+                errordlg('Currently only loading a single map is supported for video maps.')
+                return
+            end
+            
+            filenames = fullfile;
         else %if mode == 1 || mode == 2 || mode == 3
-            self.recordingActive.Filenames = arrayfun(@(jj) sprintf('%s%04d%s',self.recordingActive.BaseName,jj,ext),1:numel(traceFiles),'UniformOutput',false);
+            filenames = arrayfun(@(jj) sprintf('%s%04d%s',self.recordingActive.BaseName,jj,ext),1:numel(traceFiles),'UniformOutput',false);
         end
 
         switch ext
+            case '.mat'
+                if mode == 0
+                    errordlg('This isn''t implemented yet.'); % TODO : implement
+                    self.recordingActive = mapAnalysis.VideoMapRecording.fromVideoFiles(self.recordingActive.Filenames);
+                elseif mode == 1
+                    self.recordingActive = mapAnalysis.VideoMapRecording.fromMATFile(fullfile);
+                end
             case '.xsg'
+                self.recordingActive.Directory = pathname;
+                self.recordingActive.Filenames = filenames;
                 fnames = cellfun(@(fname) [self.recordingActive.UncagingPathName fname],self.recordingActive.Filenames,'UniformOutput',false);
                 [data,self.sampleRate] = concatenateEphusTraces(fnames,[],self.aiTraceNum,'Program',self.aiProgram);
 
@@ -196,21 +226,15 @@ function loadTraces(self, mode)
                 self.recordingActive.ScopeHeader = traceFile.header.scopeGui.ephysScopeAccessory; % gs 20060625
                 self.recordingActive.AcquirerHeader = traceFile.header.acquirer.acquirer; % gs 20060625
                 self.recordingActive.ImagingSysHeader = traceFile.header.imagingSys.imagingSys; % gs 20080627
-            otherwise
-                warning('ShepherdLab:mapalyzer:loadTraces:UnknownFileFormat', 'Unknown file format %s\n',ext(2:end));
-                return
-        end
         
-        if numel(self.recordingActive.UncagingHeader.mapPatternArray) == size(data,2)
-            pattern = self.recordingActive.UncagingHeader.mapPatternArray;
-        else
-            pattern = 1:size(data,2);
-        end
-        
-        self.recordingActive.Raw = mapAnalysis.Map(data',pattern);
+                if numel(self.recordingActive.UncagingHeader.mapPatternArray) == size(data,2)
+                    pattern = self.recordingActive.UncagingHeader.mapPatternArray;
+                else
+                    pattern = 1:size(data,2);
+                end
 
-        switch ext
-            case '.xsg'
+                self.recordingActive.Raw = mapAnalysis.Map(data',pattern);
+                
                 if self.recordingActive.UncagingHeader.xSpacing ~= self.recordingActive.UncagingHeader.ySpacing
                     warning('ShepherdLab:mapalyzer:loadTraces:UnequalXYSpacing','Map %d has different X and Y spacing, using X spacing by default.',ii);
                 end
@@ -268,72 +292,76 @@ function loadTraces(self, mode)
         self.experimentName = self.recordingActive.BaseName(1 : (k-1));
     elseif strcmp(ext, '.xsg')
         self.experimentName = self.recordingActive.BaseName(1 : 6);
-    end
-
-    if isfield(self.recordingActive.AcquirerHeader,'triggerTime') && ~isempty(self.recordingActive.AcquirerHeader.triggerTime)
-        triggerTime = self.recordingActive.AcquirerHeader.triggerTime;
-        self.triggerTime = datestr(datenum(triggerTime), 16);
-        self.experimentDate = [datestr(datenum(triggerTime), 'ddd') ', ' datestr(datenum(triggerTime), 1)];
     else
-        self.experimentDate = 'not noted';
-        self.triggerTime = 'not noted';
+        self.experimentName = self.recordingActive.RecordingName;
     end
 
-    if ~isempty(self.recordingActive.ScopeHeader.breakInTime)
-        self.breakInTime = datestr(datenum(self.recordingActive.ScopeHeader.breakInTime), 16);
-    else
-        self.breakInTime = 'not noted';
-    end
-
-    % register and display clamp mode
-    if isfield(self.recordingActive.PhysHeader,'modeString')
-        self.clampMode = self.recordingActive.PhysHeader.modeString;
-        
-        switch self.clampMode(1)
-            case 'V'
-                self.isCurrentClamp = 0;
-            case 'I'
-                self.isCurrentClamp = 1; 
-            otherwise
-                warning('ShepherdLab:mapalyzer:loadTraces:UnknownRecordingMode','Unknown recording mode %s\n',self.clampMode);
+    if strcmp(ext, '.xsg')
+        if isfield(self.recordingActive.AcquirerHeader,'triggerTime') && ~isempty(self.recordingActive.AcquirerHeader.triggerTime)
+            triggerTime = self.recordingActive.AcquirerHeader.triggerTime;
+            self.triggerTime = datestr(datenum(triggerTime), 16);
+            self.experimentDate = [datestr(datenum(triggerTime), 'ddd') ', ' datestr(datenum(triggerTime), 1)];
+        else
+            self.experimentDate = 'not noted';
+            self.triggerTime = 'not noted';
         end
-    else
-        self.clampMode = '';
-    end
+        
+        if ~isempty(self.recordingActive.ScopeHeader.breakInTime)
+            self.breakInTime = datestr(datenum(self.recordingActive.ScopeHeader.breakInTime), 16);
+        else
+            self.breakInTime = 'not noted';
+        end
 
-    self.laserIntensity = mean(self.avgLaserIntensity);
+        % register and display clamp mode
+        if isfield(self.recordingActive.PhysHeader,'modeString')
+            self.clampMode = self.recordingActive.PhysHeader.modeString;
 
-    if self.recordingActive.UncagingHeader.xSpacing == self.recordingActive.UncagingHeader.ySpacing
-        self.mapSpacing = self.recordingActive.UncagingHeader.xSpacing;
-    else
-        self.mapSpacing = [self.recordingActive.UncagingHeader.xSpacing self.recordingActive.UncagingHeader.ySpacing];
-    end
+            switch self.clampMode(1)
+                case 'V'
+                    self.isCurrentClamp = 0;
+                case 'I'
+                    self.isCurrentClamp = 1; 
+                otherwise
+                    warning('ShepherdLab:mapalyzer:loadTraces:UnknownRecordingMode','Unknown recording mode %s\n',self.clampMode);
+            end
+        else
+            self.clampMode = '';
+        end
 
-    self.mapPatternName = self.recordingActive.UncagingHeader.mapPattern;
-    self.xPatternOffset = self.recordingActive.UncagingHeader.xPatternOffset;
-    self.yPatternOffset = self.recordingActive.UncagingHeader.yPatternOffset;
-    self.spatialRotation = self.recordingActive.UncagingHeader.spatialRotation;
+        self.laserIntensity = mean(self.avgLaserIntensity);
 
-    [self.somaXnew, self.somaYnew] = self.transformSomaPosition(...
-        self.somaX,self.somaY,self.spatialRotation, ...
-        self.xPatternOffset,self.yPatternOffset);
+        if self.recordingActive.UncagingHeader.xSpacing == self.recordingActive.UncagingHeader.ySpacing
+            self.mapSpacing = self.recordingActive.UncagingHeader.xSpacing;
+        else
+            self.mapSpacing = [self.recordingActive.UncagingHeader.xSpacing self.recordingActive.UncagingHeader.ySpacing];
+        end
 
-    % --------- reset cell params
-    self.rseriesAvg = [];
-    self.rmembraneAvg = [];
-    self.cmembraneAvg = [];
-    self.tauAvg = [];
+        self.mapPatternName = self.recordingActive.UncagingHeader.mapPattern;
+        self.xPatternOffset = self.recordingActive.UncagingHeader.xPatternOffset;
+        self.yPatternOffset = self.recordingActive.UncagingHeader.yPatternOffset;
+        self.spatialRotation = self.recordingActive.UncagingHeader.spatialRotation;
 
-    if ~self.retainForNextCell
-        self.cellType = 'neuron';
-        self.Vrest = [];
-        self.Vhold = [];
-        self.animalAge = [];
-        self.exptCondition = '';
-        self.notes = '';
+        [self.somaXnew, self.somaYnew] = self.transformSomaPosition(...
+            self.somaX,self.somaY,self.spatialRotation, ...
+            self.xPatternOffset,self.yPatternOffset);
 
-        for cc = 'ABCDEFGH'
-            self.(['field' cc 'Val']) = '';
+        % --------- reset cell params
+        self.rseriesAvg = [];
+        self.rmembraneAvg = [];
+        self.cmembraneAvg = [];
+        self.tauAvg = [];
+
+        if ~self.retainForNextCell
+            self.cellType = 'neuron';
+            self.Vrest = [];
+            self.Vhold = [];
+            self.animalAge = [];
+            self.exptCondition = '';
+            self.notes = '';
+
+            for cc = 'ABCDEFGH'
+                self.(['field' cc 'Val']) = '';
+            end
         end
     end
 

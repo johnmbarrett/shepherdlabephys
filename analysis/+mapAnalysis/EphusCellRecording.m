@@ -3,7 +3,6 @@ classdef EphusCellRecording < mapAnalysis.CellRecording
         AcquirerHeader
         BaseName
         TraceNumber
-        Directory
         Filenames
         HeaderGUI
         ImagingSysHeader

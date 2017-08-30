@@ -11,7 +11,12 @@ function R = chooseImageFile(self,noPlot,varargin)
 % rather than add them to the axes
 % ---------------------------------------------------------------
 
-    dir = self.recordingActive.UncagingPathName;
+    if isa(self.recordingActive,'mapAnalysis.EphusCellRecording')
+        % TODO : what's the difference between these two anyway?
+        dir = self.recordingActive.UncagingPathName;
+    else
+        dir = self.recordingActive.Directory;
+    end
     
     if isempty(dir)
         dir = pwd;
@@ -53,6 +58,7 @@ function R = chooseImageFile(self,noPlot,varargin)
     set(gca, 'YDir', 'normal');
     daspect([1 1 1]);
 
+    % TODO : set image(X|Y)range properly for video maps
     set(hSliceImg, 'XData', [-self.imageXrange/2 self.imageXrange/2], 'YData', [-self.imageYrange/2 self.imageYrange/2]);
     axis tight;
 

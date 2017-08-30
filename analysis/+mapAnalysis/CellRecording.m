@@ -1,4 +1,8 @@
 classdef CellRecording < mapAnalysis.Recording
+    properties(Access=protected)
+        Directory_
+    end
+    
     properties
         CMembrane
         RMembrane
@@ -38,6 +42,16 @@ classdef CellRecording < mapAnalysis.Recording
         FourthWindowMinimumResponseAmplitude mapAnalysis.Map
         FourthWindowMaximumResponseAmplitude mapAnalysis.Map
         FourthWindowMeanResponseAmplitude mapAnalysis.Map
+    end
+    
+    methods
+        function directory = getDirectory(self)
+            directory = self.Directory_;
+        end
+        
+        function setDirectory(self,directory)
+            self.Directory = directory;
+        end
     end
 end
     

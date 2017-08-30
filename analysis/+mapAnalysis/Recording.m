@@ -3,14 +3,28 @@ classdef Recording < handle
         RecordingName
     end
     
+    properties(Dependent=true)
+        Directory
+    end
+    
     methods
         function name = get.RecordingName(self)
             name = self.getRecordingName();
+        end
+        
+        function directory = get.Directory(self)
+            directory = self.getDirectory();
+        end
+        
+        function set.Directory(self,directory)
+            self.setDirectory(directory);
         end
     end
     
     methods(Abstract=true)
         name = getRecordingName(self)
+        directory = getDirectory(self)
+        setDirectory(self,directory)
     end
     
     methods(Static=true)
