@@ -10,9 +10,14 @@ classdef VideoMapRecording < mapAnalysis.Recording
     
     properties(GetAccess=public,SetAccess=protected,Dependent=true)
         Filenames
+        Distance
+        AverageDistance
     end
     
     properties
+        % TODO : TotalMovement and PathLengths can be derived from
+        % trajectories, so maybe they should be moved to lazy-loaded
+        % Dependent properties in the style of Displacement
         TotalMovement mapAnalysis.Map
         MotionTubes mapAnalysis.Map
         PathLengths mapAnalysis.Map
@@ -22,6 +27,8 @@ classdef VideoMapRecording < mapAnalysis.Recording
     properties(Access=protected)
         BodyParts_
         Filenames_
+        Distance_
+        AverageDistance_
     end
     
     methods
@@ -43,6 +50,48 @@ classdef VideoMapRecording < mapAnalysis.Recording
             assert(iscellstr(bodyParts),'ShepherdLab:mapAnalysis:VideoMapRecording:InvalidBodyParts','BodyParts must be a cell array of strings of length equal to the number of columns in Map');
             
             self.BodyParts_ = bodyParts;
+        end
+        
+        function distance = get.Distance(self)
+            if isempty(self.Trajectories)
+                distance = [];
+                return
+            end
+            
+            % TODO: what if trajectories is dirty? we need to make that
+            % dependent and have it clear the properties that depend on it
+            if isa(self.Distance_,'mapAnalysis.Map')
+                distance = self.Distance_;
+                return
+            end
+            
+            distance = self.Trajectories.derive(@(x) cellfun(@(y) [0 0; squeeze(sqrt(sum(diff(y,[],1).^2,2)))],x,'UniformOutput',false));
+        end
+        
+        function averageDistance = get.AverageDistance(self)
+            if isempty(self.Trajectories)
+                averageDistance = [];
+                return
+            end
+            
+            % TODO: what if trajectories is dirty? we need to make that
+            % dependent and have it clear the properties that depend on it
+            if isa(self.AverageDistance_,'mapAnalysis.Map')
+                averageDistance = self.AverageDistance_;
+                return
+            end
+            
+            function y = safeMean(x)
+                maxLength = max(cellfun(@(x) size(x,1),x));
+                
+                for ii = 1:numel(x)
+                    x{ii}(end+(1:max(0,maxLength-size(x,1))),:) = NaN;
+                end
+                
+                y = permute(mean(reshape(cat(3,x{:}),[size(x{1}) size(x)]),4),[3 1 2]);
+            end
+            
+            averageDistance = self.Distance.derive(@safeMean);
         end
         
         function files = get.Filenames(self)

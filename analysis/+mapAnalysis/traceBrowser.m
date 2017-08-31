@@ -96,7 +96,7 @@ classdef traceBrowser < handle
         end
         
         function set.Recording(self,recording)
-            assert(isa(recording,'mapAnalysis.CellRecording'),'Recording must be a mapAnalysis.CellRecording');
+            assert(isa(recording,'mapAnalysis.Recording'),'Recording must be a mapAnalysis.Recording');
             
             self.Recording_ = recording;
             
@@ -162,8 +162,12 @@ classdef traceBrowser < handle
             else
                 recordingMode = 'VC';
             end
+            
+            data = self.Data;
+            
+            extraColons = repmat({':'},1,ndims(data)-2);
     
-            [~,self.TraceHandles,~,self.StimHandles] = plotTraces(self.TraceAxis,self.Data(:,index),self.Parent.sampleRate,'RecordingMode',recordingMode,'StimStart',stimOn);
+            [~,self.TraceHandles,~,self.StimHandles] = plotTraces(self.TraceAxis,squeeze(data(:,index,extraColons{:})),self.Parent.sampleRate,'RecordingMode',recordingMode,'StimStart',stimOn);
             % TODO : can we pass options like these through to plot traces instead?
             set(self.TraceHandles, 'Color', 'b');
             set(self.StimHandles, 'Color', 'c');
@@ -180,6 +184,10 @@ classdef traceBrowser < handle
             % Editing:
             % gs may 2006
             % -----------------------------------------------------------
+            
+            if isempty(spatialRotation) || isempty(xPatternOffset) || isempty(yPatternOffset) || isempty(imageXrange) || isempty(imageYrange)
+                return
+            end
 
             Hlims = [-imageXrange/2 imageXrange/2];
             Vlims = [-imageYrange/2 imageYrange/2];

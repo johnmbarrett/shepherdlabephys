@@ -98,11 +98,15 @@ classdef genericTraceBrowser < mapAnalysis.traceBrowser
         end
         
         function data = getData(self)
-            if self.IsBaselineSubtracted
-                data = self.Recording.BaselineSubtracted.Data';
+            if isa(self.Recording,'mapAnalysis.VideoMapRecording')
+                data = self.Recording.AverageDistance.Data;
+            elseif self.IsBaselineSubtracted
+                data = self.Recording.BaselineSubtracted.Data;
             else
-                data = self.Recording.Raw.Data';
+                data = self.Recording.Raw.Data;
             end
+            
+            data = permute(data,[2 1 3:ndims(data)]);
         end
         
         function averageTraces(self,varargin)

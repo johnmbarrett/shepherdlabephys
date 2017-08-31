@@ -50,7 +50,7 @@ classdef CellRecording < mapAnalysis.Recording
         end
         
         function setDirectory(self,directory)
-            self.Directory = directory;
+            self.Directory_ = directory;
         end
     end
 end

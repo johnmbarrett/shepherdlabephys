@@ -86,7 +86,8 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
                 return
             end
             
-            data = self.Map.Data';
+            data = self.Map.Data;
+            data = permute(data,[2 1 3:ndims(data)]);
         end
         
         function map = get.Map(self)
@@ -95,7 +96,11 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
                 return
             end
             
-            map = self.Recording.BaselineSubtracted;
+            if isa(self.Recording,'mapAnalysis.CellRecording')
+                map = self.Recording.BaselineSubtracted;
+            elseif isa(self.Recording,'mapAnalysis.VideoMapRecording')
+                map = self.Recording.AverageDistance;
+            end
         end
         
         function updatePlots(self)
@@ -116,8 +121,13 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
         function highlightTrace(self,ax)
             hold(ax,'on');
             [row,col] = find(flipud(self.Map.Pattern) == self.CurrentTrace);%GS20060524
-            y = (row - 1) * self.Recording.UncagingHeader.xSpacing - self.MagFactorY;
-            x = (col - 1) * self.Recording.UncagingHeader.ySpacing - self.MagFactorX;
+            y = (row - 1);
+            x = (col - 1);
+            
+            if isa(self.Recording,'mapAnalysis.EphusCellRecording') % TODO : do this properly for other kinds of maps
+                y = y * self.Recording.UncagingHeader.xSpacing - self.MagFactorY;
+                x = x * self.Recording.UncagingHeader.ySpacing - self.MagFactorX;
+            end
             
             % TODO : this feels dirty somehow?
             if ax == self.MapAxis
@@ -140,8 +150,14 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
         
         function plotMap(self)
             [sizeY,sizeX] = size(self.Map.Pattern); % LTP corrected 
-            self.MagFactorX = (self.Recording.UncagingHeader.xSpacing*(sizeX-1))/2;
-            self.MagFactorY = (self.Recording.UncagingHeader.ySpacing*(sizeY-1))/2;
+            
+            if isa(self.Recording,'mapAnalysis.EphusCellRecording')
+                self.MagFactorX = (self.Recording.UncagingHeader.xSpacing*(sizeX-1))/2;
+                self.MagFactorY = (self.Recording.UncagingHeader.ySpacing*(sizeY-1))/2;
+            else
+                self.MagFactorX = 1;
+                self.MagFactorY = 1;
+            end
 
             self.MapHandle = imagesc(self.MapAxis,flipud(self.Map.Pattern)); %GS20060524
             set(self.MapHandle,'XData',[-self.MagFactorX self.MagFactorX],'YData',[-self.MagFactorY self.MagFactorY]);
@@ -208,14 +224,14 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
             % TODO : isn't this done somewhere else?
             if isempty(self.Parent.imageXrange)
                 xrange = 1900;
-                disp('ShepherdLab:mapAnalysis:traceBrowser:NoXRange','Missing image X range, using default');
+                warning('ShepherdLab:mapAnalysis:traceBrowser:NoXRange','Missing image X range, using default');
             else
                 xrange = self.Parent.imageXrange;
             end
 
             if isempty(self.Parent.imageYrange)
                 yrange = 1520;
-                disp('ShepherdLab:mapAnalysis:traceBrowser:NoYRange','Missing image Y range, using default');
+                warning('ShepherdLab:mapAnalysis:traceBrowser:NoYRange','Missing image Y range, using default');
             else
                 yrange = self.Parent.imageYrange;
             end
