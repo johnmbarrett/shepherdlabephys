@@ -22,7 +22,7 @@ minBlobSize = input('How big is the smallest mouse in pixels?');
 
 %%
 
-[X,Y] = trackBlobs(V,'Mask',mask,'MinBlobSize',minBlobSize,'Threshold',@(I) abs(I) > 50);
+[X,Y] = trackBlobs(V,'Mask',mask,'MinBlobSize',minBlobSize,'Threshold',@(I) abs(I) > 50,'Debug',true);
 
 figure;
 plot(X,Y);

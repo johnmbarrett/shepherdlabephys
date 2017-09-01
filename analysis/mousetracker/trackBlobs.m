@@ -1,6 +1,7 @@
 function [X,Y] = trackBlobs(V,varargin)
     parser = inputParser;
     
+    addParameter(parser,'Debug',false,@(x) islogical(x) && isscalar(x));
     addParameter(parser,'MaxBlobs',Inf,@(x) validateattributes(x,{'numeric'},{'real' 'positive' 'scalar'}));
     addParameter(parser,'Mask',true,@(x) islogical(x) && ismatrix(x));
     addParameter(parser,'MinBlobSize',0,@(x) validateattributes(x,{'numeric'},{'finite' 'real' 'nonnegative' 'scalar'}));
@@ -31,37 +32,90 @@ function [X,Y] = trackBlobs(V,varargin)
     
     oldBlobs = initialBlobs;
     
+    if parser.Results.Debug
+        figure;
+        hold on;
+    end
+    
     for ii = 2:nFrames
         tic;
         currentBlobs = getBlobs(threshold(V(:,:,ii)) & parser.Results.Mask,parser.Results.MaxBlobs,parser.Results.MinBlobSize);
-        newBlobs = cell(size(oldBlobs));
+        
+        if parser.Results.Debug
+            cla;
+            colours = distinguishable_colors(max(numel(oldBlobs),numel(currentBlobs)));
+            xlim([0 sizeV(2)]);
+            ylim([0 sizeV(1)]);
+            
+            for jj = 1:numel(oldBlobs)
+                if isempty(oldBlobs{jj})
+                    continue
+                end
+                
+                [x,y] = ind2sub(sizeV(1:2),oldBlobs{jj});
+                shape = alphaShape(x,y);
+                plot(shape,'EdgeColor','none','FaceColor',colours(jj,:));
+            end
+        end 
+        
+        nextBlobs = cell(size(oldBlobs));
+        percentOverlap = zeros(numel(currentBlobs),numel(oldBlobs));
         
         for jj = 1:numel(currentBlobs)
             blob = currentBlobs{jj};
             
-            percentOverlap = 100*cellfun(@(b) numel(intersect(b,blob))/numel(union(b,blob)),oldBlobs);
-            
-            assert(all(isfinite(percentOverlap)),'A non-negative finite number divided by a positive finite number should always a finite number.');
-            
-            [biggestOverlap,biggestOverlapIndex] = max(percentOverlap);
-            
-            if biggestOverlap == 0 % assume completely new blob
-                % TODO : can a mouse ever move > the entire length of its
-                % body in a single frame?  might want to look for
-                % similar-sized blobs nearby in this case before assuming a
-                % completely new blob?
-                X(:,end+1) = NaN; %#ok<AGROW>
-                Y(:,end+1) = NaN; %#ok<AGROW>
-                blobIndex = size(X,2);
-            else
-                blobIndex = biggestOverlapIndex;
+            if parser.Results.Debug
+                [x,y] = ind2sub(sizeV(1:2),currentBlobs{jj});
+                k = boundary(x,y);
+                plot(x(k),y(k),'Color',1-colours(jj,:));
+                drawnow;
             end
             
-            newBlobs{blobIndex} = blob;
-            [X(ii,blobIndex),Y(ii,blobIndex)] = getBlobCoords(blob,sizeV(1:2));
+            percentOverlap(jj,:) = 100*cellfun(@(b) numel(intersect(b,blob))/numel(union(b,blob)),oldBlobs);
         end
         
-        oldBlobs = newBlobs;
+        completelyNewBlobs = sum(percentOverlap,2) == 0;
+        nCompletelyNewBlobs = sum(completelyNewBlobs);
+        
+        X(:,end+(1:nCompletelyNewBlobs)) = NaN;
+        Y(:,end+(1:nCompletelyNewBlobs)) = NaN;
+        nextBlobs(end+(1:nCompletelyNewBlobs)) = currentBlobs(completelyNewBlobs);
+        
+        currentBlobs(completelyNewBlobs) = [];
+        percentOverlap(completelyNewBlobs,:) = [];
+        
+        [~,nextBlobIndices] = max(percentOverlap,[],2);
+        
+        [uniqueNextBlobIndices,~,nextBlobIndexIndices] = unique(nextBlobIndices);
+        
+        for jj = 1:numel(uniqueNextBlobIndices)
+            splitBlobIndices = find(nextBlobIndexIndices == jj);
+            
+            if numel(splitBlobIndices) == 1
+                continue
+            end
+            
+            [~,biggestOverlap] = max(percentOverlap(splitBlobIndices,uniqueNextBlobIndices(jj)));
+            
+            splitBlobIndices(biggestOverlap) = [];
+            
+            nSplitBlobs = numel(splitBlobIndices);
+            
+            X(:,end+(1:nSplitBlobs)) = NaN;
+            Y(:,end+(1:nSplitBlobs)) = NaN;
+            nextBlobs(end+(1:nSplitBlobs)) = currentBlobs(splitBlobIndices);
+            
+            currentBlobs(splitBlobIndices) = [];
+            nextBlobIndices(splitBlobIndices) = [];
+        end
+        
+        assert(isequal(uniqueNextBlobIndices,sort(nextBlobIndices)),'All new and split blobs should have been removed');
+        
+        nextBlobs(nextBlobIndices) = currentBlobs; % this might leave some blobs empty, but this is okay
+        
+        [X(ii,:),Y(ii,:)] = getBlobCoords(nextBlobs,sizeV(1:2));
+        
+        oldBlobs = nextBlobs;
         toc;
     end
 end
@@ -76,6 +130,12 @@ function [X,Y] = getBlobCoords(blobs,sizeI)
     Y = zeros(1,n);
     
     for ii = 1:n
+        if isempty(blobs{ii})
+            X(ii) = nan;
+            Y(ii) = nan;
+            continue
+        end
+        
         [y,x] = ind2sub(sizeI,blobs{ii});
         X(ii) = mean(x);
         Y(ii) = mean(y);
@@ -84,9 +144,20 @@ end
 
 function blobs = getBlobs(I,maxBlobs,minBlobSize)
     blobs = bwconncomp(I);
+    blobs = blobs.PixelIdxList;
 
-    % TODO : should really sort by size
-    blobs = blobs.PixelIdxList(1:min(numel(blobs.PixelIdxList),maxBlobs));
-
-    blobs(cellfun(@(b) numel(b) < minBlobSize,blobs)) = [];
+    blobSizes = cellfun(@numel,blobs);
+    
+    tooSmall = blobSizes < minBlobSize;
+    
+    blobSizes(tooSmall) = [];
+    blobs(tooSmall) = [];
+    
+    if ~isfinite(maxBlobs)
+        return
+    end
+    
+    [~,sortIndices] = sort(blobSizes);
+    
+    blobs(sortIndices(1:end-maxBlobs)) = [];
 end
