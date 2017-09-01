@@ -1,10 +1,12 @@
-function [X,Y] = trackBlobs(V,varargin)
+function [X,Y,d] = trackBlobs(V,varargin)
     parser = inputParser;
     
     addParameter(parser,'Debug',false,@(x) islogical(x) && isscalar(x));
     addParameter(parser,'MaxBlobs',Inf,@(x) validateattributes(x,{'numeric'},{'real' 'positive' 'scalar'}));
     addParameter(parser,'Mask',true,@(x) islogical(x) && ismatrix(x));
     addParameter(parser,'MinBlobSize',0,@(x) validateattributes(x,{'numeric'},{'finite' 'real' 'nonnegative' 'scalar'}));
+    addParameter(parser,'MinDistanceTravelled',0,@(x) validateattributes(x,{'numeric'},{'finite' 'real' 'nonnegative' 'scalar'}));
+    addParameter(parser,'MinExistencePercentage',5,@(x) validateattributes(x,{'numeric'},{'finite' 'real' 'scalar' '>=' 0 '<=' 100}));
     addParameter(parser,'Threshold',NaN,@(x) isa(x,'function_handle') || validateattributes(x,{'numeric'},{'finite' 'real' 'nonnegative' 'scalar'}));
     parser.parse(varargin{:});
     
@@ -118,6 +120,28 @@ function [X,Y] = trackBlobs(V,varargin)
         oldBlobs = nextBlobs;
         toc;
     end
+    
+    isTooTransient = 100*sum(~isnan(X))/size(X,1) < parser.Results.MinExistencePercentage;
+    
+    X(:,isTooTransient) = [];
+    Y(:,isTooTransient) = [];
+    
+    d = zeros(1,size(X,2));
+    
+    for ii = 1:size(X,2)
+        isIncluded = ~isnan(X(:,ii));
+        x = X(isIncluded,ii);
+        y = Y(isIncluded,ii);
+        d(ii) = sum(sqrt(diff(x).^2+diff(y).^2));
+    end
+    
+    assert(all(isfinite(d)),'If a blob exists in one dimension it must exist in the other');
+    
+    isTooStationary = d < parser.Results.MinDistanceTravelled;
+    
+    X(:,isTooStationary) = [];
+    Y(:,isTooStationary) = [];
+    d(:,isTooStationary) = [];
 end
 
 function [X,Y] = getBlobCoords(blobs,sizeI)
