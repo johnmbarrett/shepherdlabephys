@@ -2,6 +2,7 @@ function [X,Y] = trackBlobs(V,varargin)
     parser = inputParser;
     
     addParameter(parser,'MaxBlobs',Inf,@(x) validateattributes(x,{'numeric'},{'real' 'positive' 'scalar'}));
+    addParameter(parser,'Mask',true,@(x) islogical(x) && ismatrix(x));
     addParameter(parser,'MinBlobSize',0,@(x) validateattributes(x,{'numeric'},{'finite' 'real' 'nonnegative' 'scalar'}));
     addParameter(parser,'Threshold',NaN,@(x) isa(x,'function_handle') || validateattributes(x,{'numeric'},{'finite' 'real' 'nonnegative' 'scalar'}));
     parser.parse(varargin{:});
@@ -14,7 +15,7 @@ function [X,Y] = trackBlobs(V,varargin)
         threshold = @(I) I > parser.Results.Threshold;
     end
     
-    initialBlobs = getBlobs(threshold(V(:,:,1)),parser.Results.MaxBlobs,parser.Results.MinBlobSize);
+    initialBlobs = getBlobs(threshold(V(:,:,1)) & parser.Results.Mask,parser.Results.MaxBlobs,parser.Results.MinBlobSize);
     sizeV = size(V);
     nFrames = sizeV(3);
     nBlobs = numel(initialBlobs);
@@ -32,7 +33,7 @@ function [X,Y] = trackBlobs(V,varargin)
     
     for ii = 2:nFrames
         tic;
-        currentBlobs = getBlobs(threshold(V(:,:,ii)),parser.Results.MaxBlobs,parser.Results.MinBlobSize);
+        currentBlobs = getBlobs(threshold(V(:,:,ii)) & parser.Results.Mask,parser.Results.MaxBlobs,parser.Results.MinBlobSize);
         newBlobs = cell(size(oldBlobs));
         
         for jj = 1:numel(currentBlobs)
@@ -84,6 +85,7 @@ end
 function blobs = getBlobs(I,maxBlobs,minBlobSize)
     blobs = bwconncomp(I);
 
+    % TODO : should really sort by size
     blobs = blobs.PixelIdxList(1:min(numel(blobs.PixelIdxList),maxBlobs));
 
     blobs(cellfun(@(b) numel(b) < minBlobSize,blobs)) = [];

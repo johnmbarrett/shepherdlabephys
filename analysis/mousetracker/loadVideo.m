@@ -31,7 +31,8 @@ function V = loadVideo(videoFile,varargin)
             sizeV(1:2) = ceil(sizeI(1:2)/binning);
         else
             sizeV(1:2) = binning;
-            binning = ceil(sizeI(1:2)./sizeV(1:2));
+            binning = ceil(sizeI(1)./sizeV(1));
+            assert(binning == ceil(sizeI(2)./sizeV(2)),'When specifying size to bin to, aspect ratio must be the same as the original video');
         end
     end
     
