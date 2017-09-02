@@ -1,4 +1,42 @@
 function V = loadVideo(videoFile,varargin)
+%LOADVIDEO  Convenience function for loading videos into memory
+%
+%   V = LOADVIDEO(VIDEOFILE) loads the entirety of the video specified by
+%   the path VIDEOFILE into memory and returns the result as a matrix V.
+%   Any video format supported by VideoReader can be loaded.
+%
+%   V = LOADVIDEO(VIDEOFILE,PARAM1,VALUE1,PARAM2,VALUE2,...) allows
+%   specifying any of the following name-value pairs:
+%
+%   'BackgroundImage'       An image of the same size as each frame of V or
+%                           a scalar value.  In either case, it is 
+%                           subtracted from each frame of V before 
+%                           returning.
+%   'Binning'               A scalar or a two-element vector.  If set to a
+%                           scalar, B, then each BxB region of V is binned 
+%                           into a single pixel before returning.  If set 
+%                           to a two-element vector, each frame of V is 
+%                           shrunk to the specified size by binning.  The 
+%                           aspect ratio must be maintained and the value 
+%                           of Binning must be equal to the frame size of V
+%                           divided by an integer value.
+%   'ConvertToGrayscale'    If true, converts V to grayscale by averaging
+%                           along the third dimension (which is assumed to
+%                           be colour).
+%   'MaxFrames'             Maximum number of frames to return.  By
+%                           default, all frames in the video are returned.
+%   'Scaling'               May be a scalar, in which case V is divided by
+%                           the specified value before return, or an image
+%                           of the same size as in each frame of V.  In the
+%                           latter case, each frame of V is divided 
+%                           element-wise by the image provided.  Combining
+%                           the BackgroundImage and Scaling options allows
+%                           images to be Z-scored by passing in a mean and
+%                           a standard deviation image, respectively.
+
+%   Created by John Barrett 2017-08-31 18:12 CDT
+%   Last modified by John Barrett 2017-09-01 19:39 CDT
+
     parser = inputParser;
     
     isImageOrScalar = @(x) isnumeric(x) && (isscalar(x) || (ismember(ndims(x),[2 3]) && ismember(size(x,3),[1 3]) && all(isfinite(x(:)) & isreal(x(:)) & x(:) > 0)));

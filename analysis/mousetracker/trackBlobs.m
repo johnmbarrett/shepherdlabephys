@@ -1,4 +1,74 @@
 function [X,Y,d] = trackBlobs(V,varargin)
+%TRACKBLOBS Track multiple blobs in a series of images
+%
+%   [X,Y] = TRACKBLOBS(V) finds "blobs" (regions of connected pixels) in
+%   the series of images V and tracks them, returning the X and Y
+%   co-ordinates of each blob's centre of mass in each frame.  V must be an
+%   NxMxP numeric or logical matrix.  If none of the thresholding options
+%   are set (see below), V must be pre-binarised for TRACKBLOBS to work 
+%   effectively.  The resulting matrices X and Y will have size [P Q],
+%   where Q is the number of blobs detected.
+%
+%   Different numbers of blobs may be detected in each frame.  TRACKBLOBS
+%   attempts to keep track of which blob is which by assuming that blobs
+%   cannot travel a distance greater than their length in any direction in
+%   one frame, hence two blobs that overlap in consecutive frames are
+%   likely the same blob.  If a blob overlaps with multiple blobs in the
+%   preceding frame, it is assumed to be the blob with which it shares the
+%   greatest percentage overlap (100*<number of intesecting pixels>/<number
+%   of conjoined pixels>).  If, after applying this heuristic, multiple
+%   current blobs overlap with the same preceding blob, the blob with the
+%   greatest percentage overlap is assumed to be the preceding blob and the
+%   others to have split off from it.  Blobs that don't appear in a frame
+%   are assigned NaN X and Y coordinates for that frame.
+%
+%   [X,Y,d] = TRACKBLOBS(V) additionally returns a 1xQ row vector, d,
+%   giving the total distance travelled (in pixels) by each blob.
+%
+%   [...] = TRACKBLOBS(V,PARAM1,VALUE1,PARAM2,VALUE2,...) allows specifying
+%   the following name-value pair arguments:
+%
+%       'Debug'                     Plots the outline of every blob in the
+%                                   frame currently being analyzed and the
+%                                   silhouetter of every blob in the
+%                                   previous frame, in opposing colours.
+%                                   Considerably slows the execution of
+%                                   TRACKBLOBS.
+%       'MaxBlobs'                  Maximum number of blobs to locate *in
+%                                   each frame*.  As blobs may appear,
+%                                   disappear, or split off from other
+%                                   blobs, the total number of blobs
+%                                   returned may be greater than MaxBlobs.
+%                                   When excluding blobs, the smallest
+%                                   blobs are thrown away first.  Setting
+%                                   this option may speed up execution when
+%                                   you have many small, artifactual blobs,
+%                                   but risks throwing away important blobs
+%                                   if you have large artifactual blobs in
+%                                   some frames.
+%       'Mask'                      Allows specifying the search area.
+%                                   Must be an NxM logical matrix.  False
+%                                   pixels in mask are not searched for
+%                                   blobs.
+%       'MinBlobSize'               Blobs containing fewer pixels than this
+%                                   value are thrown away in each frame.
+%       'MinDistanceTravelled'      Blobs whose centre of mass travels less
+%                                   than this many pixels are thrown away
+%                                   at the end.
+%       'MinExistencePercentage'    Blobs that appear in few than this
+%                                   percentage of frames are thrown away at
+%                                   the end.
+%       'Threshold'                 If Threshold is a scalar, V is
+%                                   binarized by applying a threshold of
+%                                   the specified value to each frame.  If
+%                                   Threshold is a function handle, the
+%                                   specified function is applied to each
+%                                   frame of V.  The function should accept
+%                                   an image matrix and return a binary
+%                                   matrix.
+
+%   Created by John Barrett 2017-08-31 18:58 CDT
+%   Last modified by John Barrett 2017-09-01 19:23 CDT
     parser = inputParser;
     
     addParameter(parser,'Debug',false,@(x) islogical(x) && isscalar(x));
