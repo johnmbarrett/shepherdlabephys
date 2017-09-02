@@ -18,11 +18,12 @@ mask = createMask(roi);
 
 close(gcf);
 
-minBlobSize = input('How big is the smallest mouse in pixels?');
+minBlobSize = input('How big is the smallest mouse in pixels? ');
+maxBlobs = input('What is the most number of mice that should ever exist at a time? ');
 
 %%
 
-[X,Y,d] = trackBlobs(V,'Mask',mask,'MinBlobSize',minBlobSize,'Threshold',@(I) abs(I) > 50);
+[X,Y,d] = trackBlobs(V,'Mask',mask,'MaxBlobs',maxBlobs,'MinBlobSize',minBlobSize,'Threshold',@(I) abs(I) > 50);
 
 disp('Total distance travelled by all blobs (in pixels):');
 disp(d);
