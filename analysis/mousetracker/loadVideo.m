@@ -41,6 +41,9 @@ function V = loadVideo(videoFile,varargin)
     
     isImageOrScalar = @(x) isnumeric(x) && (isscalar(x) || (ismember(ndims(x),[2 3]) && ismember(size(x,3),[1 3]) && all(isfinite(x(:)) & isreal(x(:)) & x(:) > 0)));
     addParameter(parser,'BackgroundImage',[],isImageOrScalar);
+    % TODO : what about uneven binning?  if we add this at a later date,
+    % the two-element form becomes ambiguous, so we should add a new
+    % parameter called TargetSize or something
     addParameter(parser,'Binning',NaN,@(x) isnumeric(x) && ismember(numel(x),[1 2]) && all(isfinite(x) & isreal(x) & round(x) == x));
     addParameter(parser,'ConvertToGrayscale',false,@(x) islogical(x) && isscalar(x));
     addParameter(parser,'MaxFrames',Inf,@(x) isnumeric(x) && isscalar(x) && ~isnan(x) && isreal(x) && x > 0);

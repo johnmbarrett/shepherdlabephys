@@ -69,6 +69,10 @@ function [X,Y,d] = trackBlobs(V,varargin)
 
 %   Created by John Barrett 2017-08-31 18:58 CDT
 %   Last modified by John Barrett 2017-09-01 19:23 CDT
+
+%   TODO : are there better algorithms than this?  the CV community must
+%   have something
+
     parser = inputParser;
     
     addParameter(parser,'Debug',false,@(x) islogical(x) && isscalar(x));
@@ -146,6 +150,10 @@ function [X,Y,d] = trackBlobs(V,varargin)
             percentOverlap(jj,:) = 100*cellfun(@(b) numel(intersect(b,blob))/numel(union(b,blob)),oldBlobs);
         end
         
+        % TODO : is this always correct?  what if a blob moves REALLY fast?
+        % or disappears in a frame for artefactual reasons?  I suspect once
+        % you relax some of these assumptions, the problem becomes
+        % ill-posed, but maybe worth investigating in future
         completelyNewBlobs = sum(percentOverlap,2) == 0;
         nCompletelyNewBlobs = sum(completelyNewBlobs);
         
@@ -160,6 +168,7 @@ function [X,Y,d] = trackBlobs(V,varargin)
         
         [uniqueNextBlobIndices,~,nextBlobIndexIndices] = unique(nextBlobIndices);
         
+        % TODO : would be good to return the "family tree" of blobs
         for jj = 1:numel(uniqueNextBlobIndices)
             splitBlobIndices = find(nextBlobIndexIndices == jj);
             
@@ -212,6 +221,8 @@ function [X,Y,d] = trackBlobs(V,varargin)
     X(:,isTooStationary) = [];
     Y(:,isTooStationary) = [];
     d(:,isTooStationary) = [];
+    
+    % TODO : return the blobs themselves in each frame?
 end
 
 function [X,Y] = getBlobCoords(blobs,sizeI)
