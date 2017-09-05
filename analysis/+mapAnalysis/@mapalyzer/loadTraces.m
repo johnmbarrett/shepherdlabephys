@@ -203,6 +203,8 @@ function loadTraces(self, mode, traceType)
                 elseif mode == 1
                     self.recordingActive = mapAnalysis.VideoMapRecording.fromMATFile(fullfile);
                 end
+                
+                self.sampleRate = 100; % TODO : pull out of the file?
             case '.xsg'
                 self.recordingActive.Directory = pathname;
                 self.recordingActive.Filenames = filenames;
