@@ -49,7 +49,9 @@ function loadSwitchyard(self,varargin)
 
     self.recordingActive = self.recordings(1);
 
-    self.chooseImageFile();
+    if ~strcmp(traceType,'video map')
+        self.chooseImageFile();
+    end
 
     close(hWaitBar);
 end

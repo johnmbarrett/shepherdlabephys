@@ -202,6 +202,73 @@ function loadTraces(self, mode, traceType)
                     self.recordingActive = mapAnalysis.VideoMapRecording.fromVideoFiles(self.recordingActive.Filenames);
                 elseif mode == 1
                     self.recordingActive = mapAnalysis.VideoMapRecording.fromMATFile(fullfile);
+                    
+                    stimDir = splitDirs(pathname);
+                    stimDir = stimDir{end-1};
+                    
+                    stimNumber = sscanf(stimDir,'stim %d');
+                    
+                    while isempty(stimNumber)
+                        stimNumber = inputdlg('Enter stim number:');
+                        stimNumber = str2num(stimNumber{1}); %#ok<ST2NM>
+                    end
+                    
+                    notesDir = dirAbove(pathname,2);
+                    notesFile = [notesDir '\notes for matlab.txt'];
+                    
+                    if ~exist(notesFile,'file')
+                        [notesFile,notesDir] = uigetfile('*.txt','Choose notes file');
+                        notesFile = [notesDir notesFile]; %#ok<AGROW>
+                    end
+                    
+                    experimentTable = readtable(notesFile,'Delimiter','\t');
+                    
+                    params = experimentTable(stimNumber,:);
+                    
+                    setupNumber = params.Setup;
+                    
+                    setupFile = sprintf('%s\\setup %d\\setup %d_laser_grid.mat',notesDir,setupNumber,setupNumber);
+                    
+                    la = mapAnalysis.LaserAlignment.fromNotesFile(params,setupFile,'ManualDetection',false,'ThresholdMethod','percentile','Threshold',99);
+                    self.recordingActive.AlignmentInfo = la;
+                    
+                    setupFig = strrep(setupFile,'.mat','.fig');
+                    [setupPath,setupFigName] = fileparts(setupFig);
+                    
+                    self.image.imgDir = setupPath;
+                    self.image.imgName = setupFigName;
+                    self.image.info = [];
+                    
+                    open(setupFig);
+                    
+                    imageHandle = findobj(gca,'Type','Image');
+                    imageSize = size(imageHandle.CData);
+                    
+                    self.spatialRotation = 0;
+                    self.xPatternOffset = 0;
+                    self.yPatternOffset = 0;
+                    self.imageXrange = imageSize(2);
+                    self.imageYrange = imageSize(1);
+                    
+                    % TODO : no??? everything is a mess
+                    self.spatialRotation = 0;
+                    self.xPatternOffset = 0;
+                    self.yPatternOffset = 0;
+                    
+                    set(gcf,'Units','pixels','Position',[0 0 fliplr(imageSize)]);
+                    set(gca,'Position',[0 0 1 1]);
+                    
+                    frame = getframe(gca);
+                    
+                    self.image.img = frame.cdata;
+                    
+                    [self.somaX,self.somaY] = la.AlignmentTransform.transformPointsForward(la.Rows/2,la.Cols/2); 
+                    self.somaXnew = self.somaX;
+                    self.somaYnew = self.somaY;
+                    
+                    % TODO : this isn't quite right but it'll do for now
+                    self.mapSpacing = abs(la.GridParameters(2,1));
+                    self.mapSpacingY = abs(la.GridParameters(3,2));
                 end
                 
                 self.sampleRate = 100; % TODO : pull out of the file?

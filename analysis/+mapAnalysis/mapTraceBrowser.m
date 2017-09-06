@@ -125,9 +125,15 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
             x = (col - 1);
             
             if isa(self.Recording,'mapAnalysis.EphusCellRecording') % TODO : do this properly for other kinds of maps
-                y = y * self.Recording.UncagingHeader.xSpacing - self.MagFactorY;
-                x = x * self.Recording.UncagingHeader.ySpacing - self.MagFactorX;
+                xSpacing = self.Recording.UncagingHeader.xSpacing;
+                ySpacing = self.Recording.UncagingHeader.ySpacing;
+            else
+                xSpacing = self.Parent.mapSpacing;
+                ySpacing = self.Parent.mapSpacingY;
             end
+            
+            y = y * ySpacing - self.MagFactorY;
+            x = x * xSpacing - self.MagFactorX;
             
             % TODO : this feels dirty somehow?
             if ax == self.MapAxis
@@ -152,12 +158,15 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
             [sizeY,sizeX] = size(self.Map.Pattern); % LTP corrected 
             
             if isa(self.Recording,'mapAnalysis.EphusCellRecording')
-                self.MagFactorX = (self.Recording.UncagingHeader.xSpacing*(sizeX-1))/2;
-                self.MagFactorY = (self.Recording.UncagingHeader.ySpacing*(sizeY-1))/2;
+                xSpacing = self.Recording.UncagingHeader.xSpacing;
+                ySpacing = self.Recording.UncagingHeader.ySpacing;
             else
-                self.MagFactorX = 1;
-                self.MagFactorY = 1;
+                xSpacing = self.Parent.mapSpacing;
+                ySpacing = self.Parent.mapSpacingY;
             end
+            
+            self.MagFactorX = (xSpacing*(sizeX-1))/2;
+            self.MagFactorY = (ySpacing*(sizeY-1))/2;
 
             self.MapHandle = imagesc(self.MapAxis,flipud(self.Map.Pattern)); %GS20060524
             set(self.MapHandle,'XData',[-self.MagFactorX self.MagFactorX],'YData',[-self.MagFactorY self.MagFactorY]);
