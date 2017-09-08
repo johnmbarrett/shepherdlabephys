@@ -27,7 +27,7 @@ classdef Recording < handle
         setDirectory(self,directory)
         highlightMapPixel(self,ax,highlight,color);
         handle = plotMapPattern(self,ax,highlight)
-        [sliceHandle,mapHandle] = plotMapAreaOnVideoImage(self,ax,highlight)
+        [sliceHandle,mapHandle] = plotMapAreaOnVideoImage(self,ax,img,highlight,varargin)
     end
     
     methods(Static=true)
