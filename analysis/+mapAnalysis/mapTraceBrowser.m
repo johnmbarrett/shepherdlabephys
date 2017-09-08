@@ -114,8 +114,8 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
         
         function changeTrace(self,controlOrValue,varargin)
             self.changeTrace@mapAnalysis.traceBrowser(controlOrValue,varargin{:});
-            self.highlightTrace(self.MapAxis);
-            self.highlightTrace(self.SliceAxis);
+            self.Recording.highlightMapPixel(self.MapAxis,self.CurrentTrace,'c');
+            self.Recording.highlightMapPixel(self.SliceAxis,self.CurrentTrace,'w');
         end
         
         function highlightTrace(self,ax)
@@ -155,25 +155,7 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
         end
         
         function plotMap(self)
-            [sizeY,sizeX] = size(self.Map.Pattern); % LTP corrected 
-            
-            if isa(self.Recording,'mapAnalysis.EphusCellRecording')
-                xSpacing = self.Recording.UncagingHeader.xSpacing;
-                ySpacing = self.Recording.UncagingHeader.ySpacing;
-            else
-                xSpacing = self.Parent.mapSpacing;
-                ySpacing = self.Parent.mapSpacingY;
-            end
-            
-            self.MagFactorX = (xSpacing*(sizeX-1))/2;
-            self.MagFactorY = (ySpacing*(sizeY-1))/2;
-
-            self.MapHandle = imagesc(self.MapAxis,flipud(self.Map.Pattern)); %GS20060524
-            set(self.MapHandle,'XData',[-self.MagFactorX self.MagFactorX],'YData',[-self.MagFactorY self.MagFactorY]);
-            set(self.MapAxis, 'PlotBoxAspectRatio', [1 1 1], 'YDir', 'normal');%GS20060524
-            axis(self.MapAxis,'tight');
-
-            self.highlightTrace(self.MapAxis);
+            self.MapHandle = self.Recording.plotMapPattern(self.MapAxis,self.CurrentTrace);
 
             set(self.MapHandle,'ButtonDownFcn',@self.pickTrace);
         end
@@ -219,53 +201,11 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
                 warning('ShepherdLab:mapAnalysis:traceBrowser:plotSlice:NoSliceImage','No slice image has been selected')
             else
                 R = self.Parent.image.img;
-
-                R = self.transformImagePosition(R, self.Parent.spatialRotation, ...
-                    self.Parent.xPatternOffset, self.Parent.yPatternOffset, ...
-                    self.Parent.imageXrange, self.Parent.imageYrange);    
-
-                R = flipud(R);
             end
 
-            self.SliceHandle = imagesc(self.SliceAxis,R);
-            set(self.SliceAxis,'YDir', 'normal');
-
-            % TODO : isn't this done somewhere else?
-            if isempty(self.Parent.imageXrange)
-                xrange = 1900;
-                warning('ShepherdLab:mapAnalysis:traceBrowser:NoXRange','Missing image X range, using default');
-            else
-                xrange = self.Parent.imageXrange;
-            end
-
-            if isempty(self.Parent.imageYrange)
-                yrange = 1520;
-                warning('ShepherdLab:mapAnalysis:traceBrowser:NoYRange','Missing image Y range, using default');
-            else
-                yrange = self.Parent.imageYrange;
-            end
-
-            set(self.SliceHandle, 'XData', [-xrange/2 xrange/2], 'YData', [-yrange/2 yrange/2], ...
-                'ButtonDownFcn', @self.changeSliceImage);
-            
-            hold(self.SliceAxis,'on');
-
-            self.BlankMapHandle = imagesc(self.SliceAxis,zeros(16,16));
-            set(self.BlankMapHandle, 'AlphaData', .15, 'XData', [-self.MagFactorX self.MagFactorX], 'YData', [-self.MagFactorY self.MagFactorY]);
+            [self.SliceHandle,self.BlankMapHandle] = self.Recording.plotMapAreaOnVideoImage(self.SliceAxis,R,self.CurrentTrace,self.MapHandle);
+            set(self.SliceHandle, 'ButtonDownFcn', @self.changeSliceImage);
             set(self.BlankMapHandle,'ButtonDownFcn',@self.pickTrace);
-
-            self.highlightTrace(self.SliceAxis);
-
-            xdata = get(self.MapHandle, 'XData');
-            ydata = get(self.MapHandle, 'YData');
-            rectangle(self.SliceAxis,'Position', ...
-                [xdata(1) ydata(1) xdata(2)-xdata(1) ydata(2)-ydata(1)], ...
-                'EdgeColor', 'y', 'LineStyle', ':');
-
-            plot(self.SliceAxis,self.Parent.somaXnew,self.Parent.somaYnew,'co');
-            
-            daspect(self.SliceAxis,[1 1 1]);
-            axis(self.SliceAxis,'tight');
         end
     end
 end
