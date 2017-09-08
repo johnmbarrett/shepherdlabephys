@@ -101,9 +101,7 @@ classdef traceBrowser < handle
             self.Recording_ = recording;
             
             % TODO : event-driven model
-            if isa(self.Figure,'handle') && isvalid(self.Figure)
-                self.updatePlots();
-            end
+            self.raiseFigure();
         end
         
         function changeTrace(self,controlOrValue,varargin)

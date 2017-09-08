@@ -8,16 +8,22 @@ function [figs,tf,warpedMaps,refs] = alignHeatmapToBrainImage(self,brainImage)
     rows = self.AlignmentInfo.Rows;
     cols = self.AlignmentInfo.Cols;
     
-    map = reshape(self.Map,rows,cols,size(self.Map,2)); % TODO : multiple maps?
+    map = self.TotalMovement.Array;
     
-    [~,currentFolder] = fileparts(pwd);
-    save(sprintf('%s_heatmap_alignment_transform.mat',currentFolder),'tf');
+    pathname = self.Directory;
+    [~,filename] = fileparts(pathname);
+    save(sprintf('%s\\%s_heatmap_alignment_transform.mat',pathname,filename),'tf');
     
     if ischar(brainImage)
         brainImage = imread(brainImage);
     end
     
-    brainImage = repmat(double(brainImage)/255,1,1,3);
+    brainImage = double(brainImage)/255;
+    
+    if size(brainImage,3) == 1
+        brainImage = repmat(brainImage,1,1,3);
+    end
+    
     cmap = jet(256); % TODO : jet3
     cmap(1,:) = 0;
     

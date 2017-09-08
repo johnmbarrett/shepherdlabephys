@@ -317,7 +317,6 @@ classdef mapalyzer < dynamicprops
                         self.traceBrowsers(ii) = traceBrowser;
                     end
                 else
-                    self.traceBrowsers(ii).raiseFigure();
                     self.traceBrowsers(ii).Recording = theRecordings(ii);
                 end
             end

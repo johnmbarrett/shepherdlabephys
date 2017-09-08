@@ -134,6 +134,51 @@ classdef VideoMapRecording < mapAnalysis.Recording
         function setDirectory(~,~)
             error('ShepherdLab:mapAnalysis:VideoMapRecording:setDirectory:CannotSetDirectory','You can not set the directory of a VideoMapRecording');
         end
+        
+        function highlightMapPixel(self,ax,highlight,color)
+            [y,x] = ind2sub(size(self.TotalMovement.Pattern),highlight);
+            
+            if strcmp(get(ax,'Tag'),'sliceaxis')
+                [x,y] = self.AlignmentInfo.AlignmentTransform.transformPointsForward(x,y);
+            end
+            
+            delete(findobj(ax,'Marker','*'));
+            
+            plot(ax,x,y,'Color',color,'Marker','*');
+        end
+        
+        function handle = plotMapPattern(self,ax,highlight)
+            cla(ax);
+            
+            handle = imagesc(ax,flipud(self.TotalMovement.Pattern));
+            
+            hold(ax,'on');
+            
+            set(ax,'Tag','mapaxis','YDir','normal');
+            xlabel(ax,'<- left | right ->');
+            ylabel(ax,'<- caudal | rostral ->');
+            
+            self.highlightMapPixel(ax,highlight,'c');
+        end
+        
+        function [sliceHandle,blankMapHandle] = plotMapAreaOnVideoImage(self,ax,img,highlight,varargin)
+            cla(ax);
+            
+            sliceHandle = imagesc(ax,img);
+            daspect(ax,[1 1 1]);
+            
+            hold(ax,'on');
+            
+            [X,Y] = meshgrid(1:self.AlignmentInfo.Rows,1:self.AlignmentInfo.Cols);
+            
+            [U,V] = self.AlignmentInfo.AlignmentTransform.transformPointsForward(X,Y);
+            
+            blankMapHandle = plot(ax,U,V,'Color','m','LineStyle','none','Marker','o');
+            
+            set(ax,'Tag','sliceaxis');
+            
+            self.highlightMapPixel(ax,highlight,'w');
+        end
     end
     
     methods(Static=true)
@@ -167,7 +212,7 @@ classdef VideoMapRecording < mapAnalysis.Recording
                 else
                     % assume the squarest map we can, with more rows than
                     % columns, because the mouse brain is long
-                    factors = [1; unique(cumprod(perms(factor(12)),2))];
+                    factors = [1; unique(cumprod(perms(factor(n)),2))];
                     
                     k = numel(factors);
                     assert(mod(k,2) == 0); % it's not square, so it should have an even number of factors

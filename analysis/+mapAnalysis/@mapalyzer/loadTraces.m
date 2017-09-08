@@ -201,8 +201,6 @@ function loadTraces(self, mode, traceType)
                     errordlg('This isn''t implemented yet.'); % TODO : implement
                     self.recordingActive = mapAnalysis.VideoMapRecording.fromVideoFiles(self.recordingActive.Filenames);
                 elseif mode == 1
-                    self.recordingActive = mapAnalysis.VideoMapRecording.fromMATFile(fullfile);
-                    
                     stimDir = splitDirs(pathname);
                     stimDir = stimDir{end-1};
                     
@@ -224,6 +222,10 @@ function loadTraces(self, mode, traceType)
                     experimentTable = readtable(notesFile,'Delimiter','\t');
                     
                     params = experimentTable(stimNumber,:);
+                    
+                    mapSize = sscanf(params.Map{1},'%dx%d');
+                    
+                    self.recordingActive = mapAnalysis.VideoMapRecording.fromMATFile(fullfile,mapSize(1),mapSize(2));
                     
                     setupNumber = params.Setup;
                     
