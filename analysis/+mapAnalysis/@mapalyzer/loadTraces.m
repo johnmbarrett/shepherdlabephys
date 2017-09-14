@@ -229,7 +229,7 @@ function loadTraces(self, mode, traceType)
                     
                     setupNumber = params.Setup;
                     
-                    setupFile = sprintf('%s\\setup %d\\setup %d_laser_grid.mat',notesDir,setupNumber,setupNumber);
+                    setupFile = sprintf('%s\\setup %d\\setup %d_laser_grid_new.mat',notesDir,setupNumber,setupNumber);
                     
                     la = mapAnalysis.LaserAlignment.fromNotesFile(params,setupFile,'ManualDetection',false,'ThresholdMethod','percentile','Threshold',99);
                     self.recordingActive.AlignmentInfo = la;

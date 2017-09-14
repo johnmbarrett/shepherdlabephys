@@ -129,7 +129,7 @@ classdef LaserAlignment
 
             [~,lastDir] = fileparts(pwd);
 
-            saveFile = [lastDir '_laser_grid']; % TODO : more control over saving
+            saveFile = [lastDir '_laser_grid_new']; % TODO : more control over saving
 
             saveas(gcf,saveFile,'fig');
 

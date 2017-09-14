@@ -43,11 +43,11 @@ classdef traceBrowser < handle
 
     methods
         function self = traceBrowser(recording,parent,noPlot)
+            self.Parent = parent;
+            
             self.Recording = recording;
             
             assert(isa(parent,'mapAnalysis.mapalyzer'),'ShepherdLab:mapAnalysis:traceBrowser:InvalidParent','Trace browser parent must be a mapalyzer');
-            
-            self.Parent = parent;
             
             if nargin < 2 || noPlot
                 return

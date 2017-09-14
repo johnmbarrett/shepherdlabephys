@@ -139,7 +139,7 @@ classdef VideoMapRecording < mapAnalysis.Recording
             [y,x] = ind2sub(size(self.TotalMovement.Pattern),highlight);
             
             if strcmp(get(ax,'Tag'),'sliceaxis')
-                [x,y] = self.AlignmentInfo.AlignmentTransform.transformPointsForward(x,y);
+                [x,y] = self.AlignmentInfo.AlignmentTransform.transformPointsForward(y,x);
             end
             
             delete(findobj(ax,'Marker','*'));
