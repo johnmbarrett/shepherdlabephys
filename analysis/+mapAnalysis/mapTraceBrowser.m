@@ -166,19 +166,7 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
             x = eventData.IntersectionPoint(1);
             y = eventData.IntersectionPoint(2);
 
-            xdata = get(source, 'XData'); % TODO : src, surely???
-            numCols = size(M,2);
-            pixelSideX = (xdata(2) - xdata(1))/(numCols - 1);
-            fullSideX = [xdata(1)-pixelSideX/2 xdata(2)+pixelSideX/2];
-            Xfraction = (x - fullSideX(1)) / (fullSideX(2) - fullSideX(1));
-            colInd = ceil(Xfraction * numCols);
-            
-            ydata = get(source, 'YData');
-            numRows = size(M,1);
-            pixelSideY = (ydata(2) - ydata(1))/(numRows - 1);
-            fullSideY = [ydata(1)-pixelSideY/2 ydata(2)+pixelSideY/2];
-            Yfraction = (y - fullSideY(1)) / (fullSideY(2) - fullSideY(1));
-            rowInd = ceil(Yfraction * numRows);
+            [rowInd,colInd] = self.Recording.convertImageCoordinatesToMapCoordinates(x,y,source,size(M,1),size(M,2));
 
             traceNumber = M(rowInd, colInd);
 

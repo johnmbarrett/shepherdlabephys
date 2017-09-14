@@ -18,6 +18,20 @@ classdef EphusCellRecording < mapAnalysis.CellRecording
             name = sprintf('%s%04d',self.BaseName,self.TraceNumber);
         end
         
+        function [rowInd,colInd] = convertImageCoordinatesToMapCoordinates(~,x,y,source,numRows,numCols)
+            xdata = get(source, 'XData'); % TODO : src, surely???
+            pixelSideX = (xdata(2) - xdata(1))/(numCols - 1);
+            fullSideX = [xdata(1)-pixelSideX/2 xdata(2)+pixelSideX/2];
+            Xfraction = (x - fullSideX(1)) / (fullSideX(2) - fullSideX(1));
+            colInd = ceil(Xfraction * numCols);
+            
+            ydata = get(source, 'YData');
+            pixelSideY = (ydata(2) - ydata(1))/(numRows - 1);
+            fullSideY = [ydata(1)-pixelSideY/2 ydata(2)+pixelSideY/2];
+            Yfraction = (y - fullSideY(1)) / (fullSideY(2) - fullSideY(1));
+            rowInd = ceil(Yfraction * numRows);
+        end
+        
         function highlightMapPixel(self,ax,highlight,color)
             hold(ax,'on');
             [row,col] = find(flipud(self.Raw.Pattern) == highlight);%GS20060524
