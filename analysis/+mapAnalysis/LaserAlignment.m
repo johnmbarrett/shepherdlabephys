@@ -92,19 +92,17 @@ classdef LaserAlignment
             end
 
             cd(imageFolder);
-            laserImages = dir('*.bmp');
+            laserImages = loadFilesInNumericOrder('*.bmp','tt([0-9]+)');
             
             if isnan(blankImageIndex)
-                I = imread(laserImages(1).name);
-                J = imread(laserImages(2).name);
-                [~,blankImageIndex] = min([sum(I(:)) sum(J(:))]);
+                I = imread(laserImages{1});
+                J = imread(laserImages{2});
+                % mean-subtracting controls for variations in overall brightness
+                [~,blankImageIndex] = min([sum(I(:)-mean(I(:))) sum(J(:)-mean(J(:)))]);
             end
 
             firstImageIndex = 3-blankImageIndex;
 
-            [~,si] = sort(cellfun(@(A) str2double(A{1}{1}),cellfun(@(s) regexp(s,'tt([0-9])+','tokens'),{laserImages.name},'UniformOutput',false))); % TODO : introduced method, also specify regex
-
-            laserImages = laserImages(si);
             laserImages = laserImages(1:(2*rows*cols));
             
             blankImage = arrayfun(@(idx) imread(laserImages(idx).name),blankImageIndex:2:(2*rows*cols),'UniformOutput',false);
@@ -133,11 +131,11 @@ classdef LaserAlignment
 
             saveas(gcf,saveFile,'fig');
 
-            tf = mm.LaserAlignment.createAlignmentTransformation(rows,cols,beta);
+            tf = mapAnalysis.LaserAlignment.createAlignmentTransformation(rows,cols,beta);
             
             save(saveFile,'grid','beta','CX','CY','rows','cols','tf');
             
-            la = mm.LaserAlignment(rows,cols,angle,vScale,xOffset,yOffset,grid,beta,tf); % TODO : supress figures?
+            la = mapAnalysis.LaserAlignment(rows,cols,angle,vScale,xOffset,yOffset,grid,beta,tf); % TODO : supress figures?
         end
     
         function la = fromMATFile(matFile,angle,vScale,xOffset,yOffset,varargin)
@@ -149,7 +147,7 @@ classdef LaserAlignment
             assert(logical(exist('cols','var')),'MotorMapping:LaserAlignment:ColsNotFound','File %s does not contain a number of columns\n',matFile);
             
             if ~exist('tf','var')
-                tf = mm.LaserAlignment.createAlignmentTransformation(rows,cols,beta); % fuck's sake matlab lern2scope
+                tf = mapAnalysis.LaserAlignment.createAlignmentTransformation(rows,cols,beta); % fuck's sake matlab lern2scope
             end
             
              % TODO : fill in NaNs if possible
@@ -169,7 +167,7 @@ classdef LaserAlignment
                 yOffset = NaN;
             end
             
-            la = mm.LaserAlignment(rows,cols,angle,vScale,xOffset,yOffset,grid,beta,tf);
+            la = mapAnalysis.LaserAlignment(rows,cols,angle,vScale,xOffset,yOffset,grid,beta,tf);
         end
         
         function la = fromNotesFile(params,setupFile,varargin)
@@ -185,10 +183,10 @@ classdef LaserAlignment
             [setupDir,setupFileName] = fileparts(setupFile);
 
             if exist(setupFile,'file')
-                la = mm.LaserAlignment.fromMATFile(setupFile,angle,vScale,xOffset,yOffset);
+                la = mapAnalysis.LaserAlignment.fromMATFile(setupFile,angle,vScale,xOffset,yOffset);
             else
                 try
-                    la = mm.LaserAlignment.fromLaserImages(rows,cols,setupDir,NaN,angle,vScale,xOffset,yOffset,varargin{:});
+                    la = mapAnalysis.LaserAlignment.fromLaserImages(rows,cols,setupDir,NaN,angle,vScale,xOffset,yOffset,varargin{:});
                 catch err
                     logMatlabError(err,sprintf('Encountered the following error trying to align laser for setup %s, using empty LaserAlignment\n',setupFileName));
                     la = LaserAlignment(rows,cols,angle,vScale,xOffset,yOffset);
@@ -197,7 +195,7 @@ classdef LaserAlignment
         end
         
         function la = fromRowsAndCols(rows,cols)
-            la = mm.LaserAlignment(rows,cols,NaN,NaN,NaN,NaN,NaN,NaN,NaN);
+            la = mapAnalysis.LaserAlignment(rows,cols,NaN,NaN,NaN,NaN,NaN,NaN,NaN);
         end
         
         function tf = createAlignmentTransformation(rows,cols,gridParams) % TODO : can a method be both static and non-static?
