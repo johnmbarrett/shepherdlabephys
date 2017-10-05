@@ -22,6 +22,7 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
     properties
         BlankMapHandle
         MapAxis
+        MapChoicePopupMenu
         MapHandle
         MapHighlightHandle
         SliceAxis
@@ -60,15 +61,20 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
                 'min', 1, 'max', 1, 'BackgroundColor', 'w', 'FontSize', 12, ...
                 'Callback', @self.changeTrace, 'String', 1, ...
                 'Units', 'normalized', 'Position', [0.5   0.79    0.06    0.04]);
+            
+            self.MapChoicePopupMenu = uicontrol(self.Figure, 'Tag', 'mapChoicePopupMenu', ...
+                'Style', 'popupmenu', 'BackgroundColor', 'w', 'FontSize', 12, ...
+                'Value', 1, 'String', self.getMapChoices(), 'Callback', @self.changeMap, ...
+                'Units', 'normalized', 'Position', [0.5   0.55    0.1   0.04], 'Enable', 'off');
     
             uicontrol(gcf, 'Style', 'text', 'String', 'current trace', 'FontSize', 10, ...
                 'Units', 'normalized', 'Position', [0.5   0.83    0.06    0.04]);
             
             self.MapAxis = axes;
-            set(self.MapAxis, 'Position', [0.5    0.15    0.1    0.35], 'box', 'on');
+            set(self.MapAxis, 'Tag', 'mapaxis', 'Position', [0.5    0.15    0.1    0.35], 'box', 'on');
             
             self.SliceAxis = axes;
-            set(self.SliceAxis, 'Position', [0.65    0.15    0.3    0.75]);
+            set(self.SliceAxis, 'Tag', 'sliceaxis', 'Position', [0.65    0.15    0.3    0.75]);
             title('Click on axes to upload an image');
             
             self.updatePlots();
@@ -110,6 +116,29 @@ classdef mapTraceBrowser < mapAnalysis.traceBrowser
                 self.plotMap();
                 self.plotSlice();
             end
+        end
+        
+        function choices = getMapChoices(self,varargin)
+            fields = fieldnames(self.Recording);
+            fields = fields(cellfun(@(f) isa(self.Recording.(f),'mapAnalysis.Map') && isnumeric(self.Recording.(f).Data),fields));
+            
+            choices = [{'Pattern'};fields];
+        end
+        
+        function changeMap(self,menu,varargin)
+            choice = menu.Value;
+            
+            if choice == 1
+                map = self.Map.Pattern;
+            else
+                map = self.Recording.(menu.String{choice}).Array;
+            end
+            
+            if size(map,3) > 1
+                map = nanmean(map,3);
+            end
+            
+            set(self.MapHandle,'CData',flipud(map));
         end
         
         function changeTrace(self,controlOrValue,varargin)
