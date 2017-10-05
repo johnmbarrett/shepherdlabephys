@@ -51,7 +51,7 @@ classdef EphusCellRecording < mapAnalysis.CellRecording
             magFactorY = (self.UncagingHeader.ySpacing*(sizeY-1))/2;
         end
         
-        function handle = plotMapPattern(self,ax,map,highlight)
+        function handle = plotMapPattern(self,ax,~,highlight)
             [magFactorX,magFactorY] = self.getMagFactor();
 
             handle = imagesc(ax,flipud(self.Raw.Pattern)); %GS20060524

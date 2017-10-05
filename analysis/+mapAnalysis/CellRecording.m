@@ -45,6 +45,19 @@ classdef CellRecording < mapAnalysis.Recording
     end
     
     methods
+        function n = getNMapLocations(self)
+            n = numel(self.Raw.Pattern);
+        end
+        
+        % TODO : does this actually work????
+        function n = getNTrials(self)
+            n = size(self.Raw.Data,2);
+        end
+        
+        function n = getNChannels(self)
+            n = size(self.Raw.Data{1},3);
+        end
+        
         function directory = getDirectory(self)
             directory = self.Directory_;
         end

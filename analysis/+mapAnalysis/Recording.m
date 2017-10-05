@@ -1,6 +1,9 @@
 classdef Recording < handle
     properties(Dependent=true,SetAccess=immutable)
         RecordingName
+        NMapLocations
+        NTrials
+        NChannels
     end
     
     properties(Dependent=true)
@@ -10,6 +13,18 @@ classdef Recording < handle
     methods
         function name = get.RecordingName(self)
             name = self.getRecordingName();
+        end
+        
+        function n = get.NMapLocations(self)
+            n = self.getNMapLocations();
+        end
+        
+        function n = get.NTrials(self)
+            n = self.getNTrials();
+        end
+        
+        function n = get.NChannels(self)
+            n = self.getNChannels();
         end
         
         function directory = get.Directory(self)
@@ -23,6 +38,9 @@ classdef Recording < handle
     
     methods(Abstract=true)
         name = getRecordingName(self)
+        n = getNMapLocations(self)
+        n = getNTrials(self);
+        n = getNChannels(self)
         directory = getDirectory(self)
         setDirectory(self,directory)
         [r,c] = convertImageCoordinatesToMapCoordinates(self,x,y,source,maxRows,maxCols)

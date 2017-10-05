@@ -130,6 +130,18 @@ classdef VideoMapRecording < mapAnalysis.Recording
             end
         end
         
+        function n = getNMapLocations(self)
+            n = numel(self.Trajectories.Pattern);
+        end
+        
+        function n = getNTrials(self)
+            n = size(self.Trajectories.Data,2);
+        end
+        
+        function n = getNChannels(self)
+            n = size(self.Trajectories.Data{1},3);
+        end
+        
         function setDirectory(~,~)
             error('ShepherdLab:mapAnalysis:VideoMapRecording:setDirectory:CannotSetDirectory','You can not set the directory of a VideoMapRecording');
         end
