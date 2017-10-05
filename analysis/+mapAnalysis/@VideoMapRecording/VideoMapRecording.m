@@ -134,10 +134,16 @@ classdef VideoMapRecording < mapAnalysis.Recording
             error('ShepherdLab:mapAnalysis:VideoMapRecording:setDirectory:CannotSetDirectory','You can not set the directory of a VideoMapRecording');
         end
         
-        function [r,c] = convertImageCoordinatesToMapCoordinates(self,x,y,~,maxRows,maxCols)
-            [r,c] = self.AlignmentInfo.AlignmentTransform.transformPointsInverse(x,y);
-            r = max(0,min(maxRows,round(r)));
-            c = max(0,min(maxCols,round(c)));
+        function [r,c] = convertImageCoordinatesToMapCoordinates(self,x,y,source,maxRows,maxCols)
+            if strcmp(get(get(source,'Parent'),'Tag'),'sliceaxis')
+                [r,c] = self.AlignmentInfo.AlignmentTransform.transformPointsInverse(x,y);
+            else
+                r = y;
+                c = x;
+            end
+            
+            r = max(1,min(maxRows,round(r)));
+            c = max(1,min(maxCols,round(c)));
         end
         
         function highlightMapPixel(self,ax,highlight,color)
