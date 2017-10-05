@@ -37,8 +37,7 @@ classdef VideoMapRecording < mapAnalysis.Recording
         end
         
         function set.AlignmentInfo(self,la)
-            % TODO : pull in LaserAlignment?
-            assert(isa(la,'mm.LaserAlignment') || (isnumeric(la) && isscalar(la) && isnan(la)),'ShepherdLab:mapAnalysis:VideoMapRecording:IllegalLaserAlignment','Alignment info must be of class mm.LaserAlignment or a scalar NaN');
+            assert(isa(la,'mapAnalysis.LaserAlignment') || (isnumeric(la) && isscalar(la) && isnan(la)),'ShepherdLab:mapAnalysis:VideoMapRecording:IllegalLaserAlignment','Alignment info must be of class mapAnalysis.LaserAlignment or a scalar NaN');
             self.AlignmentInfo = la;
         end
         
