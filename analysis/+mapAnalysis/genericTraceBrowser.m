@@ -109,6 +109,16 @@ classdef genericTraceBrowser < mapAnalysis.traceBrowser
             data = permute(data,[2 1 3:ndims(data)]);
         end
         
+        function data = getDataToPlot(self)
+            % TODO : move the map location (condition?)/trial/channel logic
+            % up into traceBrowser and get rid of this horrible kludge
+            data = self.Data;
+            
+            extraColons = repmat({':'},1,ndims(data)-2);
+    
+            data = squeeze(data(:,index,extraColons{:}));
+        end
+        
         function averageTraces(self,varargin)
             tracesToAverage = inputdlg('Enter Matlab-format vector of traces to average (e.g. [1:3 5])');
             tracesToAverage{1} = str2num(tracesToAverage{1}); %#ok<ST2NM>

@@ -39,6 +39,7 @@ classdef traceBrowser < handle
        
     methods(Abstract=true)
         data = getData(self);
+        data = getDataToPlot(self);
     end
 
     methods
@@ -161,11 +162,10 @@ classdef traceBrowser < handle
                 recordingMode = 'VC';
             end
             
-            data = self.Data;
-            
-            extraColons = repmat({':'},1,ndims(data)-2);
+            % TODO : everything is a fucking mess
+            data = self.getDataToPlot();
     
-            [~,self.TraceHandles,~,self.StimHandles] = plotTraces(self.TraceAxis,squeeze(data(:,index,extraColons{:})),self.Parent.sampleRate,'RecordingMode',recordingMode,'StimStart',stimOn);
+            [~,self.TraceHandles,~,self.StimHandles] = plotTraces(self.TraceAxis,data,self.Parent.sampleRate,'RecordingMode',recordingMode,'StimStart',stimOn);
             % TODO : can we pass options like these through to plot traces instead?
             set(self.TraceHandles, 'Color', 'b');
             set(self.StimHandles, 'Color', 'c');
