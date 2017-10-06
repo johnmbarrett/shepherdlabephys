@@ -1,4 +1,4 @@
-classdef BasicMotorMapper < mm.MotorMapper
+classdef BasicMotorMapper < mapAnalysis.MotorMapper
     methods
         function [trajectory,motionTube] = trackMotion(self,I,varargin) % TODO : this is an absolute behemoth of a method.  Can I break it down somehow?
             parser = inputParser; % TODO : properties?
@@ -296,6 +296,22 @@ classdef BasicMotorMapper < mm.MotorMapper
         end
         
         function [map,trajectories,pathLengths,motionTubes,roiPositions,saveFile] = mapMotion(self,files,varargin)
+            [roiPositions,templates,masks] = mapAnalysis.BasicMotorMapper.getROIs(files,varargin{:});
+            
+            roisIndex = find(strcmpi('ROIs',varargin));
+            
+            if ~isempty(roisIndex)
+                varargin(roisIndex+[0 1]) = [];
+            end
+            
+            varargin = [{'ROIs' roiPositions 'Templates' templates 'UpdateTemplate' false 'VideoOutputFile' NaN 'MotionTubeMasks' masks} varargin];
+            
+            [map,trajectories,pathLengths,motionTubes,roiPositions,saveFile] = mapMotion@mapAnalysis.MotorMapper(self,files,varargin{:});
+        end
+    end
+    
+    methods(Static=true)
+        function [roiPositions,templates,masks] = getROIs(files,varargin)
             parser = inputParser; % TODO : can these parameters be promoted to properties?
             parser.KeepUnmatched = true;
             parser.addParameter('ROIs',NaN,@(x) isa(x,'imroi') || (iscell(x) && all(cellfun(@(A) isequal(size(A),[1 4]),x))) || (isnumeric(x) && ismatrix(x) && size(x,2) == 4));
@@ -373,16 +389,6 @@ classdef BasicMotorMapper < mm.MotorMapper
                     max(1,round(pos(1))):min(size(meanFirstImage,2),round(pos(1)+pos(3)))   ...
                     );
             end
-            
-            roisIndex = find(strcmpi('ROIs',varargin));
-            
-            if ~isempty(roisIndex)
-                varargin(roisIndex+[0 1]) = [];
-            end
-            
-            varargin = [{'ROIs' roiPositions 'Templates' templates 'UpdateTemplate' false 'VideoOutputFile' NaN 'MotionTubeMasks' masks} varargin];
-            
-            [map,trajectories,pathLengths,motionTubes,roiPositions,saveFile] = mapMotion@mm.MotorMapper(self,files,varargin{:});
         end
     end
 
