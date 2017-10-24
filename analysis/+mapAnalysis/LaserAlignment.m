@@ -105,7 +105,7 @@ classdef LaserAlignment
 
             laserImages = laserImages(1:(2*rows*cols));
             
-            blankImage = arrayfun(@(idx) imread(laserImages(idx).name),blankImageIndex:2:(2*rows*cols),'UniformOutput',false);
+            blankImage = arrayfun(@(idx) imread(laserImages{idx}),blankImageIndex:2:(2*rows*cols),'UniformOutput',false);
             blankImage = cat(3,blankImage{:});
             blankImage = median(blankImage,3);
             

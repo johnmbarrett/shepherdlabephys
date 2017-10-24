@@ -3,6 +3,7 @@ classdef BasicMotorMapper < mapAnalysis.MotorMapper
         function [trajectory,motionTube] = trackMotion(self,I,varargin) % TODO : this is an absolute behemoth of a method.  Can I break it down somehow?
             parser = inputParser; % TODO : properties?
             parser.KeepUnmatched = true;
+            parser.addParameter('GaussianBlurSigma',NaN,@(x) isnumeric(x) && isscalar(x) && isreal(x) && isfinite(x) && x > 0);
             parser.addParameter('MotionTubeMasks',NaN,@(x) iscell(x) && all(cellfun(@(y) isnumeric(y) & isvector(y),x)));
             parser.addParameter('ROIs',NaN,@(x) isa(x,'imroi') || (iscell(x) && all(cellfun(@(A) isequal(size(A),[1 4]),x))) || (isnumeric(x) && ismatrix(x) && size(x,2) == 4));
             parser.addParameter('Templates',NaN,@(x) iscell(x) && all(cellfun(@ismatrix,x)));
@@ -11,19 +12,37 @@ classdef BasicMotorMapper < mapAnalysis.MotorMapper
             parser.parse(varargin{:});
 
             updateTemplate = parser.Results.UpdateTemplate;
+            
+            isImageList = iscellstr(I);
 
-            extraDims = ndims(I)-2;
+            extraDims = ndims(I)-2*(~isImageList);
 
             firstFrame = 0;
             ii = 0;
+            
+            isToBeFiltered = ~isnan(parser.Results.GaussianBlurSigma);
 
             while std(double(firstFrame(:))) == 0
                 ii = ii + 1;
-                firstFrameIndex = [{':' ':' ii} num2cell(ones(1,extraDims-1))];
-                firstFrame = I(firstFrameIndex{:});
+                
+                if isImageList
+                    firstFrame = imread(I{ii});
+                    firstFrameIndex = {[] [] ii}; % TODO : historical reasons
+                else
+                    firstFrameIndex = [{':' ':' ii} num2cell(ones(1,extraDims-1))];
+                    firstFrame = I(firstFrameIndex{:});
+                    
+                    if isToBeFiltered
+                        firstFrame = imgaussfilt(firstFrame,parser.Results.GaussianBlurSigma);
+                    end
+                end
             end
 
-            sizeI = size(I);
+            if isImageList
+                sizeI = size(firstFrame);
+            else
+                sizeI = size(I);
+            end
 
             if iscell(parser.Results.Templates)
                 templates = parser.Results.Templates;
@@ -31,6 +50,10 @@ classdef BasicMotorMapper < mapAnalysis.MotorMapper
                 templatePos = zeros(numel(templates),4);
 
                 for ii = 1:numel(templates)
+                    if isToBeFiltered
+                        templates{ii} = imgaussfilt(templates{ii},parser.Results.GaussianBlurSigma);
+                    end
+                    
                     C = normxcorr2(templates{ii},firstFrame);
 
                     [ymax,xmax] = find(C == max(C(:)));
@@ -122,7 +145,11 @@ classdef BasicMotorMapper < mapAnalysis.MotorMapper
                 templates = cellfun(@(x,y) firstFrame(x,y),templateY,templateX,'UniformOutput',false);
             end
 
-            nFrames = prod(sizeI(3:end));
+            if isImageList
+                nFrames = numel(I);
+            else
+                nFrames = prod(sizeI(3:end));
+            end
 
             xcenter = round(cellfun(@mean,templateX));
             ycenter = round(cellfun(@mean,templateY));
@@ -150,7 +177,7 @@ classdef BasicMotorMapper < mapAnalysis.MotorMapper
 
             if outputVideo
                 fig = figure;
-                set(fig,'Position',[100 100 size(I,2) size(I,1)]);
+                set(fig,'Position',[100 100 sizeI(2) sizeI(1)]);
                 ax = gca;
                 set(ax,'Position',[0 0 1 1]);
                 self.plotFrameWithTemplateMarker(ax,firstFrame,trajectory(firstFrameIndex{3},1,:),trajectory(firstFrameIndex{3},2,:),templateX,templateY);
@@ -164,10 +191,19 @@ classdef BasicMotorMapper < mapAnalysis.MotorMapper
             for jj = (firstFrameIndex{3}+1):nFrames
         %         tic;
 
-                nextFrameIndex = cell(1,extraDims);
-                [nextFrameIndex{:}] = ind2sub(sizeI(3:end),jj);
-                nextFrameIndex = [{':' ':'} nextFrameIndex]; %#ok<AGROW>
-                nextFrame = I(nextFrameIndex{:});
+                if isImageList
+                    nextFrame = imread(I{jj});
+                    nextFrameIndex = {[] [] jj}; % TODO : historical reasons
+                else
+                    nextFrameIndex = cell(1,extraDims);
+                    [nextFrameIndex{:}] = ind2sub(sizeI(3:end),jj);
+                    nextFrameIndex = [{':' ':'} nextFrameIndex]; %#ok<AGROW>
+                    nextFrame = I(nextFrameIndex{:});
+                end
+                    
+                if isToBeFiltered
+                    nextFrame = imgaussfilt(nextFrame,parser.Results.GaussianBlurSigma);
+                end
 
                 s = std(double(nextFrame(:)));
                 if s == 0 || isnan(s)
@@ -226,8 +262,8 @@ classdef BasicMotorMapper < mapAnalysis.MotorMapper
 
                     xStart = 1;
                     yStart = 1;
-                    xEnd = numel(templateX{kk});
-                    yEnd = numel(templateY{kk});
+                    xEnd = numel(matchX{kk});
+                    yEnd = numel(matchY{kk});
 
                     [maskY,maskX] = ind2sub([yEnd xEnd],maskIndices);
 
@@ -304,7 +340,7 @@ classdef BasicMotorMapper < mapAnalysis.MotorMapper
                 varargin(roisIndex+[0 1]) = [];
             end
             
-            varargin = [{'ROIs' roiPositions 'Templates' templates 'UpdateTemplate' false 'VideoOutputFile' NaN 'MotionTubeMasks' masks} varargin];
+            varargin = [{'ROIs' roiPositions 'Templates' templates 'VideoOutputFile' NaN 'MotionTubeMasks' masks} varargin];
             
             [map,trajectories,pathLengths,motionTubes,roiPositions,saveFile] = mapMotion@mapAnalysis.MotorMapper(self,files,varargin{:});
         end
@@ -393,7 +429,7 @@ classdef BasicMotorMapper < mapAnalysis.MotorMapper
     end
 
     methods(Access=protected)
-        function plotFrameWithTemplateMarker(ax,frame,x,y,templateX,templateY)
+        function plotFrameWithTemplateMarker(~,ax,frame,x,y,templateX,templateY)
             cla;
             surf(flipud(frame));
             shading interp;
@@ -409,6 +445,8 @@ classdef BasicMotorMapper < mapAnalysis.MotorMapper
             xlim([0 size(frame,2)]);
             ylim([0 size(frame,1)]);
             set(ax,'XTick',[],'YTick',[]);
+            
+            drawnow;
         end
     end
 end
