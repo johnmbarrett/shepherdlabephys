@@ -102,14 +102,24 @@ classdef LaserAlignment
             end
 
             firstImageIndex = 3-blankImageIndex;
-
-            laserImages = laserImages(1:(2*rows*cols));
             
-            blankImage = arrayfun(@(idx) imread(laserImages{idx}),blankImageIndex:2:(2*rows*cols),'UniformOutput',false);
+            parser = inputParser;
+            parser.KeepUnmatched = true;
+            addParameter(parser,'ImagesPerSite',2,@(x) validateattributes(x,{'numeric'},{'real' 'finite' 'positive' 'integer' 'scalar'}));
+            parser.parse(varargin{:});
+            
+            imagesPerSite = parser.Results.ImagesPerSite;
+            totalImages = imagesPerSite*rows*cols;
+
+            laserImages = laserImages(1:totalImages);
+            
+            % TODO : if imagesPerSite > 2 this doesn't use all the
+            % available blank images, but I don't case
+            blankImage = arrayfun(@(idx) imread(laserImages{idx}),blankImageIndex:imagesPerSite:totalImages,'UniformOutput',false);
             blankImage = cat(3,blankImage{:});
             blankImage = median(blankImage,3);
             
-            laserImages = laserImages(firstImageIndex:2:(2*rows*cols));
+            laserImages = laserImages(firstImageIndex:imagesPerSite:totalImages);
             
             varargin = [{'BackgroundSubtraction' true 'BackgroundImage' blankImage} varargin];
 
