@@ -18,12 +18,6 @@ function [figs,tf,warpedMaps,refs] = alignHeatmapToBrainImage(self,brainImage)
         brainImage = imread(brainImage);
     end
     
-    brainImage = double(brainImage)/255;
-    
-    if size(brainImage,3) == 1
-        brainImage = repmat(brainImage,1,1,3);
-    end
-    
     cmap = jet(256); % TODO : jet3
     cmap(1,:) = 0;
     
@@ -38,7 +32,7 @@ function [figs,tf,warpedMaps,refs] = alignHeatmapToBrainImage(self,brainImage)
         warpedMaps{ii} = warpedMap;
         refs{ii} = ref;
         
-        registeredMap = zeros(size(brainImage));
+        registeredMap = zeros(size(brainImage,1),size(brainImage,2),3);
         registeredMap( ...
             round(ref.YWorldLimits(1)+1:ref.YWorldLimits(2)),   ...
             round(ref.XWorldLimits(1)+1:ref.XWorldLimits(2)),:) ...
@@ -46,9 +40,15 @@ function [figs,tf,warpedMaps,refs] = alignHeatmapToBrainImage(self,brainImage)
         
         figs(ii) = figure;
         
-        imagesc(brainImage+registeredMap/5); % TODO : transparency
+        imagesc(brainImage);
+        
+        if size(brainImage,3) == 1
+            colormap(gray);
+        end
         
         hold on;
+        
+        imagesc(registeredMap,'AlphaData',(1/3)*(sum(registeredMap,3) > 0)); % TODO : transparency
         
         plot(grid(:,1),grid(:,2),'LineStyle','none','Marker','.','Color','m'); % TODO : control marker
     end
