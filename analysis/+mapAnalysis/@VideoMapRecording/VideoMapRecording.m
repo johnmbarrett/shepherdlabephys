@@ -208,7 +208,11 @@ classdef VideoMapRecording < mapAnalysis.Recording
         function pattern = standardPattern(rows,cols)
             n = rows*cols;
             
-            pattern = flipud(reshape(1:n,rows,cols));
+            % Store the map in laser command coordinates.  This will put
+            % rostral at the bottom if you plot it using Matlab's image
+            % plotting commands, but plays nicer with fitgeotrans and
+            % imwarp for aligning to the laser grid.
+            pattern = reshape(1:n,rows,cols);
         end
         
         function recording = fromMATFile(matFile,rows,cols) % TODO : a superclass that knows about its subclasses?  is that allowed?  maybe a factory class would be better

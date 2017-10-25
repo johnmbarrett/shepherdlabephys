@@ -199,7 +199,7 @@ classdef LaserAlignment
         end
         
         function tf = createAlignmentTransformation(rows,cols,gridParams) % TODO : can a method be both static and non-static?
-            movingPoints = [0.5 0.5; 0.5 rows+0.5; cols+0.5 0; cols+0.5 rows+0.5];
+            movingPoints = [0.5 0.5; cols+0.5 0.5; 0.5 rows+0.5; cols+0.5 rows+0.5];
             fixedPoints = [ones(4,1) movingPoints]*gridParams;
             tf = fitgeotrans(movingPoints,fixedPoints,'affine');
         end
