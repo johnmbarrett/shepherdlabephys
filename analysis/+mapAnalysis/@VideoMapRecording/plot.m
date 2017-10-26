@@ -9,10 +9,10 @@ function hs = plot(self,useRealCoords,bregmaCoordsPX) % TODO : this method is ki
     end
 
     bodyParts = self.BodyParts;
-    map = self.Map;
+    map = self.TotalMovement.Array; % TODO : pick which map
     
-    if numel(bodyParts) ~= size(map,2)
-        switch size(map,2)
+    if numel(bodyParts) ~= size(map,3)
+        switch size(map,3)
             case 2
                 bodyParts = {'right_forepaw' 'left_forepaw'};
             case 3
@@ -22,7 +22,7 @@ function hs = plot(self,useRealCoords,bregmaCoordsPX) % TODO : this method is ki
         end
     end
 
-    assert(isa(self.AlignmentInfo,'mm.LaserAlignment'),'MotorMapping:MotorMappingResult:MissingAlignmentInfo','You must set AlignmentInfo before plotting a MotorMappingResult.');
+    assert(isa(self.AlignmentInfo,'mapAnalysis.LaserAlignment'),'MotorMapping:MotorMappingResult:MissingAlignmentInfo','You must set AlignmentInfo before plotting a MotorMappingResult.');
 
     layout = [self.AlignmentInfo.Rows self.AlignmentInfo.Cols];
     
@@ -32,7 +32,7 @@ function hs = plot(self,useRealCoords,bregmaCoordsPX) % TODO : this method is ki
     isColsEven = mod(layout,2) == 0;
     ytick = ((1-0.5*isColsEven):(1+(layout(2) > 9)):(layout(2)+isColsEven))';
 
-    assert(prod(layout) == size(map,1),'Map dimensions must match number of stimulation sites');
+    assert(isequal(layout,[size(map,1) size(map,2)]),'Map dimensions must match number of stimulation sites');
     
     mmppxTracking = 0.067;
 
@@ -111,13 +111,14 @@ function hs = plot(self,useRealCoords,bregmaCoordsPX) % TODO : this method is ki
     hs = gobjects(size(map,2),1);
     
     [~,finalFolder] = fileparts(pwd);
+    
+    cax = [min(map(:)) max(map(:))]*mmppxTracking;
 
-    for ii = 1:size(map,2)
+    for ii = 1:size(map,3)
         hs(ii) = figure;
         ax1 = axes;
-        cax = [min(map(:)) max(map(:))]*mmppxTracking;
 
-        imagesc(flipud(reshape(map(:,ii)*mmppxTracking,layout)));
+        imagesc(flipud(map(:,:,ii)*mmppxTracking));
 
         if ~useRealCoords
             % TODO : more control over saving
