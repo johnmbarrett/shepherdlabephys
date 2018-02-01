@@ -14,7 +14,9 @@ function B = pagefun(fun,A,dims,varargin)
     
     sizeA = size(A);
     
-    if ~isnumeric(dims) || ~isequal(size(dims),[1 2]) || any(isnan(dims(:)) | dims(:) < 1 | dims(:) > ndims(A))
+    if nargin < 3
+        dims = [1 2];
+    elseif ~isnumeric(dims) || ~isequal(size(dims),[1 2]) || any(isnan(dims(:)) | dims(:) < 1 | dims(:) > ndims(A))
         varargin = [{dims} varargin];
         dims = [1 2];
     end

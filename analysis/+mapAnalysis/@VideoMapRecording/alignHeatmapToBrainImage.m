@@ -11,6 +11,12 @@ function [figs,tf,warpedMaps,refs] = alignHeatmapToBrainImage(self,brainImage)
     map = self.TotalMovement.Array;
     
     pathname = self.Directory;
+    
+    if ~exist(pathname,'dir')
+        warning('mapAnalysis:VideoMapRecording:alignHeatmapToBrainImage:MissingDirectory','Directory where the data were originally analysed no longer exists.  Falling back to current working directory to save data.');
+        pathname = pwd;
+    end
+    
     [~,filename] = fileparts(pathname);
     save(sprintf('%s\\%s_heatmap_alignment_transform.mat',pathname,filename),'tf');
     
@@ -18,8 +24,7 @@ function [figs,tf,warpedMaps,refs] = alignHeatmapToBrainImage(self,brainImage)
         brainImage = imread(brainImage);
     end
     
-    cmap = jet(256); % TODO : jet3
-    cmap(1,:) = 0;
+    cmap = [0 0 0; jet(256)]; % TODO : jet3
     
     figs = gobjects(size(map,3),1);
     
@@ -36,7 +41,7 @@ function [figs,tf,warpedMaps,refs] = alignHeatmapToBrainImage(self,brainImage)
         registeredMap( ...
             round(ref.YWorldLimits(1)+1:ref.YWorldLimits(2)),   ...
             round(ref.XWorldLimits(1)+1:ref.XWorldLimits(2)),:) ...
-            = interp1(0:255,cmap,min(255*warpedMap/max(warpedMap(:)),255));
+            = interp1(0:256,cmap,min(255*warpedMap/max(warpedMap(:)),255)+1);
         
         figs(ii) = figure;
         

@@ -218,10 +218,10 @@ classdef VideoMapRecording < mapAnalysis.Recording
         function recording = fromMATFile(matFile,rows,cols) % TODO : a superclass that knows about its subclasses?  is that allowed?  maybe a factory class would be better
             recording = mapAnalysis.VideoMapRecording;
             
-            load(matFile);
+            load(matFile,'map','pathLengths','roiPositions','trajectories');
             
             assert(logical(exist('map','var')),'ShepherdLab:mapAnalysis:VideoMapRecording:fromMATFile:TotalMovementNotFound','File %s does not contain a motor map\n',matFile); % TODO : generate if missing
-            assert(logical(exist('motionTubes','var')),'ShepherdLab:mapAnalysis:VideoMapRecording:fromMATFile:MotionTubesNotFound','File %s does not contain any motion tubes\n',matFile);
+%             assert(logical(exist('motionTubes','var')),'ShepherdLab:mapAnalysis:VideoMapRecording:fromMATFile:MotionTubesNotFound','File %s does not contain any motion tubes\n',matFile);
             assert(logical(exist('pathLengths','var')),'ShepherdLab:mapAnalysis:VideoMapRecording:fromMATFile:PathLengthsNotFound','File %s does not contain any path lengths\n',matFile);
             assert(logical(exist('roiPositions','var')),'ShepherdLab:mapAnalysis:VideoMapRecording:fromMATFile:ROIsNotFound','File %s does not contain any ROI coordinates\n',matFile);
             assert(logical(exist('trajectories','var')),'ShepherdLab:mapAnalysis:VideoMapRecording:fromMATFile:TrajectoriesNotFound','File %s does not contain any trajectories\n',matFile);
@@ -254,7 +254,7 @@ classdef VideoMapRecording < mapAnalysis.Recording
             pattern = mapAnalysis.VideoMapRecording.standardPattern(rows,cols);
             
             recording.TotalMovement = mapAnalysis.Map(map,pattern);
-            recording.MotionTubes = mapAnalysis.Map(motionTubes,pattern); % TODO : make the cell maps arrays?
+%             recording.MotionTubes = mapAnalysis.Map(motionTubes,pattern); % TODO : make the cell maps arrays?
             recording.PathLengths = mapAnalysis.Map(pathLengths,pattern);
             recording.Trajectories = mapAnalysis.Map(trajectories,pattern);
             recording.ROIs = roiPositions;
