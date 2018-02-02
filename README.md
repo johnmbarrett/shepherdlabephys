@@ -11,7 +11,6 @@ Table of Contents
 Introduction
 ------------
 
-01234567890123456789012345678901234567890123456789012345678901234567890123456789
 This is a repository for basic analysis of electrophysiology (mostly patch-
 clamp) data in Matlab. It is maintained by John Barrett and is a mixture of new 
 code and heavily refactored versions of older code written by other members of 
