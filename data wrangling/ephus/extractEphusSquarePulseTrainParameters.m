@@ -32,16 +32,34 @@ function [amplitude,width,start,number,interval] = extractEphusSquarePulseTrainP
     end
     
     parser = inputParser;
-    addParameter(parser,'Program','stimulator',@(x) any(strcmpi(x,{'ephys' 'stimulator'})));
+    addParameter(parser,'Program','stimulator',@(x) any(strcmpi(x,{'ephys' 'pulseJacker' 'stimulator'})));
     parser.parse(varargin{:});
-   
+    
     program = lower(parser.Results.Program);
     
-    stimData = dataFile.header.(program).(program).pulseParameters{1,stimIndex};
+    switch program
+        case {'ephys' 'stimulator'}
+            stimData = dataFile.header.(program).(program).pulseParameters{1,stimIndex};
+        case 'pulsejacker'
+            pulseJacker = dataFile.header.pulseJacker.pulseJacker;
+            stimData = pulseJacker.pulseDataMap{stimIndex,pulseJacker.currentPosition+1};
+    end
     
-    start = stimData.squarePulseTrainDelay;
-    width = stimData.squarePulseTrainWidth;
-    interval = stimData.squarePulseTrainISI;
-    number = stimData.squarePulseTrainNumber;
-    amplitude = stimData.amplitude;
+    if isempty(stimData)
+        start = NaN;
+        width = NaN;
+        interval = NaN;
+        number = NaN;
+        amplitude = NaN;
+    else
+        start = stimData.squarePulseTrainDelay;
+        width = stimData.squarePulseTrainWidth;
+        interval = stimData.squarePulseTrainISI;
+        number = stimData.squarePulseTrainNumber;
+        amplitude = stimData.amplitude;
+    end
+    
+    if nargout <= 1 
+        amplitude = struct('start',start,'width',width,'interval',interval,'number',number,'amplitude',amplitude);
+    end
 end 
