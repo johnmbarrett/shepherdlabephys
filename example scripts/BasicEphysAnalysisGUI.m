@@ -1,19 +1,25 @@
 classdef BasicEphysAnalysisGUI < handle
     properties(Constant=true)
-        DataOptions = {                     ...
-            'Raw Traces',                   ...
-            'Baseline Subtracted Traces',   ...
-            'Average Trace',                ...
-            'Filtered Traces',              ...
-            'Average Filtered Trace',       ...
-            'Filtered Average Trace',       ...
-            'Series Resistance',            ...
-            'Input Resistance',             ...
-            'Membrane Time Constant',       ...
-            'Membrane Capacitance',         ...
-            'Charge Transferred',           ...
-            'Temporal Parameters',          ...
+        TraceOptions = {                                                ...
+            'Raw Traces', 'SelectedTraces';                             ...
+            'd(Raw Traces)/dt', 'FirstDerivativeTraces';                ...
+            'Baseline Subtracted Traces', 'BaselineSubtractedTraces';   ...
+            'Average Trace', 'AverageTrace';                            ...
+            'Filtered Traces', 'FilteredTraces';                        ...
+            'Average Filtered Trace', 'AverageFilteredTrace';           ...
+            'Filtered Average Trace', 'FilteredAverageTrace'            ...
             };
+        ParameterOptions = {                                            ...
+            'Series Resistance', 'SeriesResistance';                    ...
+            'Input Resistance', 'InputResistance';                      ...
+            'Membrane Time Constant', 'MembraneTimeConstant';           ...
+            'Membrane Capacitance', 'MembraneCapacitance';              ...
+            'Charge Transferred', 'ChargeTransferred'                   ...
+            };
+        OtherOptions = {
+            'Temporal Parameters', @(self) get(findobj(self.Figure,'Tag','tpdatasourcepopupmenu'),'Value'); ... TODO : this isn't exactly true but it's handled as a special case anyway so fuck it
+            };
+        DataOptions = [BasicEphysAnalysisGUI.TraceOptions; BasicEphysAnalysisGUI.ParameterOptions; BasicEphysAnalysisGUI.OtherOptions]
     end
     
     properties(GetAccess=public,SetAccess=protected)
@@ -34,6 +40,7 @@ classdef BasicEphysAnalysisGUI < handle
         BaselineSubtractedTraces
         AverageTrace
         FilteredTraces
+        FirstDerivativeTraces
         AverageFilteredTrace
         FilteredAverageTrace
         SeriesResistance
@@ -71,7 +78,7 @@ classdef BasicEphysAnalysisGUI < handle
             
             uicontrol(self.Figure,                                  ...
                 'Style',    'popupmenu',                            ...
-                'String',   BasicEphysAnalysisGUI.DataOptions,      ...
+                'String',   BasicEphysAnalysisGUI.DataOptions(:,1), ...
                 'Units',    'normalized',                           ...
                 'Tag',      'dataselectionpopupmenu',               ...
                 'Position', [245/figureWidth 460/figureHeight 540/figureWidth 25/figureHeight],       ...
@@ -796,10 +803,10 @@ classdef BasicEphysAnalysisGUI < handle
             cla(self.DataAxis);
             set(self.DataAxis,'XLimMode','auto');
                
-            if selection < 7
+            if selection <= size(self.TraceOptions,1)
                 plotTraces(self.DataAxis,data,self.SampleRate,'RecordingMode',self.RecordingMode);
                 return
-            elseif selection < 12
+            elseif selection <= size(self.TraceOptions,1) + size(self.ParameterOptions,1)
                 plotParams(self.DataAxis,data);
                 
                 switch selection
@@ -818,7 +825,7 @@ classdef BasicEphysAnalysisGUI < handle
                 return
             end
             
-            % if we get here, selection == 12, i.e. show temporal parameters
+            % if we get here, we're showing temporal parameters
             time = (1:size(data,1))/self.SampleRate;
             
             plotTraces(self.DataAxis,data,self.SampleRate,'RecordingMode',self.RecordingMode);
@@ -884,35 +891,26 @@ classdef BasicEphysAnalysisGUI < handle
         end
         
         function data = selectData(self,selection)
-            switch selection
-                case 1
-                    data = self.SelectedTraces;
-                case 2
-                    data = self.BaselineSubtractedTraces;
-                case 3
-                    data = self.AverageTrace;
-                case 4
-                    data = self.FilteredTraces;
-                case 5
-                    data = self.AverageFilteredTrace;
-                case 6
-                    data = self.FilteredAverageTrace;
-                case 7
-                    data = self.SeriesResistance;
-                case 8
-                    data = self.InputResistance;
-                case 9
-                    data = self.MembraneTimeConstant;
-                case 10
-                    data = self.MembraneCapacitance;
-                case 11
-                    data = self.ChargeTransferred;
-                case 12
-                    data = self.selectData(get(findobj(self.Figure,'Tag','tpdatasourcepopupmenu'),'Value')); % LOLrecursion
+            dataField = self.DataOptions{selection,2};
+            
+            if ischar(dataField) && isprop(self,dataField)
+                data = self.(dataField);
+                
+                return
             end
+            
+            if isa(dataField,'function_handle')
+                data = self.selectData(dataField(self)); % LOLrecursion
+                
+                return
+            end
+            
+            error('ShepherdLabEphys:BasicEphysAnalysisGUI:UnknownSelection','Unknown selection %s',dataField);
         end
         
         function updatePreprocessing(self)
+            self.FirstDerivativeTraces = diff(self.SelectedTraces);
+            
             isBaselineSubtract = logical(get(findobj(self.Figure,'Tag','baselinesubtractcheckbox'),'Value'));
             
             if isBaselineSubtract
