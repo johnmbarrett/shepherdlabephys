@@ -551,7 +551,9 @@ classdef BasicEphysAnalysisGUI < handle
             
             self.Filenames = cellfun(@(s) sprintf('%s%s',pathname,s),filenames,'UniformOutput',false);
     
-            [self.AllTraces,self.SampleRate,self.TraceNames] = concatenateTraces(self.Filenames);
+            [self.AllTraces,self.SampleRate,self.TraceNames,isEmpty] = concatenateTraces(self.Filenames,[],[],'DeleteEmptyFiles',true);
+            
+            self.Filenames(isEmpty) = [];
             
             self.SelectedTraceIndices = 1:(size(self.AllTraces,2)*size(self.AllTraces,3));
             
