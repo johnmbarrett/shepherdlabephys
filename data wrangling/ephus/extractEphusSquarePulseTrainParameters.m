@@ -18,8 +18,8 @@ function [amplitude,width,start,number,interval] = extractEphusSquarePulseTrainP
 %   specifies one or more of the following name/value pairs:
 %
 %       'Program'   Specifies which Ephus program to extract the stimulus
-%                   parameters from.  Must be one of 'ephys' or
-%                   'stimulator'.  Default is 'stimulator'.
+%                   parameters from.  Must be one of 'ephys', 'pulseJacker'
+%                   or giot'stimulator'.  Default is 'stimulator'.
 
 %   Written by John Barrett 2017-07-28 11:42 CDT
 %   Last updated John Barrett 2017-08-15 17:16 CDT
