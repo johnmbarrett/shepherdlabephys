@@ -42,7 +42,12 @@ function [amplitude,width,start,number,interval] = extractEphusSquarePulseTrainP
             stimData = dataFile.header.(program).(program).pulseParameters{1,stimIndex};
         case 'pulsejacker'
             pulseJacker = dataFile.header.pulseJacker.pulseJacker;
-            stimData = pulseJacker.pulseDataMap{stimIndex,pulseJacker.currentPosition+1};
+            
+            if isempty(pulseJacker.pulseDataMap)
+                stimData = [];
+            else
+                stimData = pulseJacker.pulseDataMap{stimIndex,pulseJacker.currentPosition+1};
+            end
     end
     
     if isempty(stimData)
