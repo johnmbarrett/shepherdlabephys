@@ -1,4 +1,4 @@
-function [data,sampleRate,traceNames,isEmpty] = concatenateWavesurferTraces(files,sweeps,channels)
+function [data,sampleRate,traceNames,isEmpty] = concatenateWavesurferTraces(files,sweeps,channels,varargin)
 %CONCATENATEWAVESURFERTRACES    Concatenate traces from WaveSurfer files
 %   DATA = CONCATENATEWAVESURFERTRACES(FILES) extracts every trace from
 %   every channel in the WaveSurfer-exported HDF5 files specified by the
