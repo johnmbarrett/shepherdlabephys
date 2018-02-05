@@ -85,6 +85,10 @@ function [data,sampleRate,traceNames,isEmpty] = concatenateWavesurferTraces(file
     data = permute(data,[1 3 2]); % time, sweep, channel
     traceNames = permute(traceNames,[1 3 2]);
     
+    if nargout > 3
+        isEmpty = false(1,numel(files)); % TODO : can WaveSurfer files ever be empty?
+    end
+    
     if nargin < 3 || isempty(channels) || any(isnan(channels))
         return
     end
@@ -93,8 +97,4 @@ function [data,sampleRate,traceNames,isEmpty] = concatenateWavesurferTraces(file
     % throw them away at the end
     data = data(:,:,channels);
     traceNames = traceNames(:,:,channels);
-    
-    if nargout > 3
-        isEmpty = false(1,numel(files)); % TODO : can WaveSurfer files ever be empty?
-    end
 end
