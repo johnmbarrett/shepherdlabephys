@@ -143,7 +143,7 @@ function [data,sampleRate,traceNames] = concatenateEphusTraces(files,sweeps,chan
         
             if ~exist('data','var')
                 data = nan(length(trace),numel(sweeps),numel(files),numel(channels));
-                traceNames = cell(1,numel(sweeps),numel(files),numel(channels));
+                traceNames = cellfun(@(~) '',cell(1,numel(sweeps),numel(files),numel(channels)),'UniformOutput',false);
             end
         
             if size(trace,1) < size(data,1)
@@ -164,7 +164,8 @@ function [data,sampleRate,traceNames] = concatenateEphusTraces(files,sweeps,chan
             
             data(:,colIndices,ii,hyperPageIndex) = trace(:,sweepIndices);
             
-            traceNames(1,colIndices,ii,hyperPageIndex) = arrayfun(@(kk) sprintf('File %s sweep %d channel %s',files{ii},kk,channelName),sweepIndices,'UniformOutput',false);
+            % assign names to every trace, even ones that don't exist
+            traceNames(1,:,ii,hyperPageIndex) = arrayfun(@(kk) sprintf('File %s sweep %d channel %s',files{ii},kk,channelName),1:size(traceNames,2),'UniformOutput',false);
         end
     end
     

@@ -996,7 +996,11 @@ classdef BasicEphysAnalysisGUI < handle
             data = self.selectData(get(findobj(self.Figure,'Tag','rsdatasourcepopupmenu'),'Value'));
             
             [self.SeriesResistance,self.InputResistance,self.MembraneTimeConstant,self.MembraneCapacitance,self.SteadyStateCurrent] = calculateCellParameters(data,voltageStep,self.SampleRate,'ResponseStart',responseStart,'ResponseLength',responseLength,'SteadyStateStart',steadyStateStart,'SteadyStateLength',steadyStateLength);
-            self.ChargeTransferred = calculateAUC(data,self.SampleRate,'WindowStart',responseStart,'WindowLength',steadyStateStart+steadyStateLength-responseLength,'Baseline',self.SteadyStateCurrent);
+            
+            baseline = self.SteadyStateCurrent;
+            baseline(isnan(baseline)) = 0;
+            
+            self.ChargeTransferred = calculateAUC(data,self.SampleRate,'WindowStart',responseStart,'WindowLength',steadyStateStart+steadyStateLength-responseLength,'Baseline',baseline);
             
             self.refreshData();
         end
