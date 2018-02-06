@@ -917,14 +917,33 @@ classdef BasicEphysAnalysisGUI < handle
         function plotFICurve(self)
             [~,~,extension] = fileparts(self.Filenames{1});
             
-            if ~strcmp(extension,'.xsg')
-                warndlg('F/I curves are currently only supported for Ephus files');
-                return
+            switch extension(2:end)
+                case 'h5'
+                    tokens = cellfun(@(s) regexp(s,'File (.+) (sweep [0-9]+) channel (.+)','tokens'),self.SelectedTraceNames,'UniformOutput',false);
+                    files = cellfun(@(A) A{1}{1},tokens,'UniformOutput',false);
+                    sweeps = cellfun(@(A) strrep(A{1}{2},' ','_'),tokens,'UniformOutput',false);
+                    channels = cellfun(@(A) A{1}{3},tokens,'UniformOutput',false);
+                    
+                    [uniqueFiles,~,fileIndices] = unique(files);
+                    amplitudes = zeros(size(fileIndices));
+                    
+                    % TODO : this is fucked up WaveSurfer is such garbage
+                    for ii = 1:numel(uniqueFiles)
+                        indices = fileIndices == ii;
+                        amplitudes(indices) = extractWavesurferSquarePulseTrainParameters(uniqueFiles{ii},unique(sweeps(indices)),unique(channels(indices)));
+                    end
+                    
+                    self.CurrentStepAmplitudes = amplitudes;
+                case 'xsg'
+                    % TODO : this doesn't work if you've selected a subset
+                    % of traces or if you're working with DAQ timing files
+                    pulses = extractEphusSquarePulseTrainParameters(self.Filenames,1,'Program','pulseJacker'); % TODO : choose stimIndex, program
+
+                    self.CurrentStepAmplitudes = [pulses.amplitude];
+                otherwise
+                    errordlg(sprintf('Unknown file format %s',extension));
+                    return
             end
-            
-            pulses = extractEphusSquarePulseTrainParameters(self.Filenames,1,'Program','pulseJacker'); % TODO : choose stimIndex, program
-            
-            self.CurrentStepAmplitudes = [pulses.amplitude];
             
             figure;
             hold on;
