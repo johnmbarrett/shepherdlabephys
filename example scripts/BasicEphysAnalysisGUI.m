@@ -676,6 +676,8 @@ classdef BasicEphysAnalysisGUI < handle
             end
             
             self.Filenames = cellfun(@(s) sprintf('%s%s',pathname,s),filenames,'UniformOutput',false);
+            
+            wb = waitbar(0,'Loading traces...');
     
             [self.AllTraces,self.SampleRate,self.TraceNames,isEmpty] = concatenateTraces(self.Filenames,[],[],'DeleteEmptyFiles',true);
             
@@ -691,7 +693,11 @@ classdef BasicEphysAnalysisGUI < handle
                 disp(self.TraceNames{ii});
             end
             
+            waitbar(1/2,wb,'Processing Data...');
+            
             self.updatePreprocessing();
+            
+            close(wb);
         end
         
         function openChooseTracesDialog(self)
@@ -1195,7 +1201,12 @@ classdef BasicEphysAnalysisGUI < handle
             set(findobj(self.Figure,'Tag','plotficurvebutton'),'Enable','on');
             
             data = self.selectData(get(findobj(self.Figure,'Tag','dsdatasourcepopupmenu'),'Value'));
-            threshold = str2double(get(findobj(self.Figure,'Tag','dsthresholdeditbox'),'String')); % TODO : more threshold options
+            threshold = str2num(get(findobj(self.Figure,'Tag','dsthresholdeditbox'),'String')); %#ok<ST2NM> % TODO : more threshold options
+            
+            if ~isscalar(threshold) && (~isvector(threshold) || numel(threshold) ~= size(data,2));
+                warndlg('Threshold must be a scalar or a vector with one element per trace');
+                return
+            end
             
             polarityMenu = findobj(self.Figure,'Tag','dspolaritypopupmenu');
             polarities = get(polarityMenu,'String');
