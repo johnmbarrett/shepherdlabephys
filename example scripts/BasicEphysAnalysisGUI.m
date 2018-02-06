@@ -65,6 +65,7 @@ classdef BasicEphysAnalysisGUI < handle
         SpikeTimes
         SpikeAmplitudes
         SpikeRate
+        CurrentStepAmplitudes
         SampleRate
         RecordingMode = 'IC'
         Filenames
@@ -461,7 +462,7 @@ classdef BasicEphysAnalysisGUI < handle
                 'HorizontalAlignment',  'left'                      ...
                 );
             
-            uibuttongroup(self.Figure,'Position',[800/figureWidth 345/figureHeight 190/figureWidth 130/figureHeight]);
+            uibuttongroup(self.Figure,'Position',[800/figureWidth 320/figureHeight 190/figureWidth 155/figureHeight]);
             
             uicontrol(self.Figure,                                  ...
                 'Style',    'checkbox',                             ...
@@ -555,6 +556,16 @@ classdef BasicEphysAnalysisGUI < handle
                 'Tag',      'dslengtheditbox',                      ...
                 'Position', [950/figureWidth 355/figureHeight 30/figureWidth 20/figureHeight],         ...
                 'Callback', @(varargin) self.updateSpikeDetection() ...
+                );
+            
+            uicontrol(self.Figure,                                  ...
+                'Enable',   'off',                                  ...
+                'Style',    'pushbutton',                           ...
+                'String',   'Plot F/I curve',                       ...
+                'Units',    'normalized',                           ...
+                'Tag',      'plotficurvebutton',                    ...
+                'Position', [805/figureWidth 325/figureHeight 175/figureWidth 25/figureHeight],         ...
+                'Callback', @(varargin) self.plotFICurve()          ...
                 );
             
 %             uipanel(self.Figure,               ...
@@ -903,6 +914,33 @@ classdef BasicEphysAnalysisGUI < handle
             self.createChoicePanel(fig,3,'channel (.+)','channel');
         end
         
+        function plotFICurve(self)
+            [~,~,extension] = fileparts(self.Filenames{1});
+            
+            if ~strcmp(extension,'.xsg')
+                warndlg('F/I curves are currently only supported for Ephus files');
+                return
+            end
+            
+            pulses = extractEphusSquarePulseTrainParameters(self.Filenames,1,'Program','pulseJacker'); % TODO : choose stimIndex, program
+            
+            self.CurrentStepAmplitudes = [pulses.amplitude];
+            
+            figure;
+            hold on;
+            
+            splits = [0; find(diff(self.CurrentStepAmplitudes) < 0); numel(self.CurrentStepAmplitudes)]+1;
+            
+            for ii = 1:numel(splits)-1
+                startIndex = splits(ii);
+                endIndex = splits(ii+1)-1;
+                plot(self.CurrentStepAmplitudes(startIndex:endIndex),self.SpikeRate(startIndex:endIndex));
+            end
+            
+            xlabel('Current (pA)');
+            ylabel('Firing Rate (Hz)');
+        end
+        
         function refreshData(self)
             selection = get(findobj(self.Figure,'Tag','dataselectionpopupmenu'),'Value');
             
@@ -1123,13 +1161,14 @@ classdef BasicEphysAnalysisGUI < handle
         end
         
         function updateSpikeDetection(self)
-            isSpikeDetectionEnabled = logical(get(findobj(self.Figure,'Tag','detectspikescheckbox'),'Value'));
-            
-            if ~isSpikeDetectionEnabled
+            if ~logical(get(findobj(self.Figure,'Tag','detectspikescheckbox'),'Value'))
+                set(findobj(self.Figure,'Tag','plotficurvebutton'),'Enable','off');
                 self.refreshData();
                 
                 return
             end
+            
+            set(findobj(self.Figure,'Tag','plotficurvebutton'),'Enable','on');
             
             data = self.selectData(get(findobj(self.Figure,'Tag','dsdatasourcepopupmenu'),'Value'));
             threshold = str2double(get(findobj(self.Figure,'Tag','dsthresholdeditbox'),'String')); % TODO : more threshold options
