@@ -911,7 +911,16 @@ classdef BasicEphysAnalysisGUI < handle
             set(self.DataAxis,'XLimMode','auto');
                
             if selection <= size(self.TraceOptions,1)
-                plotTraces(self.DataAxis,data,self.SampleRate,'RecordingMode',self.RecordingMode);
+                if logical(get(findobj(self.Figure,'Tag','detectspikescheckbox'),'Value')) && selection == get(findobj(self.Figure,'Tag','dsdatasourcepopupmenu'),'Value')
+                    peaks = self.SpikeAmplitudes;
+                    peakIndices = self.SpikeIndices;
+                else
+                    peaks = [];
+                    peakIndices = [];
+                end
+                
+                plotTraces(self.DataAxis,data,self.SampleRate,'RecordingMode',self.RecordingMode,'PeakIndices',peakIndices,'Peaks',peaks);
+                
                 return
             elseif selection <= size(self.TraceOptions,1) + size(self.ParameterOptions,1)
                 plotParams(self.DataAxis,data);
@@ -1157,6 +1166,8 @@ classdef BasicEphysAnalysisGUI < handle
             end
             
             self.SpikeTimes = cellfun(@(indices) indices/self.SampleRate,self.SpikeIndices,'UniformOutput',false);
+            
+            self.refreshData();
         end
         
         function updateTPCalculation(self)
