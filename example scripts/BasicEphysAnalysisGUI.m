@@ -61,6 +61,9 @@ classdef BasicEphysAnalysisGUI < handle
         Peak10IndexFalling
         Peak50IndexRising
         Peak50IndexFalling
+        SpikeIndices
+        SpikeTimes
+        SpikeAmplitudes
         SampleRate
         RecordingMode = 'IC'
         Filenames
@@ -514,7 +517,7 @@ classdef BasicEphysAnalysisGUI < handle
                 'Style',    'edit',                                 ...
                 'String',   '0',                                    ...
                 'Units',    'normalized',                           ...
-                'Tag',      'tpstarteditbox',                       ...
+                'Tag',      'dsthresholdeditbox',                   ...
                 'Position', [860/figureWidth 380/figureHeight 120/figureWidth 20/figureHeight],         ...
                 'Callback', @(varargin) self.updateSpikeDetection() ...
                 );
@@ -1075,8 +1078,45 @@ classdef BasicEphysAnalysisGUI < handle
             self.refreshData();
         end
         
-        function updateSpikeDetection(~)
-            errordlg('I dunno, maybe try waiting until this is actually implemented? Just a thought.');
+        function updateSpikeDetection(self)
+            isSpikeDetectionEnabled = logical(get(findobj(self.Figure,'Tag','detectspikescheckbox'),'Value'));
+            
+            if ~isSpikeDetectionEnabled
+                return
+            end
+            
+            data = self.selectData(get(findobj(self.Figure,'Tag','dsdatasourcepopupmenu'),'Value'));
+            threshold = str2double(get(findobj(self.Figure,'Tag','dsthresholdeditbox'),'String')); % TODO : more threshold options
+            
+            polarityMenu = findobj(self.Figure,'Tag','dspolaritypopupmenu');
+            polarities = get(polarityMenu,'String');
+            polarityIndex = get(polarityMenu,'Value');
+            polarity = polarities{polarityIndex};
+            
+            crossings = findThresholdCrossings(data,threshold,polarity);
+            
+            self.SpikeIndices = crossings;
+            self.SpikeAmplitudes = crossings;
+            
+            peakFuns = {@max @min @peak}; % TODO : is peak right here?
+            peakFun = peakFuns{polarityIndex};
+            
+            for ii = 1:numel(crossings)
+                if isempty(crossings{ii})
+                    continue
+                end
+                
+                indices = [crossings{ii}; size(data,1)+1];
+                
+                for jj = 1:numel(indices)-1
+                    [self.SpikeAmplitudes{ii}(jj),spikeIndex] = peakFun(data(indices(jj):(indices(jj+1)-1),ii));
+                    
+                    self.SpikeIndices{ii}(jj) = spikeIndex+indices(jj)-1;
+                end
+            end
+            
+            % TODO : detection window?
+            self.SpikeTimes = cellfun(@(indices) indices/self.SampleRate,self.SpikeIndices,'UniformOutput',false);
         end
         
         function updateTPCalculation(self)
