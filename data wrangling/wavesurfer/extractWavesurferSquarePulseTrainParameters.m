@@ -63,20 +63,12 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
         map = maps{mod(i-1,nMaps)+1}; % TODO : is this right? each sweep it moves on to the next map? how does that interact with the i parameter in each stimulus?  does it increment every sweep or every run through the sequence?
 
         if iscell(channels)
-            % sometimes it's ChannelNames sometimes it's ChannelName? What
-            % the FUCK WaveSurfer?!
-            if isfield(map,'ChannelNames')
-                channelField = 'ChannelNames';
-            elseif isfield(map,'ChannelName')
-                channelField = 'ChannelName';
-            else
-                error('ShepherdLab:extractWavesurferSquarePulseTrainParameters:UnknownMapFormat','Unable to find ChannelName or ChannelNames in Map');
-            end
+            mapChannels = getUniqueChannelNamesInOutputable(map);
                 
             % have to use strncmp instead of ismember because
             % Wavesurfer pads all the channel names to the same length
             % FOR NO GOD DAMN REASON
-            channelIndices = cell2mat(cellfun(@(channel) find(strncmp(channel,map.(channelField),numel(channel))),channels,'UniformOutput',false));
+            channelIndices = cell2mat(cellfun(@(channel) find(strncmp(channel,mapChannels,numel(channel))),channels,'UniformOutput',false));
         else
             channelIndices = channels;
         end
