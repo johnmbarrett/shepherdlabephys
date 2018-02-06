@@ -59,6 +59,8 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
         else
             i = sscanf(sweeps{ii},'sweep_%d');
         end
+        
+        i = i-dataFile.header.Logging.NextSweepIndex+1;
 
         map = maps{mod(i-1,nMaps)+1}; % TODO : is this right? each sweep it moves on to the next map? how does that interact with the i parameter in each stimulus?  does it increment every sweep or every run through the sequence?
 
@@ -78,7 +80,7 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
         for jj = 1:numel(channelIndices)
             if iscell(channels)
                 % in case not all named channels are found in all maps
-                columnIndex = find(cellfun(@(channel) strncmp(channel,map.ChannelNames(channelIndices(jj)),numel(channel)),channels));
+                columnIndex = find(cellfun(@(channel) strncmp(channel,mapChannels{channelIndices(jj)},numel(channel)),channels));
             else
                 columnIndex = jj;
             end
