@@ -695,6 +695,14 @@ classdef BasicEphysAnalysisGUI < handle
             
             waitbar(1/2,wb,'Processing Data...');
             
+            % TODO : there should be a reset function that just erases
+            % everything
+            self.SpikeIndices = {};
+            self.SpikeTimes = {};
+            self.SpikeAmplitudes = {};
+            self.SpikeRate = [];
+            self.refreshData();
+            
             self.updatePreprocessing();
             
             close(wb);
@@ -1189,11 +1197,6 @@ classdef BasicEphysAnalysisGUI < handle
         function updateSpikeDetection(self)
             if ~logical(get(findobj(self.Figure,'Tag','detectspikescheckbox'),'Value'))
                 set(findobj(self.Figure,'Tag','plotficurvebutton'),'Enable','off');
-                self.SpikeIndices = {};
-                self.SpikeTimes = {};
-                self.SpikeAmplitudes = {};
-                self.SpikeRate = [];
-                self.refreshData();
                 
                 return
             end
