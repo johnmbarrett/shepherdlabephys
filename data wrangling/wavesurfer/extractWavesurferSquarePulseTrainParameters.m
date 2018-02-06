@@ -1,4 +1,4 @@
-function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseTrainParameters(dataFile,sweeps,channels)
+function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseTrainParameters(dataFile,sweeps,channels) % TODO : unify interface between ephus and wavesurfer versions?
 %EXTRACTWAVESURFERSQUAREPULSETRAINPARAMETERS  Extract square pulse train
 %parameters.
 %   AMPLITUDE = EXTRACTWAVESURFERSQUAREPULSETRAINPARAMETERS(DATAFILE)
@@ -26,7 +26,10 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
 %   Written by John Barrett 2017-07-28 14:36 CDT
 %   Last updated John Barrett 2017-08-15 17:41 CDT
 
-    % TODO : allow passing in a filename
+    if ischar(dataFile)
+        dataFile = ws.loadDataFile(dataFile);
+    end
+    
     stimulusLibrary = dataFile.header.Stimulation.StimulusLibrary;
     
     if nargin < 2 || isempty(sweeps) || any(isnan(sweeps(:)))
