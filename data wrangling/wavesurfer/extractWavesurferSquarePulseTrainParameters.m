@@ -30,8 +30,6 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
         dataFile = ws.loadDataFile(dataFile);
     end
     
-    stimulusLibrary = dataFile.header.Stimulation.StimulusLibrary;
-    
     if nargin < 2 || isempty(sweeps) || (isnumeric(sweeps) && any(isnan(sweeps(:))))
         sweeps = 1;
     end
@@ -53,17 +51,7 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
     
     sampleRate = dataFile.header.Acquisition.SampleRate;
     
-    if isfield(stimulusLibrary,'SelectedOutputable')
-        % it's a sequence!  I think
-        sequence = stimulusLibrary.SelectedOutputable;
-        nMaps = numel(fieldnames(sequence.Maps)); % ._.
-        maps = arrayfun(@(ii) sequence.Maps.(sprintf('element%d',ii)),1:nMaps,'UniformOutput',false);
-    else
-        % it must be a map?
-        assert(strcmp(stimulusLibrary.SelectedOutputableClassName,'ws.StimulusMap'),'ShepherdLab:extractWavesurferSquarePulseTrainParameters:UnknownOutputable','Unknown Outputable class: %s\n',stimulusLibrary.SelectedOutputableClassName);
-        maps = {stimulusLibrary.Maps.(sprintf('element%d',stimulusLibrary.SelectedOutputableIndex))};
-        nMaps = 1;
-    end
+    [maps,stimulusLibrary,nMaps] = getSelectedOutputable(dataFile);
         
     for ii = 1:numel(sweeps)
         if isnumeric(sweeps)
