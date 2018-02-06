@@ -639,6 +639,8 @@ classdef BasicEphysAnalysisGUI < handle
             
             close(fig)
             
+            self.clearDetectedSpikes();
+            
             self.updatePreprocessing();
         end
         
@@ -695,6 +697,14 @@ classdef BasicEphysAnalysisGUI < handle
             
             waitbar(1/2,wb,'Processing Data...');
             
+            self.clearDetectedSpikes();
+            
+            self.updatePreprocessing();
+            
+            close(wb);
+        end
+        
+        function clearDetectedSpikes(self)
             % TODO : there should be a reset function that just erases
             % everything
             self.SpikeIndices = {};
@@ -702,10 +712,6 @@ classdef BasicEphysAnalysisGUI < handle
             self.SpikeAmplitudes = {};
             self.SpikeRate = [];
             self.refreshData();
-            
-            self.updatePreprocessing();
-            
-            close(wb);
         end
         
         function openChooseTracesDialog(self)
@@ -931,20 +937,52 @@ classdef BasicEphysAnalysisGUI < handle
         function plotFICurve(self)
             [~,~,extension] = fileparts(self.Filenames{1});
             
+            wb = waitbar(0,'Loading stimulus parameters...');
+            
             switch extension(2:end)
                 case 'h5'
                     tokens = cellfun(@(s) regexp(s,'File (.+) (sweep [0-9]+) channel (.+)','tokens'),self.SelectedTraceNames,'UniformOutput',false);
                     files = cellfun(@(A) A{1}{1},tokens,'UniformOutput',false);
                     sweeps = cellfun(@(A) strrep(A{1}{2},' ','_'),tokens,'UniformOutput',false);
-                    channels = cellfun(@(A) A{1}{3},tokens,'UniformOutput',false);
                     
                     [uniqueFiles,~,fileIndices] = unique(files);
                     amplitudes = zeros(size(fileIndices));
                     
                     % TODO : this is fucked up WaveSurfer is such garbage
                     for ii = 1:numel(uniqueFiles)
-                        indices = fileIndices == ii;
-                        amplitudes(indices) = extractWavesurferSquarePulseTrainParameters(uniqueFiles{ii},unique(sweeps(indices)),unique(channels(indices)));
+                        dataFile = ws.loadDataFile(uniqueFiles{ii}); % TODO : cache
+                        
+                        outputable = getSelectedOutputable(dataFile);
+                        
+                        stimChannels = getUniqueChannelNamesInOutputable(outputable);
+                        
+                        if isempty(stimChannels)
+                            close(wb);
+                            errordlg(sprintf('Missing stimuli for file %s',uniqueFiles{ii}));
+                            
+                            return
+                        elseif numel(stimChannels) == 1
+                            stimChannel = stimChannels{1};
+                        else
+                            selection = listdlg('ListString',stimChannels,'SelectionMode','single','PromptString','Choose current step channel');
+                            
+                            if isempty(selection)
+                                close(wb);
+                                return
+                            end
+                            
+                            stimChannel = stimChannels{selection};
+                        end
+                        
+                        indices = find(fileIndices == ii);
+                        
+                        [uniqueSweeps,~,sweepIndices] = unique(sweeps(indices));
+                        
+                        amplitude = extractWavesurferSquarePulseTrainParameters(dataFile,uniqueSweeps,stimChannel);
+                        
+                        for jj = 1:numel(uniqueSweeps)
+                            amplitudes(indices(sweepIndices == jj)) = amplitude(jj);
+                        end
                     end
                     
                     self.CurrentStepAmplitudes = amplitudes;
@@ -955,9 +993,12 @@ classdef BasicEphysAnalysisGUI < handle
 
                     self.CurrentStepAmplitudes = [pulses.amplitude];
                 otherwise
+                    close(wb);
                     errordlg(sprintf('Unknown file format %s',extension));
                     return
             end
+            
+            close(wb);
             
             figure;
             hold on;
