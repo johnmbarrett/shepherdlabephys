@@ -1,4 +1,4 @@
-function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseTrainParameters(dataFile,sweeps,channels)
+function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseTrainParameters(dataFile,sweeps,channels) % TODO : unify interface between ephus and wavesurfer versions?
 %EXTRACTWAVESURFERSQUAREPULSETRAINPARAMETERS  Extract square pulse train
 %parameters.
 %   AMPLITUDE = EXTRACTWAVESURFERSQUAREPULSETRAINPARAMETERS(DATAFILE)
@@ -26,10 +26,11 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
 %   Written by John Barrett 2017-07-28 14:36 CDT
 %   Last updated John Barrett 2017-08-15 17:41 CDT
 
-    % TODO : allow passing in a filename
-    stimulusLibrary = dataFile.header.Stimulation.StimulusLibrary;
+    if ischar(dataFile)
+        dataFile = ws.loadDataFile(dataFile);
+    end
     
-    if nargin < 2 || isempty(sweeps) || any(isnan(sweeps(:)))
+    if nargin < 2 || isempty(sweeps) || (isnumeric(sweeps) && any(isnan(sweeps(:))))
         sweeps = 1;
     end
     
@@ -50,28 +51,26 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
     
     sampleRate = dataFile.header.Acquisition.SampleRate;
     
-    if isfield(stimulusLibrary,'SelectedOutputable')
-        % it's a sequence!  I think
-        sequence = stimulusLibrary.SelectedOutputable;
-        nMaps = numel(fieldnames(sequence.Maps)); % ._.
-        maps = arrayfun(@(ii) sequence.Maps.(sprintf('element%d',ii)),1:nMaps,'UniformOutput',false);
-    else
-        % it must be a map?
-        assert(strcmp(stimulusLibrary.SelectedOutputableClassName,'ws.StimulusMap'),'ShepherdLab:extractWavesurferSquarePulseTrainParameters:UnknownOutputable','Unknown Outputable class: %s\n',stimulusLibrary.SelectedOutputableClassName);
-        maps = {stimulusLibrary.Maps.(sprintf('element%d',stimulusLibrary.SelectedOutputableIndex))};
-        nMaps = 1;
-    end
+    [maps,stimulusLibrary,nMaps] = getSelectedOutputable(dataFile);
         
     for ii = 1:numel(sweeps)
-        i = sweeps(ii); % I normally like to avoid using i as a variable but the reason for this will become apparent momentarily
+        if isnumeric(sweeps)
+            i = sweeps(ii); % I normally like to avoid using i as a variable but the reason for this will become apparent momentarily
+        else
+            i = sscanf(sweeps{ii},'sweep_%d');
+        end
+        
+        i = i-dataFile.header.Logging.NextSweepIndex+1;
 
         map = maps{mod(i-1,nMaps)+1}; % TODO : is this right? each sweep it moves on to the next map? how does that interact with the i parameter in each stimulus?  does it increment every sweep or every run through the sequence?
 
         if iscell(channels)
+            mapChannels = getUniqueChannelNamesInOutputable(map);
+                
             % have to use strncmp instead of ismember because
             % Wavesurfer pads all the channel names to the same length
             % FOR NO GOD DAMN REASON
-            channelIndices = cell2mat(cellfun(@(channel) find(strncmp(channel,map.ChannelNames,numel(channel))),channels,'UniformOutput',false));
+            channelIndices = cell2mat(cellfun(@(channel) find(strncmp(channel,mapChannels,numel(channel))),channels,'UniformOutput',false));
         else
             channelIndices = channels;
         end
@@ -81,7 +80,7 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
         for jj = 1:numel(channelIndices)
             if iscell(channels)
                 % in case not all named channels are found in all maps
-                columnIndex = find(cellfun(@(channel) strncmp(channel,map.ChannelNames(channelIndices(jj)),numel(channel)),channels));
+                columnIndex = find(cellfun(@(channel) strncmp(channel,mapChannels{channelIndices(jj)},numel(channel)),channels));
             else
                 columnIndex = jj;
             end

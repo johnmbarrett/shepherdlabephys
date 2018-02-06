@@ -19,12 +19,16 @@ function [ax,traceHandles,peakHandles,stimHandles] = plotTraces(ax,data,sampleRa
 %   PLOTPARAMS(...,PARAM1,VAL1,PARAM2,VAL2,...)  specifies one or more of 
 %   the following name/value pairs:
 %
-%       'Peaks'         Vector specifying Y-axis values of points of 
-%                       interest (e.g. peak response) to be highlighted on 
-%                       the plot with circles.  Default is no points.
-%       'PeakIndices'   Vector specifying Y-axis values of points of 
-%                       interest (e.g. peak response) to be highlighted on 
-%                       the plot with circles.  Default is no points.
+%       'Peaks'         Vector or cell array specifying Y-axis values of 
+%                       points of interest (e.g. peak response) to be 
+%                       highlighted on the plot with circles.  Default is 
+%                       no points.  If a cell array, it must contain one
+%                       vector for every column of DATA.
+%       'PeakIndices'   Vector or cell array specifying X indices of points
+%                       of interest (e.g. peak response) to be highlighted 
+%                       on the plot with circles.  Default is no points.  
+%                       If a cell array, it must contain one vector for 
+%                       every column of DATA.
 %       'StimStart'     Draws a dashed vertical line at the time(s)
 %                       specified.  Default is no line.
 %       'RecordingMode' Specifies the Y-axis label.  Options are 'IC' for
@@ -66,8 +70,12 @@ function [ax,traceHandles,peakHandles,stimHandles] = plotTraces(ax,data,sampleRa
     % TODO : Peaks and PeakIndices could really be any points of interest,
     % and maybe StimStart can just be abcissa?  can we factor out common
     % code between this and plotParams
-    addParameter(parser,'Peaks',NaN,@(x) validateattributes(x,{'numeric'},{'real' 'finite' 'vector'}));
-    addParameter(parser,'PeakIndices',NaN,@(x) validateattributes(x,{'numeric'},{'real' 'finite' 'positive' 'integer' 'vector'}));
+    isValidPeaks = @(x) isnumeric(x) && isreal(x) && isvector(x) && all(isfinite(x(:)));
+    addParameter(parser,'Peaks',NaN,@(x) isempty(x) || (isnumeric(x) && isValidPeaks(x)) || (iscell(x) && all(cellfun(isValidPeaks,x)) && numel(x) == size(data,2)));
+    
+    isValidPeakIndices = @(x) isnumeric(x) && isreal(x) && isvector(x) && all(isfinite(x(:)) & x > 0 & x <= size(data,1) & round(x) == x);
+    addParameter(parser,'PeakIndices',NaN,@(x) isempty(x) || (isnumeric(x) && isValidPeakIndices(x)) || (iscell(x) && all(cellfun(isValidPeakIndices,x)) && numel(x) == size(data,2)));
+    
     addParameter(parser,'StimStart',NaN,@(x) validateattributes(x,{'numeric'},{'real' 'finite' 'vector'}));
     addParameter(parser,'RecordingMode','VC',@(x) ismember(x,{'VC' 'IC'}));
     addParameter(parser,'Title','',@ischar);
@@ -97,22 +105,39 @@ function [ax,traceHandles,peakHandles,stimHandles] = plotTraces(ax,data,sampleRa
     
     stimHandles = plot(ax,(parser.Results.StimStart(:)*[1 1])',repmat(ylim(ax)',1,numel(parser.Results.StimStart)),'Color','k','LineStyle','-.'); % TODO : override these plot options?
     
-    if all(isnan(parser.Results.Peaks(:)))
+    peaks = parser.Results.Peaks;
+    
+    if ~iscell(peaks)
+        peaks = {peaks};
+    end
+    
+    if all(cellfun(@(p) all(isnan(p(:))),peaks))
         hold(ax,'off');
         peakHandles = [];
         return
     end
     
-    if all(isnan(parser.Results.PeakIndices(:)))
+    peakIndices = parser.Results.PeakIndices;
+    
+    if ~iscell(peakIndices)
+        peakIndices = {peakIndices};
+    end
+    
+    if all(cellfun(@(p) all(isnan(p(:))),peakIndices))
         error('ShepherdLab:plotTraces:MissingPeakIndices','You must provide PeakIndices when passing Peaks to plotTraces.');
     end
     
-    peaks = parser.Results.Peaks;
-    peakIndices = parser.Results.PeakIndices;
+    assert(numel(peaks) == numel(peakIndices) && all(cellfun(@(pk,pi) numel(pk) == numel(pi),peaks,peakIndices)),'ShepherdLab:plotTraces:PeaksPeakIndicesMismatch','The must be one PeakIndex for every peak');
     
-    assert(numel(peaks) == numel(peakIndices),'ShepherdLab:plotTraces:PeaksPeakIndicesMismatch','The must be one PeakIndex for every peak');
+    peakHandles = gobjects(size(peaks));
     
-    peakHandles = plot(peakIndices(:)/sampleRate,peaks(:),'Color','k','LineStyle','none','Marker','o','MarkerSize',10);
+    for ii = 1:numel(peaks)
+        h = plot(peakIndices{ii}(:)/sampleRate,peaks{ii}(:),'Color',get(traceHandles(ii),'Color'),'LineStyle','none','Marker','o','MarkerSize',10);
+        
+        if ~isempty(h)
+            peakHandles(ii) = h;
+        end
+    end
     
     hold(ax,'off');
 end
