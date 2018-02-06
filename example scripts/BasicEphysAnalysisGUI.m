@@ -1170,6 +1170,8 @@ classdef BasicEphysAnalysisGUI < handle
             
             self.SpikeTimes = cellfun(@(indices) indices/self.SampleRate,self.SpikeIndices,'UniformOutput',false);
             
+            self.SpikeRate = cellfun(@numel,self.SpikeTimes)/windowLength;
+            
             self.refreshData();
         end
         
