@@ -32,7 +32,7 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
     
     stimulusLibrary = dataFile.header.Stimulation.StimulusLibrary;
     
-    if nargin < 2 || isempty(sweeps) || any(isnan(sweeps(:)))
+    if nargin < 2 || isempty(sweeps) || (isnumeric(sweeps) && any(isnan(sweeps(:))))
         sweeps = 1;
     end
     
@@ -66,15 +66,29 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
     end
         
     for ii = 1:numel(sweeps)
-        i = sweeps(ii); % I normally like to avoid using i as a variable but the reason for this will become apparent momentarily
+        if isnumeric(sweeps)
+            i = sweeps(ii); % I normally like to avoid using i as a variable but the reason for this will become apparent momentarily
+        else
+            i = sscanf(sweeps{ii},'sweep_%d');
+        end
 
         map = maps{mod(i-1,nMaps)+1}; % TODO : is this right? each sweep it moves on to the next map? how does that interact with the i parameter in each stimulus?  does it increment every sweep or every run through the sequence?
 
         if iscell(channels)
+            % sometimes it's ChannelNames sometimes it's ChannelName? What
+            % the FUCK WaveSurfer?!
+            if isfield(map,'ChannelNames')
+                channelField = 'ChannelNames';
+            elseif isfield(map,'ChannelName')
+                channelField = 'ChannelName';
+            else
+                error('ShepherdLab:extractWavesurferSquarePulseTrainParameters:UnknownMapFormat','Unable to find ChannelName or ChannelNames in Map');
+            end
+                
             % have to use strncmp instead of ismember because
             % Wavesurfer pads all the channel names to the same length
             % FOR NO GOD DAMN REASON
-            channelIndices = cell2mat(cellfun(@(channel) find(strncmp(channel,map.ChannelNames,numel(channel))),channels,'UniformOutput',false));
+            channelIndices = cell2mat(cellfun(@(channel) find(strncmp(channel,map.(channelField),numel(channel))),channels,'UniformOutput',false));
         else
             channelIndices = channels;
         end
