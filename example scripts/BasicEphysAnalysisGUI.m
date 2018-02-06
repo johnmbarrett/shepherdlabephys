@@ -64,6 +64,7 @@ classdef BasicEphysAnalysisGUI < handle
         SpikeIndices
         SpikeTimes
         SpikeAmplitudes
+        SpikeRate
         SampleRate
         RecordingMode = 'IC'
         Filenames
@@ -1125,6 +1126,8 @@ classdef BasicEphysAnalysisGUI < handle
             isSpikeDetectionEnabled = logical(get(findobj(self.Figure,'Tag','detectspikescheckbox'),'Value'));
             
             if ~isSpikeDetectionEnabled
+                self.refreshData();
+                
                 return
             end
             
