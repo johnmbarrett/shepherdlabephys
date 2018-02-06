@@ -1131,6 +1131,7 @@ classdef BasicEphysAnalysisGUI < handle
             % this
             self.updateCellParametersCalculation();
             self.updateTPCalculation();
+            self.updateSpikeDetection();
             
             self.refreshData();
         end
@@ -1163,6 +1164,10 @@ classdef BasicEphysAnalysisGUI < handle
         function updateSpikeDetection(self)
             if ~logical(get(findobj(self.Figure,'Tag','detectspikescheckbox'),'Value'))
                 set(findobj(self.Figure,'Tag','plotficurvebutton'),'Enable','off');
+                self.SpikeIndices = {};
+                self.SpikeTimes = {};
+                self.SpikeAmplitudes = {};
+                self.SpikeRate = [];
                 self.refreshData();
                 
                 return
