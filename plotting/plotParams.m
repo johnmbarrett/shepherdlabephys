@@ -1,11 +1,14 @@
-function ax = plotParams(ax,data,varargin)
+function [ax,h] = plotParams(ax,data,varargin)
 %PLOTPARAMS Plot extracted parameters
 %   PLOTPARAMS(DATA) produces a scatter plot of the data contained in DATA.
 %   This function is intended for plotting scalar parameters calculated by
 %   analysing ephys traces, for example the series resistance or response
 %   latency on each trace.
 %
-%   AX = PLOTPARAMS(DATA) returns a handle, AX, to the resulting plot.
+%   AX = PLOTPARAMS(DATA) returns a handle, AX, to the resulting axes.
+%
+%   [AX,H] = PLOTPARAMS(DATA) also returns a handle, H, to the resulting
+%   plot.
 %
 %   PLOTPARAMS(AX,...) plots the data into the axes handle AX instead of
 %   creating a new figure.
@@ -33,7 +36,7 @@ function ax = plotParams(ax,data,varargin)
 %                   the limits automatically.
 
 %   Written by John Barrett 2017-07-28 17:35 CDT
-%   Last updated John Barrett 2017-08-15 18:17 CDT
+%   Last updated John Barrett 2018-02-07 17:43 CDT
     if isnumeric(ax) && ~isscalar(ax) % TODO : this isn't exactly right but close enough unless you want to plot a single datapoint without specifying a handle
         if nargin > 1
             varargin = [{data} varargin];
@@ -72,7 +75,7 @@ function ax = plotParams(ax,data,varargin)
         ylim(ax,parser.Results.YLim);
     end
     
-    plot(1:length(data),data,'Color','r','LineStyle','-','Marker','o');
+    h = plot(1:length(data),data,'Color','r','LineStyle','-','Marker','o');
     
     xx = xlim;
     yy = ylim;

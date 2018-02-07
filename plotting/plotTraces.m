@@ -81,6 +81,7 @@ function [ax,traceHandles,peakHandles,stimHandles] = plotTraces(ax,data,sampleRa
     addParameter(parser,'Title','',@ischar);
     parser.parse(varargin{:});
     
+    isHold = ishold(ax);
     hold(ax,'on');
     
     title(parser.Results.Title,'Parent',ax);
@@ -112,7 +113,10 @@ function [ax,traceHandles,peakHandles,stimHandles] = plotTraces(ax,data,sampleRa
     end
     
     if all(cellfun(@(p) all(isnan(p(:))),peaks))
-        hold(ax,'off');
+        if ~isHold
+            hold(ax,'off');
+        end
+        
         peakHandles = [];
         return
     end
@@ -139,5 +143,7 @@ function [ax,traceHandles,peakHandles,stimHandles] = plotTraces(ax,data,sampleRa
         end
     end
     
-    hold(ax,'off');
+    if ~isHold
+        hold(ax,'off');
+    end
 end
