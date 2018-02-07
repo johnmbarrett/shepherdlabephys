@@ -1,4 +1,4 @@
-function [data,sampleRate,traceNames] = concatenateWavesurferTraces(files,sweeps,channels)
+function [data,sampleRate,traceNames,isEmpty] = concatenateWavesurferTraces(files,sweeps,channels,varargin)
 %CONCATENATEWAVESURFERTRACES    Concatenate traces from WaveSurfer files
 %   DATA = CONCATENATEWAVESURFERTRACES(FILES) extracts every trace from
 %   every channel in the WaveSurfer-exported HDF5 files specified by the
@@ -14,6 +14,11 @@ function [data,sampleRate,traceNames] = concatenateWavesurferTraces(files,sweeps
 %   returns a 1xMxP cell array containing a human-readable name for each
 %   trace, including the name of the file each trace was extracted from,
 %   the sweep number, and he channel.
+%
+%   [DATA,SAMPLERATE,TRACENAMES,ISEMPTY] = ...
+%   CONCATENATEWAVESURFERTRACES(FILES) returns a logical array of size 
+%   [1,numel(FILES)] where every element is false.  This is mostly for
+%   compatibility with CONCATENATEEPHUSTRACES.
 %
 %   [...] = CONCATENATEWAVESURFERTRACES(FILES,SWEEPS) extracts only those
 %   traces specifed in the vector of sweep numbers SWEEPS.  Any sweep
@@ -79,6 +84,10 @@ function [data,sampleRate,traceNames] = concatenateWavesurferTraces(files,sweeps
     
     data = permute(data,[1 3 2]); % time, sweep, channel
     traceNames = permute(traceNames,[1 3 2]);
+    
+    if nargout > 3
+        isEmpty = false(1,numel(files)); % TODO : can WaveSurfer files ever be empty?
+    end
     
     if nargin < 3 || isempty(channels) || any(isnan(channels))
         return

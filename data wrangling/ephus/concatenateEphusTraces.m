@@ -1,4 +1,4 @@
-function [data,sampleRate,traceNames] = concatenateEphusTraces(files,sweeps,channels,varargin)
+function [data,sampleRate,traceNames,isEmpty] = concatenateEphusTraces(files,sweeps,channels,varargin)
 %CONCATENATEEPHUSTRACES Concatenate traces from .xsg files
 %   DATA = CONCATENATEEPHUSTRACES(FILES) extracts all the traces from each
 %   xsg file in the cell array of filename strings FILES and concatenates 
@@ -20,15 +20,24 @@ function [data,sampleRate,traceNames] = concatenateEphusTraces(files,sweeps,chan
 %   the name of the amplifier used for recording.  (Currently this function
 %   only retrieves data from one ephys channel.)
 %
+%   [DATA,SAMPLERATE,TRACENAMES,ISEMPTY] = CONCATENATEEPHUSTRACES(...) also
+%   returns a logical array in which each element is true if the
+%   corresponding files was empty.
+%
 %   [...] = CONCATENATEEPHUSTRACES(...,PARAM1,VAL1,...) specifes one or
 %   more of the following name-value pair options:
 %
-%       'Program'   Specifies which program to load the data from.  Options
-%                   are 'ephys' or 'acquirer'.  Default is 'acquirer'.
+%       'DeleteEmptyFiles'  Boolean specifying whether to remove empty
+%                           files from the DATA array (if true) or replace
+%                           them with NaNs (if false).
+%       'Program'           Specifies which program to load the data from. 
+%                           Options are 'ephys' or 'acquirer'.  Default is 
+%                           'acquirer'.
 
 %   Written by John Barrett 2017-07-27 14:14 CDT
 %   Last updated John Barrett 2017-08-18 15:05 CDT
     parser = inputParser();
+    addParameter(parser,'DeleteEmptyFiles',false,@(x) isscalar(x) && islogical(x));
     addParameter(parser,'Program','ephys',@(x) ismember(x,{'ephys' 'acquirer'}));
     parser.parse(varargin{:});
     
@@ -38,7 +47,7 @@ function [data,sampleRate,traceNames] = concatenateEphusTraces(files,sweeps,chan
         files = {files};
     end
     
-    missingFiles = false(numel(files),1);
+    isEmpty = false(numel(files),1);
 
     for ii = 1:numel(files)
         dataStruct = load(files{ii},'-mat'); % TODO : specify files as dir(...) struct
@@ -50,7 +59,7 @@ function [data,sampleRate,traceNames] = concatenateEphusTraces(files,sweeps,chan
         if ~isstruct(dataStruct) || ~isfield(dataStruct,'data') || ~isstruct(dataStruct.data) || ~isfield(dataStruct.data,program) || ~isstruct(dataStruct.data.(program))
             warning('ShepherdLab:concatenateEphusTraces:NoTracesFound','No traces found in file %s, ignoring...\n',files{ii});
             
-            missingFiles(ii) = true;
+            isEmpty(ii) = true;
             
             continue
         end
@@ -64,7 +73,7 @@ function [data,sampleRate,traceNames] = concatenateEphusTraces(files,sweeps,chan
         if isempty(traceFields)
             warning('ShepherdLab:concatenateEphusTraces:NoTracesFound','No traces found in file %s, ignoring...\n',files{ii});
             
-            missingFiles(ii) = true;
+            isEmpty(ii) = true;
             
             continue
         end
@@ -143,7 +152,7 @@ function [data,sampleRate,traceNames] = concatenateEphusTraces(files,sweeps,chan
         
             if ~exist('data','var')
                 data = nan(length(trace),numel(sweeps),numel(files),numel(channels));
-                traceNames = cell(1,numel(sweeps),numel(files),numel(channels));
+                traceNames = cellfun(@(~) '',cell(1,numel(sweeps),numel(files),numel(channels)),'UniformOutput',false);
             end
         
             if size(trace,1) < size(data,1)
@@ -164,7 +173,8 @@ function [data,sampleRate,traceNames] = concatenateEphusTraces(files,sweeps,chan
             
             data(:,colIndices,ii,hyperPageIndex) = trace(:,sweepIndices);
             
-            traceNames(1,colIndices,ii,hyperPageIndex) = arrayfun(@(kk) sprintf('File %s sweep %d channel %s',files{ii},kk,channelName),sweepIndices,'UniformOutput',false);
+            % assign names to every trace, even ones that don't exist
+            traceNames(1,:,ii,hyperPageIndex) = arrayfun(@(kk) sprintf('File %s sweep %d channel %s',files{ii},kk,channelName),1:size(traceNames,2),'UniformOutput',false);
         end
     end
     
@@ -174,8 +184,12 @@ function [data,sampleRate,traceNames] = concatenateEphusTraces(files,sweeps,chan
         return
     end
     
-    data(:,:,missingFiles,:) = [];
-    traceNames(:,:,missingFiles,:) = [];
+    if parser.Results.DeleteEmptyFiles
+        data(:,:,isEmpty,:) = [];
+        traceNames(:,:,isEmpty,:) = [];
+    else
+        data(:,:,isEmpty,:) = NaN;
+    end
     
     data = reshape(data,size(data,1),size(data,2)*size(data,3),size(data,4));
     traceNames = reshape(traceNames,1,size(traceNames,2)*size(traceNames,3),size(traceNames,4));

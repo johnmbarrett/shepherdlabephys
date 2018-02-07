@@ -1,19 +1,25 @@
 classdef BasicEphysAnalysisGUI < handle
     properties(Constant=true)
-        DataOptions = {                     ...
-            'Raw Traces',                   ...
-            'Baseline Subtracted Traces',   ...
-            'Average Trace',                ...
-            'Filtered Traces',              ...
-            'Average Filtered Trace',       ...
-            'Filtered Average Trace',       ...
-            'Series Resistance',            ...
-            'Input Resistance',             ...
-            'Membrane Time Constant',       ...
-            'Membrane Capacitance',         ...
-            'Charge Transferred',           ...
-            'Temporal Parameters',          ...
+        TraceOptions = {                                                ...
+            'Raw Traces', 'SelectedTraces';                             ...
+            'd(Raw Traces)/dt', 'FirstDerivativeTraces';                ...
+            'Baseline Subtracted Traces', 'BaselineSubtractedTraces';   ...
+            'Average Trace', 'AverageTrace';                            ...
+            'Filtered Traces', 'FilteredTraces';                        ...
+            'Average Filtered Trace', 'AverageFilteredTrace';           ...
+            'Filtered Average Trace', 'FilteredAverageTrace'            ...
             };
+        ParameterOptions = {                                            ...
+            'Series Resistance', 'SeriesResistance';                    ...
+            'Input Resistance', 'InputResistance';                      ...
+            'Membrane Time Constant', 'MembraneTimeConstant';           ...
+            'Membrane Capacitance', 'MembraneCapacitance';              ...
+            'Charge Transferred', 'ChargeTransferred'                   ...
+            };
+        OtherOptions = {
+            'Temporal Parameters', @(self) get(findobj(self.Figure,'Tag','tpdatasourcepopupmenu'),'Value'); ... TODO : this isn't exactly true but it's handled as a special case anyway so fuck it
+            };
+        DataOptions = [BasicEphysAnalysisGUI.TraceOptions; BasicEphysAnalysisGUI.ParameterOptions; BasicEphysAnalysisGUI.OtherOptions]
     end
     
     properties(GetAccess=public,SetAccess=protected)
@@ -34,6 +40,7 @@ classdef BasicEphysAnalysisGUI < handle
         BaselineSubtractedTraces
         AverageTrace
         FilteredTraces
+        FirstDerivativeTraces
         AverageFilteredTrace
         FilteredAverageTrace
         SeriesResistance
@@ -54,6 +61,11 @@ classdef BasicEphysAnalysisGUI < handle
         Peak10IndexFalling
         Peak50IndexRising
         Peak50IndexFalling
+        SpikeIndices
+        SpikeTimes
+        SpikeAmplitudes
+        SpikeRate
+        CurrentStepAmplitudes
         SampleRate
         RecordingMode = 'IC'
         Filenames
@@ -61,7 +73,7 @@ classdef BasicEphysAnalysisGUI < handle
     
     methods
         function self = BasicEphysAnalysisGUI
-            figureWidth = 800;
+            figureWidth = 1000;
             figureHeight = 500;
             self.Figure = figure('Position',[100 100 figureWidth figureHeight]);
             
@@ -71,7 +83,7 @@ classdef BasicEphysAnalysisGUI < handle
             
             uicontrol(self.Figure,                                  ...
                 'Style',    'popupmenu',                            ...
-                'String',   BasicEphysAnalysisGUI.DataOptions,      ...
+                'String',   BasicEphysAnalysisGUI.DataOptions(:,1), ...
                 'Units',    'normalized',                           ...
                 'Tag',      'dataselectionpopupmenu',               ...
                 'Position', [245/figureWidth 460/figureHeight 540/figureWidth 25/figureHeight],       ...
@@ -259,7 +271,7 @@ classdef BasicEphysAnalysisGUI < handle
             
             uicontrol(self.Figure,                                  ...
                 'Style',    'popupmenu',                            ...
-                'String',   BasicEphysAnalysisGUI.DataOptions(1:6), ...
+                'String',   BasicEphysAnalysisGUI.TraceOptions(:,1),...
                 'Units',    'normalized',                           ...
                 'Tag',      'rsdatasourcepopupmenu',                ...
                 'Position', [50/figureWidth 230/figureHeight 130/figureWidth 15/figureHeight],        ...
@@ -371,7 +383,7 @@ classdef BasicEphysAnalysisGUI < handle
             
             uicontrol(self.Figure,                                  ...
                 'Style',    'popupmenu',                            ...
-                'String',   BasicEphysAnalysisGUI.DataOptions(1:6), ...
+                'String',   BasicEphysAnalysisGUI.TraceOptions(:,1),...
                 'Units',    'normalized',                           ...
                 'Tag',      'tpdatasourcepopupmenu',                ...
                 'Position', [50/figureWidth 110/figureHeight 130/figureWidth 15/figureHeight],        ...
@@ -440,6 +452,120 @@ classdef BasicEphysAnalysisGUI < handle
                 'Units',    'normalized',                           ...
                 'Position', [95/175 5/35 75/175 25/35],             ...
                 'HorizontalAlignment',  'left'                      ...
+                );
+            
+            uicontrol(self.Figure,                                  ...
+                'Style',    'text',                                 ...
+                'String',   'Spike Detection:',                     ...
+                'Units',    'normalized',                           ...
+                'Position', [800/figureWidth 465/figureHeight 190/figureWidth 25/figureHeight],        ...
+                'HorizontalAlignment',  'left'                      ...
+                );
+            
+            uibuttongroup(self.Figure,'Position',[800/figureWidth 320/figureHeight 190/figureWidth 155/figureHeight]);
+            
+            uicontrol(self.Figure,                                  ...
+                'Style',    'checkbox',                             ...
+                'String',   'Detect Spikes',                        ...
+                'Units',    'normalized',                           ...
+                'Tag',      'detectspikescheckbox',                 ...
+                'Position', [805/figureWidth 455/figureHeight 180/figureWidth 15/figureHeight],        ...
+                'Callback', @(varargin) self.updateSpikeDetection() ...
+                );
+            
+            uicontrol(self.Figure,                                  ...
+                'Style',    'text',                                 ...
+                'String',   'Using:',                               ...
+                'Units',    'normalized',                           ...
+                'Position', [805/figureWidth 430/figureHeight 60/figureWidth 15/figureHeight],         ...
+                'HorizontalAlignment',  'left'                      ...
+                );
+            
+            uicontrol(self.Figure,                                  ...
+                'Style',    'popupmenu',                            ...
+                'String',   BasicEphysAnalysisGUI.TraceOptions(:,1),...
+                'Units',    'normalized',                           ...
+                'Tag',      'dsdatasourcepopupmenu',                ...
+                'Position', [860/figureWidth 435/figureHeight 120/figureWidth 15/figureHeight],        ...
+                'Callback', @(varargin) self.updateSpikeDetection() ...
+                );
+            
+            uicontrol(self.Figure,                                  ...
+                'Style',    'text',                                 ...
+                'String',   'Polarity:',                            ...
+                'Units',    'normalized',                           ...
+                'Position', [805/figureWidth 405/figureHeight 55/figureWidth 15/figureHeight],         ...
+                'HorizontalAlignment',  'left'                      ...
+                );
+            
+            uicontrol(self.Figure,                                  ...
+                'Style',    'popupmenu',                            ...
+                'String',   {'rising' 'falling' 'both'},            ...
+                'Units',    'normalized',                           ...
+                'Tag',      'dspolaritypopupmenu',                  ...
+                'Position', [860/figureWidth 410/figureHeight 120/figureWidth 15/figureHeight],        ...
+                'Callback', @(varargin) self.updateSpikeDetection() ...
+                );
+            
+            uicontrol(self.Figure,                                  ...
+                'Style',    'text',                                 ...
+                'String',   'Threshold:',                           ...
+                'Units',    'normalized',                           ...
+                'Position', [805/figureWidth 380/figureHeight 55/figureWidth 15/figureHeight],         ...
+                'HorizontalAlignment',  'left'                      ...
+                );
+            
+            uicontrol(self.Figure,                                  ...
+                'Style',    'edit',                                 ...
+                'String',   '0',                                    ...
+                'Units',    'normalized',                           ...
+                'Tag',      'dsthresholdeditbox',                   ...
+                'Position', [860/figureWidth 380/figureHeight 120/figureWidth 20/figureHeight],         ...
+                'Callback', @(varargin) self.updateSpikeDetection() ...
+                );
+            
+            uicontrol(self.Figure,                                  ...
+                'Style',    'text',                                 ...
+                'String',   'Start (s):',                           ...
+                'Units',    'normalized',                           ...
+                'Position', [805/figureWidth 355/figureHeight 55/figureWidth 15/figureHeight],         ...
+                'HorizontalAlignment',  'left'                      ...
+                );
+            
+            uicontrol(self.Figure,                                  ...
+                'Style',    'edit',                                 ...
+                'String',   '0',                                    ...
+                'Units',    'normalized',                           ...
+                'Tag',      'dsstarteditbox',                       ...
+                'Position', [860/figureWidth 355/figureHeight 30/figureWidth 20/figureHeight],         ...
+                'Callback', @(varargin) self.updateSpikeDetection() ...
+                );
+            
+            uicontrol(self.Figure,                                  ...
+                'Style',    'text',                                 ...
+                'String',   'Length (s):',                           ...
+                'Units',    'normalized',                           ...
+                'Position', [895/figureWidth 355/figureHeight 55/figureWidth 15/figureHeight],         ...
+                'HorizontalAlignment',  'left'                      ...
+                );
+            
+            uicontrol(self.Figure,                                  ...
+                'Style',    'edit',                                 ...
+                'String',   '0',                                    ...
+                'Units',    'normalized',                           ...
+                'Tag',      'dslengtheditbox',                      ...
+                'Position', [950/figureWidth 355/figureHeight 30/figureWidth 20/figureHeight],         ...
+                'Callback', @(varargin) self.updateSpikeDetection() ...
+                );
+            
+            uicontrol(self.Figure,                                  ...
+                'Enable',   'off',                                  ...
+                'Style',    'pushbutton',                           ...
+                'String',   'Plot F/I curve',                       ...
+                'Units',    'normalized',                           ...
+                'Tag',      'plotficurvebutton',                    ...
+                'Position', [805/figureWidth 325/figureHeight 175/figureWidth 25/figureHeight],         ...
+                'Callback', @(varargin) self.plotFICurve()          ...
                 );
             
 %             uipanel(self.Figure,               ...
@@ -513,6 +639,8 @@ classdef BasicEphysAnalysisGUI < handle
             
             close(fig)
             
+            self.clearDetectedSpikes();
+            
             self.updatePreprocessing();
         end
         
@@ -550,8 +678,12 @@ classdef BasicEphysAnalysisGUI < handle
             end
             
             self.Filenames = cellfun(@(s) sprintf('%s%s',pathname,s),filenames,'UniformOutput',false);
+            
+            wb = waitbar(0,'Loading traces...');
     
-            [self.AllTraces,self.SampleRate,self.TraceNames] = concatenateTraces(self.Filenames);
+            [self.AllTraces,self.SampleRate,self.TraceNames,isEmpty] = concatenateTraces(self.Filenames,[],[],'DeleteEmptyFiles',true);
+            
+            self.Filenames(isEmpty) = [];
             
             self.SelectedTraceIndices = 1:(size(self.AllTraces,2)*size(self.AllTraces,3));
             
@@ -563,7 +695,23 @@ classdef BasicEphysAnalysisGUI < handle
                 disp(self.TraceNames{ii});
             end
             
+            waitbar(1/2,wb,'Processing Data...');
+            
+            self.clearDetectedSpikes();
+            
             self.updatePreprocessing();
+            
+            close(wb);
+        end
+        
+        function clearDetectedSpikes(self)
+            % TODO : there should be a reset function that just erases
+            % everything
+            self.SpikeIndices = {};
+            self.SpikeTimes = {};
+            self.SpikeAmplitudes = {};
+            self.SpikeRate = [];
+            self.refreshData();
         end
         
         function openChooseTracesDialog(self)
@@ -786,6 +934,87 @@ classdef BasicEphysAnalysisGUI < handle
             self.createChoicePanel(fig,3,'channel (.+)','channel');
         end
         
+        function plotFICurve(self)
+            [~,~,extension] = fileparts(self.Filenames{1});
+            
+            wb = waitbar(0,'Loading stimulus parameters...');
+            
+            switch extension(2:end)
+                case 'h5'
+                    tokens = cellfun(@(s) regexp(s,'File (.+) (sweep [0-9]+) channel (.+)','tokens'),self.SelectedTraceNames,'UniformOutput',false);
+                    files = cellfun(@(A) A{1}{1},tokens,'UniformOutput',false);
+                    sweeps = cellfun(@(A) strrep(A{1}{2},' ','_'),tokens,'UniformOutput',false);
+                    
+                    [uniqueFiles,~,fileIndices] = unique(files);
+                    amplitudes = zeros(size(fileIndices));
+                    
+                    % TODO : this is fucked up WaveSurfer is such garbage
+                    for ii = 1:numel(uniqueFiles)
+                        dataFile = ws.loadDataFile(uniqueFiles{ii}); % TODO : cache
+                        
+                        outputable = getSelectedOutputable(dataFile);
+                        
+                        stimChannels = getUniqueChannelNamesInOutputable(outputable);
+                        
+                        if isempty(stimChannels)
+                            close(wb);
+                            errordlg(sprintf('Missing stimuli for file %s',uniqueFiles{ii}));
+                            
+                            return
+                        elseif numel(stimChannels) == 1
+                            stimChannel = stimChannels{1};
+                        else
+                            selection = listdlg('ListString',stimChannels,'SelectionMode','single','PromptString','Choose current step channel');
+                            
+                            if isempty(selection)
+                                close(wb);
+                                return
+                            end
+                            
+                            stimChannel = stimChannels{selection};
+                        end
+                        
+                        indices = find(fileIndices == ii);
+                        
+                        [uniqueSweeps,~,sweepIndices] = unique(sweeps(indices));
+                        
+                        amplitude = extractWavesurferSquarePulseTrainParameters(dataFile,uniqueSweeps,stimChannel);
+                        
+                        for jj = 1:numel(uniqueSweeps)
+                            amplitudes(indices(sweepIndices == jj)) = amplitude(jj);
+                        end
+                    end
+                    
+                    self.CurrentStepAmplitudes = amplitudes;
+                case 'xsg'
+                    % TODO : this doesn't work if you've selected a subset
+                    % of traces or if you're working with DAQ timing files
+                    pulses = extractEphusSquarePulseTrainParameters(self.Filenames,1,'Program','pulseJacker'); % TODO : choose stimIndex, program
+
+                    self.CurrentStepAmplitudes = [pulses.amplitude];
+                otherwise
+                    close(wb);
+                    errordlg(sprintf('Unknown file format %s',extension));
+                    return
+            end
+            
+            close(wb);
+            
+            figure;
+            hold on;
+            
+            splits = [0; find(diff(self.CurrentStepAmplitudes) < 0); numel(self.CurrentStepAmplitudes)]+1;
+            
+            for ii = 1:numel(splits)-1
+                startIndex = splits(ii);
+                endIndex = splits(ii+1)-1;
+                plot(self.CurrentStepAmplitudes(startIndex:endIndex),self.SpikeRate(startIndex:endIndex));
+            end
+            
+            xlabel('Current (pA)');
+            ylabel('Firing Rate (Hz)');
+        end
+        
         function refreshData(self)
             selection = get(findobj(self.Figure,'Tag','dataselectionpopupmenu'),'Value');
             
@@ -794,10 +1023,19 @@ classdef BasicEphysAnalysisGUI < handle
             cla(self.DataAxis);
             set(self.DataAxis,'XLimMode','auto');
                
-            if selection < 7
-                plotTraces(self.DataAxis,data,self.SampleRate,'RecordingMode',self.RecordingMode);
+            if selection <= size(self.TraceOptions,1)
+                if logical(get(findobj(self.Figure,'Tag','detectspikescheckbox'),'Value')) && selection == get(findobj(self.Figure,'Tag','dsdatasourcepopupmenu'),'Value')
+                    peaks = self.SpikeAmplitudes;
+                    peakIndices = self.SpikeIndices;
+                else
+                    peaks = [];
+                    peakIndices = [];
+                end
+                
+                plotTraces(self.DataAxis,data,self.SampleRate,'RecordingMode',self.RecordingMode,'PeakIndices',peakIndices,'Peaks',peaks);
+                
                 return
-            elseif selection < 12
+            elseif selection <= size(self.TraceOptions,1) + size(self.ParameterOptions,1)
                 plotParams(self.DataAxis,data);
                 
                 switch selection
@@ -816,7 +1054,7 @@ classdef BasicEphysAnalysisGUI < handle
                 return
             end
             
-            % if we get here, selection == 12, i.e. show temporal parameters
+            % if we get here, we're showing temporal parameters
             time = (1:size(data,1))/self.SampleRate;
             
             plotTraces(self.DataAxis,data,self.SampleRate,'RecordingMode',self.RecordingMode);
@@ -882,35 +1120,26 @@ classdef BasicEphysAnalysisGUI < handle
         end
         
         function data = selectData(self,selection)
-            switch selection
-                case 1
-                    data = self.SelectedTraces;
-                case 2
-                    data = self.BaselineSubtractedTraces;
-                case 3
-                    data = self.AverageTrace;
-                case 4
-                    data = self.FilteredTraces;
-                case 5
-                    data = self.AverageFilteredTrace;
-                case 6
-                    data = self.FilteredAverageTrace;
-                case 7
-                    data = self.SeriesResistance;
-                case 8
-                    data = self.InputResistance;
-                case 9
-                    data = self.MembraneTimeConstant;
-                case 10
-                    data = self.MembraneCapacitance;
-                case 11
-                    data = self.ChargeTransferred;
-                case 12
-                    data = self.selectData(get(findobj(self.Figure,'Tag','tpdatasourcepopupmenu'),'Value')); % LOLrecursion
+            dataField = self.DataOptions{selection,2};
+            
+            if ischar(dataField) && isprop(self,dataField)
+                data = self.(dataField);
+                
+                return
             end
+            
+            if isa(dataField,'function_handle')
+                data = self.selectData(dataField(self)); % LOLrecursion
+                
+                return
+            end
+            
+            error('ShepherdLabEphys:BasicEphysAnalysisGUI:UnknownSelection','Unknown selection %s',dataField);
         end
         
         function updatePreprocessing(self)
+            self.FirstDerivativeTraces = diff(self.SelectedTraces);
+            
             isBaselineSubtract = logical(get(findobj(self.Figure,'Tag','baselinesubtractcheckbox'),'Value'));
             
             if isBaselineSubtract
@@ -976,6 +1205,7 @@ classdef BasicEphysAnalysisGUI < handle
             % this
             self.updateCellParametersCalculation();
             self.updateTPCalculation();
+            self.updateSpikeDetection();
             
             self.refreshData();
         end
@@ -996,7 +1226,69 @@ classdef BasicEphysAnalysisGUI < handle
             data = self.selectData(get(findobj(self.Figure,'Tag','rsdatasourcepopupmenu'),'Value'));
             
             [self.SeriesResistance,self.InputResistance,self.MembraneTimeConstant,self.MembraneCapacitance,self.SteadyStateCurrent] = calculateCellParameters(data,voltageStep,self.SampleRate,'ResponseStart',responseStart,'ResponseLength',responseLength,'SteadyStateStart',steadyStateStart,'SteadyStateLength',steadyStateLength);
-            self.ChargeTransferred = calculateAUC(data,self.SampleRate,'WindowStart',responseStart,'WindowLength',steadyStateStart+steadyStateLength-responseLength,'Baseline',self.SteadyStateCurrent);
+            
+            baseline = self.SteadyStateCurrent;
+            baseline(isnan(baseline)) = 0;
+            
+            self.ChargeTransferred = calculateAUC(data,self.SampleRate,'WindowStart',responseStart,'WindowLength',steadyStateStart+steadyStateLength-responseLength,'Baseline',baseline);
+            
+            self.refreshData();
+        end
+        
+        function updateSpikeDetection(self)
+            if ~logical(get(findobj(self.Figure,'Tag','detectspikescheckbox'),'Value'))
+                set(findobj(self.Figure,'Tag','plotficurvebutton'),'Enable','off');
+                
+                return
+            end
+            
+            set(findobj(self.Figure,'Tag','plotficurvebutton'),'Enable','on');
+            
+            data = self.selectData(get(findobj(self.Figure,'Tag','dsdatasourcepopupmenu'),'Value'));
+            threshold = str2num(get(findobj(self.Figure,'Tag','dsthresholdeditbox'),'String')); %#ok<ST2NM> % TODO : more threshold options
+            
+            if ~isscalar(threshold) && (~isvector(threshold) || numel(threshold) ~= size(data,2));
+                warndlg('Threshold must be a scalar or a vector with one element per trace');
+                return
+            end
+            
+            polarityMenu = findobj(self.Figure,'Tag','dspolaritypopupmenu');
+            polarities = get(polarityMenu,'String');
+            polarityIndex = get(polarityMenu,'Value');
+            polarity = polarities{polarityIndex};
+            
+            windowStartTime = str2double(get(findobj(self.Figure,'Tag','dsstarteditbox'),'String')); % TODO : more threshold options
+            windowStartIndex = max(0,min(size(data,1),floor(windowStartTime*self.SampleRate)+1));
+            
+            windowLength = str2double(get(findobj(self.Figure,'Tag','dslengtheditbox'),'String')); % TODO : more threshold options
+            windowEndIndex = max(0,min(size(data,1),windowStartIndex+ceil(windowLength*self.SampleRate)-1));
+            
+            data = data(windowStartIndex:windowEndIndex,:);
+            crossings = findThresholdCrossings(data,threshold,polarity);
+            
+            self.SpikeIndices = crossings;
+            self.SpikeAmplitudes = crossings;
+            
+            peakFuns = {@max @min @peak}; % TODO : is peak right here?
+            peakFun = peakFuns{polarityIndex};
+            
+            for ii = 1:numel(crossings)
+                if isempty(crossings{ii})
+                    continue
+                end
+                
+                indices = [crossings{ii}; size(data,1)+1];
+                
+                for jj = 1:numel(indices)-1
+                    [self.SpikeAmplitudes{ii}(jj),spikeIndex] = peakFun(data(indices(jj):(indices(jj+1)-1),ii));
+                    
+                    self.SpikeIndices{ii}(jj) = spikeIndex+indices(jj)+windowStartIndex-2;
+                end
+            end
+            
+            self.SpikeTimes = cellfun(@(indices) indices/self.SampleRate,self.SpikeIndices,'UniformOutput',false);
+            
+            self.SpikeRate = cellfun(@numel,self.SpikeTimes)/windowLength;
             
             self.refreshData();
         end

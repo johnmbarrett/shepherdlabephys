@@ -1,4 +1,4 @@
-function [amplitude,width,start,number,interval] = extractEphusSquarePulseTrainParameters(dataFile,stimIndex,varargin)
+function [amplitude,width,start,number,interval] = extractEphusSquarePulseTrainParameters(dataFiles,stimIndex,varargin)
 %EXTRACTEPHUSSQUAREPULSETRAINPARAMETERS  Extract square pulse train
 %parameters.
 %   AMPLITUDE = EXTRACTEPHUSSQUAREPULSETRAINPARAMETERS(DATAFILE,STIMINDEX)
@@ -18,8 +18,8 @@ function [amplitude,width,start,number,interval] = extractEphusSquarePulseTrainP
 %   specifies one or more of the following name/value pairs:
 %
 %       'Program'   Specifies which Ephus program to extract the stimulus
-%                   parameters from.  Must be one of 'ephys' or
-%                   'stimulator'.  Default is 'stimulator'.
+%                   parameters from.  Must be one of 'ephys', 'pulseJacker'
+%                   or giot'stimulator'.  Default is 'stimulator'.
 
 %   Written by John Barrett 2017-07-28 11:42 CDT
 %   Last updated John Barrett 2017-08-15 17:16 CDT
@@ -27,21 +27,56 @@ function [amplitude,width,start,number,interval] = extractEphusSquarePulseTrainP
         stimIndex = 1;
     end
     
-    if ischar(dataFile)
-        dataFile = load(dataFile,'-mat');
+    if ~iscell(dataFiles)
+        dataFiles = {dataFiles};
     end
     
-    parser = inputParser;
-    addParameter(parser,'Program','stimulator',@(x) any(strcmpi(x,{'ephys' 'stimulator'})));
-    parser.parse(varargin{:});
-   
-    program = lower(parser.Results.Program);
+    nFiles = numel(dataFiles);
     
-    stimData = dataFile.header.(program).(program).pulseParameters{1,stimIndex};
+    start = nan(nFiles,1);
+    width = nan(nFiles,1);
+    interval = nan(nFiles,1);
+    number = nan(nFiles,1);
+    amplitude = nan(nFiles,1);
     
-    start = stimData.squarePulseTrainDelay;
-    width = stimData.squarePulseTrainWidth;
-    interval = stimData.squarePulseTrainISI;
-    number = stimData.squarePulseTrainNumber;
-    amplitude = stimData.amplitude;
+    for ii = 1:nFiles
+        dataFile = dataFiles{ii};
+        
+        if ischar(dataFile)
+            dataFile = load(dataFile,'-mat');
+        end
+
+        parser = inputParser;
+        addParameter(parser,'Program','stimulator',@(x) any(strcmpi(x,{'ephys' 'pulseJacker' 'stimulator'})));
+        parser.parse(varargin{:});
+
+        program = lower(parser.Results.Program);
+
+        switch program
+            case {'ephys' 'stimulator'}
+                stimData = dataFile.header.(program).(program).pulseParameters{1,stimIndex};
+            case 'pulsejacker'
+                pulseJacker = dataFile.header.pulseJacker.pulseJacker;
+
+                if isempty(pulseJacker.pulseDataMap)
+                    stimData = [];
+                else
+                    stimData = pulseJacker.pulseDataMap{stimIndex,pulseJacker.currentPosition+1};
+                end
+        end
+
+        if isempty(stimData)
+            continue
+        end
+        
+        start(ii) = stimData.squarePulseTrainDelay;
+        width(ii) = stimData.squarePulseTrainWidth;
+        interval(ii) = stimData.squarePulseTrainISI;
+        number(ii) = stimData.squarePulseTrainNumber;
+        amplitude(ii) = stimData.amplitude;
+    end
+
+    if nargout <= 1 
+        amplitude = struct('start',num2cell(start),'width',num2cell(width),'interval',num2cell(interval),'number',num2cell(number),'amplitude',num2cell(amplitude));
+    end
 end 

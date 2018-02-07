@@ -1,4 +1,4 @@
-function [data,sampleRate,traceNames] = concatenateTraces(files,varargin)
+function [data,sampleRate,traceNames,isEmpty] = concatenateTraces(files,varargin)
 %CONCATENATETRACES  Concatenate traces from .xsg or WaveSurfer files
 %   DATA = CONCATENATETRACES(FILES) extracts and concatenates traces from
 %   the .xsg or WaveSurfer files specified in the cell array of strings
@@ -13,6 +13,10 @@ function [data,sampleRate,traceNames] = concatenateTraces(files,varargin)
 %   returns a 1xMxP cell array containing a human-readable name for each
 %   trace.
 %
+%   [DATA,SAMPLERATE,TRACENAMES,ISEMPTY] = CONCATENATETRACES(FILES) also
+%   returns a logical array indicating which files were empty.  Currently
+%   elements in this array can only be true for ephus files
+%
 %   [...] = CONCATENATETRACES(FILES,SWEEPS,CHANNELS) only returns data from
 %   the sweeps specified in SWEEPS and the channels specified in CHANNELS.
 %   These options are ignored for Ephus files at present.  See
@@ -23,9 +27,9 @@ function [data,sampleRate,traceNames] = concatenateTraces(files,varargin)
 %   Last updated John Barrett 2017-08-15 18:01 CDT
     switch getDataFormat(files{1}) % TODO : files as dir struct
         case 'xsg'
-            [data,sampleRate,traceNames] = concatenateEphusTraces(files,varargin{:});
+            [data,sampleRate,traceNames,isEmpty] = concatenateEphusTraces(files,varargin{:});
         case 'wavesurfer'
-            [data,sampleRate,traceNames] = concatenateWavesurferTraces(files,varargin{:});
+            [data,sampleRate,traceNames,isEmpty] = concatenateWavesurferTraces(files,varargin{:});
         otherwise
             error('ShepherdLab:concatenateTraces:UnknownFileFormat','Unknown file format for file %s\n',files{1});
     end
