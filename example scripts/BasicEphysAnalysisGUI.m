@@ -64,6 +64,7 @@ classdef BasicEphysAnalysisGUI < handle
         SpikeIndices
         SpikeTimes
         SpikeAmplitudes
+        NSpikes
         SpikeRate
         CurrentStepAmplitudes
         SampleRate
@@ -462,7 +463,7 @@ classdef BasicEphysAnalysisGUI < handle
                 'HorizontalAlignment',  'left'                      ...
                 );
             
-            uibuttongroup(self.Figure,'Position',[800/figureWidth 320/figureHeight 190/figureWidth 155/figureHeight]);
+            uibuttongroup(self.Figure,'Position',[800/figureWidth 280/figureHeight 190/figureWidth 195/figureHeight]);
             
             uicontrol(self.Figure,                                  ...
                 'Style',    'checkbox',                             ...
@@ -559,12 +560,30 @@ classdef BasicEphysAnalysisGUI < handle
                 );
             
             uicontrol(self.Figure,                                  ...
+                'Style',    'checkbox',                             ...
+                'String',   'Divide by burst length',               ...
+                'Units',    'normalized',                           ...
+                'Tag',      'dsburstlengthcheckbox',                ...
+                'Position', [805/figureWidth 335/figureHeight 180/figureWidth 15/figureHeight],        ...
+                'Callback', @(varargin) self.updateSpikeDetection() ...
+                );
+            
+            uicontrol(self.Figure,                                  ...
+                'Style',    'checkbox',                             ...
+                'String',   'Plot from rheobase',                   ...
+                'Units',    'normalized',                           ...
+                'Tag',      'dsplotrheobasecheckbox',               ...
+                'Position', [805/figureWidth 315/figureHeight 180/figureWidth 15/figureHeight],        ...
+                'Callback', @(varargin) self.updateSpikeDetection() ...
+                );
+            
+            uicontrol(self.Figure,                                  ...
                 'Enable',   'off',                                  ...
                 'Style',    'pushbutton',                           ...
                 'String',   'Plot F/I curve',                       ...
                 'Units',    'normalized',                           ...
                 'Tag',      'plotficurvebutton',                    ...
-                'Position', [805/figureWidth 325/figureHeight 175/figureWidth 25/figureHeight],         ...
+                'Position', [805/figureWidth 285/figureHeight 175/figureWidth 25/figureHeight],         ...
                 'Callback', @(varargin) self.plotFICurve()          ...
                 );
             
@@ -946,7 +965,7 @@ classdef BasicEphysAnalysisGUI < handle
                     sweeps = cellfun(@(A) strrep(A{1}{2},' ','_'),tokens,'UniformOutput',false);
                     
                     [uniqueFiles,~,fileIndices] = unique(files);
-                    amplitudes = zeros(size(fileIndices));
+                    amplitudes = zeros(1,numel(fileIndices));
                     
                     % TODO : this is fucked up WaveSurfer is such garbage
                     for ii = 1:numel(uniqueFiles)
@@ -1005,13 +1024,38 @@ classdef BasicEphysAnalysisGUI < handle
             
             splits = [0; find(diff(self.CurrentStepAmplitudes) < 0); numel(self.CurrentStepAmplitudes)]+1;
             
+            isFromRheobase = logical(get(findobj(self.Figure,'Tag','dsplotrheobasecheckbox'),'Value'));
+            
             for ii = 1:numel(splits)-1
                 startIndex = splits(ii);
                 endIndex = splits(ii+1)-1;
-                plot(self.CurrentStepAmplitudes(startIndex:endIndex),self.SpikeRate(startIndex:endIndex));
+                
+                % NaNs should only happen in burst length mode on traces with
+                % one spike, so interpolate them out
+                amplitude = self.CurrentStepAmplitudes(startIndex:endIndex);
+                spikeRate = self.SpikeRate(startIndex:endIndex);
+
+                if isFromRheobase
+                    rheobase = find(self.NSpikes(startIndex:endIndex) > 0,1);
+                    spikeRate = spikeRate(rheobase:end);
+                    amplitude = amplitude(rheobase:end)-amplitude(rheobase);
+                    startIndex = startIndex+rheobase-1;
+                elseif any(isnan(spikeRate))
+                    spikeRate(isnan(spikeRate)) = interp1(amplitude(~isnan(spikeRate)),spikeRate(~isnan(spikeRate)),amplitude(isnan(spikeRate)),'cubic'); % TODO : pick method?
+                end
+                
+                h = plot(amplitude,spikeRate);
+                
+                % only put markers on points that are real
+                plot(amplitude,self.SpikeRate(startIndex:endIndex),'Color',get(h,'Color'),'LineStyle','none','Marker','o');
             end
             
-            xlabel('Current (pA)');
+            if isFromRheobase
+                xlabel('Current above rheobase (pA)');
+            else
+                xlabel('Current (pA)');
+            end
+            
             ylabel('Firing Rate (Hz)');
         end
         
@@ -1288,7 +1332,15 @@ classdef BasicEphysAnalysisGUI < handle
             
             self.SpikeTimes = cellfun(@(indices) indices/self.SampleRate,self.SpikeIndices,'UniformOutput',false);
             
-            self.SpikeRate = cellfun(@numel,self.SpikeTimes)/windowLength;
+            self.NSpikes = cellfun(@numel,self.SpikeTimes);
+            
+            if logical(get(findobj(self.Figure,'Tag','dsburstlengthcheckbox'),'Value'))
+                self.SpikeRate = nan(size(self.NSpikes));
+                self.SpikeRate(self.NSpikes == 0) = 0;
+                self.SpikeRate(self.NSpikes > 1) = self.NSpikes(self.NSpikes > 1)./cellfun(@(t) t(end)-t(1),self.SpikeTimes(self.NSpikes > 1));
+            else
+                self.SpikeRate = cellfun(@numel,self.SpikeTimes)/windowLength;
+            end
             
             self.refreshData();
         end
