@@ -1,4 +1,4 @@
-function [data,sampleRate,traceNames,isEmpty] = concatenateWavesurferTraces(files,sweeps,channels,varargin)
+function [data,sampleRate,traceNames,isEmpty,headers] = concatenateWavesurferTraces(files,sweeps,channels,varargin)
 %CONCATENATEWAVESURFERTRACES    Concatenate traces from WaveSurfer files
 %   DATA = CONCATENATEWAVESURFERTRACES(FILES) extracts every trace from
 %   every channel in the WaveSurfer-exported HDF5 files specified by the
@@ -20,6 +20,10 @@ function [data,sampleRate,traceNames,isEmpty] = concatenateWavesurferTraces(file
 %   [1,numel(FILES)] where every element is false.  This is mostly for
 %   compatibility with CONCATENATEEPHUSTRACES.
 %
+%   [DATA,SAMPLERATE,TRACENAMES,ISEMPTY,HEADERS] = ...
+%   CONCATENATEWAVESURFERTRACES(FILES) also returns an array of header
+%   structs HEADERS for each file.
+%
 %   [...] = CONCATENATEWAVESURFERTRACES(FILES,SWEEPS) extracts only those
 %   traces specifed in the vector of sweep numbers SWEEPS.  Any sweep
 %   numbers not found in any of the files are silently ignored.  If SWEEPS
@@ -32,7 +36,7 @@ function [data,sampleRate,traceNames,isEmpty] = concatenateWavesurferTraces(file
 %   is empty or contains any NaN values, all channels are included.
 
 %   Written by John Barrett 2017-07-28 12:11 CDT
-%   Last updated John Barrett 2017-08-15 17:34 CDT
+%   Last updated John Barrett 2018-02-08 15:33 CDT
     if ischar(files)
         files = {files};
     end
@@ -43,6 +47,12 @@ function [data,sampleRate,traceNames,isEmpty] = concatenateWavesurferTraces(file
     
     for ii = 1:numel(files)
         dataFile = loadDataFile(files{ii});
+        
+        if ~exist('headers','var')
+            headers = repmat(dataFile.header,1,numel(files));
+        else
+            headers(ii) = dataFile.header;
+        end
         
         fields = fieldnames(dataFile);
         

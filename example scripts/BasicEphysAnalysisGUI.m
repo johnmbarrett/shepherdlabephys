@@ -77,6 +77,7 @@ classdef BasicEphysAnalysisGUI < handle
         SampleRate
         RecordingMode = 'IC'
         Filenames
+        Headers
     end
     
     methods
@@ -707,7 +708,7 @@ classdef BasicEphysAnalysisGUI < handle
             
             wb = waitbar(0,'Loading traces...');
     
-            [self.AllTraces,self.SampleRate,self.TraceNames,isEmpty] = concatenateTraces(self.Filenames,[],[],'DeleteEmptyFiles',true);
+            [self.AllTraces,self.SampleRate,self.TraceNames,isEmpty,self.Headers] = concatenateTraces(self.Filenames,[],[],'DeleteEmptyFiles',true);
             
             self.Filenames(isEmpty) = [];
             
@@ -976,7 +977,7 @@ classdef BasicEphysAnalysisGUI < handle
                     
                     % TODO : this is fucked up WaveSurfer is such garbage
                     for ii = 1:numel(uniqueFiles)
-                        dataFile = ws.loadDataFile(uniqueFiles{ii}); % TODO : cache
+                        dataFile = struct('header',self.Headers(strncmp(uniqueFiles{ii},self.Filenames,numel(uniqueFiles{ii}))));
                         
                         outputable = getSelectedOutputable(dataFile);
                         
@@ -1015,7 +1016,7 @@ classdef BasicEphysAnalysisGUI < handle
                 case 'xsg'
                     % TODO : this doesn't work if you've selected a subset
                     % of traces or if you're working with DAQ timing files
-                    pulses = extractEphusSquarePulseTrainParameters(self.Filenames,1,'Program','pulseJacker'); % TODO : choose stimIndex, program
+                    pulses = extractEphusSquarePulseTrainParameters(arrayfun(@(S) struct('header',S),self.Headers,'UniformOutput',false),1,'Program','pulseJacker'); % TODO : choose stimIndex, program
 
                     self.CurrentStepAmplitudes = [pulses.amplitude];
                 otherwise
