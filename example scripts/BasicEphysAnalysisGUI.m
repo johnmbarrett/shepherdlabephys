@@ -1,23 +1,28 @@
 classdef BasicEphysAnalysisGUI < handle
     properties(Constant=true)
-        TraceOptions = {                                                ...
-            'Raw Traces', 'SelectedTraces';                             ...
-            'd(Raw Traces)/dt', 'FirstDerivativeTraces';                ...
-            'Baseline Subtracted Traces', 'BaselineSubtractedTraces';   ...
-            'Average Trace', 'AverageTrace';                            ...
-            'Filtered Traces', 'FilteredTraces';                        ...
-            'Average Filtered Trace', 'AverageFilteredTrace';           ...
-            'Filtered Average Trace', 'FilteredAverageTrace'            ...
+        TraceOptions = {                                                    ...
+            'Raw Traces', 'SelectedTraces', [];                             ...
+            'd(Raw Traces)/dt', 'FirstDerivativeTraces', [];                ...
+            'Baseline Subtracted Traces', 'BaselineSubtractedTraces', [];   ...
+            'Average Trace', 'AverageTrace', [];                            ...
+            'Filtered Traces', 'FilteredTraces', [];                        ...
+            'Average Filtered Trace', 'AverageFilteredTrace', [];           ...
+            'Filtered Average Trace', 'FilteredAverageTrace', []            ...
             };
-        ParameterOptions = {                                            ...
-            'Series Resistance', 'SeriesResistance';                    ...
-            'Input Resistance', 'InputResistance';                      ...
-            'Membrane Time Constant', 'MembraneTimeConstant';           ...
-            'Membrane Capacitance', 'MembraneCapacitance';              ...
-            'Charge Transferred', 'ChargeTransferred'                   ...
+        ParameterOptions = {                                                ...
+            'Series Resistance', 'SeriesResistance', '(M{\Omega})';         ...
+            'Input Resistance', 'InputResistance', '(M{\Omega})';           ...
+            'Membrane Time Constant', 'MembraneTimeConstant', '(s)';        ...
+            'Membrane Capacitance', 'MembraneCapacitance', '(pF)';          ...
+            'Charge Transferred', 'ChargeTransferred', '(pC)';              ...
+            'Number of Spikes', 'NSpikes', '';                              ...
+            'Firing Rate', 'SpikeRate', '(Hz)';                             ...
+            'Last ISI/First ISI', 'FirstLastISIRatio', ''                   ...
             };
         OtherOptions = {
-            'Temporal Parameters', @(self) get(findobj(self.Figure,'Tag','tpdatasourcepopupmenu'),'Value'); ... TODO : this isn't exactly true but it's handled as a special case anyway so fuck it
+            'Temporal Parameters', @(self) get(findobj(self.Figure,'Tag','tpdatasourcepopupmenu'),'Value'), []; ... TODO : this isn't exactly true but it's handled as a special case anyway so fuck it
+            'Raster', 'SpikeTimes', [];                                     ...
+            'Inter-Spike Intervals', 'ISIs', []                             ...
             };
         DataOptions = [BasicEphysAnalysisGUI.TraceOptions; BasicEphysAnalysisGUI.ParameterOptions; BasicEphysAnalysisGUI.OtherOptions]
     end
@@ -63,6 +68,8 @@ classdef BasicEphysAnalysisGUI < handle
         Peak50IndexFalling
         SpikeIndices
         SpikeTimes
+        ISIs
+        FirstLastISIRatio
         SpikeAmplitudes
         NSpikes
         SpikeRate
@@ -1066,6 +1073,7 @@ classdef BasicEphysAnalysisGUI < handle
             
             cla(self.DataAxis);
             set(self.DataAxis,'XLimMode','auto');
+            set(self.DataAxis,'YLimMode','auto');
                
             if selection <= size(self.TraceOptions,1)
                 if logical(get(findobj(self.Figure,'Tag','detectspikescheckbox'),'Value')) && selection == get(findobj(self.Figure,'Tag','dsdatasourcepopupmenu'),'Value')
@@ -1082,42 +1090,67 @@ classdef BasicEphysAnalysisGUI < handle
             elseif selection <= size(self.TraceOptions,1) + size(self.ParameterOptions,1)
                 plotParams(self.DataAxis,data);
                 
-                switch selection
-                    case 7
-                        ylabel(self.DataAxis,'Series Resistance (M{\Omega})');
-                    case 8
-                        ylabel(self.DataAxis,'Input Resistance (M{\Omega})');
-                    case 9
-                        ylabel(self.DataAxis,'Membrane Time Constant (s)');
-                    case 10
-                        ylabel(self.DataAxis,'Membrane Capacitance (pF)');
-                    case 11
-                        ylabel(self.DataAxis,'Charge Transferred (pC)');
-                end
+                ylabel(self.DataAxis,strjoin(self.DataOptions(selection,[1 3]),' '));
                         
                 return
             end
             
-            % if we get here, we're showing temporal parameters
-            time = (1:size(data,1))/self.SampleRate;
-            
-            plotTraces(self.DataAxis,data,self.SampleRate,'RecordingMode',self.RecordingMode);
-            
             hold(self.DataAxis,'on');
             
-            start = str2double(get(findobj(self.Figure,'Tag','tpstarteditbox'),'String'));
+            switch self.DataOptions{selection,1}
+                case 'Temporal Parameters'
+                    time = (1:size(data,1))/self.SampleRate;
+
+                    plotTraces(self.DataAxis,data,self.SampleRate,'RecordingMode',self.RecordingMode);
+
+                    start = str2double(get(findobj(self.Figure,'Tag','tpstarteditbox'),'String'));
+
+                    latencyHandles = line(repmat(self.Latencies+start,2,1),repmat(ylim',1,numel(self.Latencies)),'Color','k','LineStyle','-');
+                    peakTimeHandles = plot(time(self.PeakIndices),data(self.PeakIndices),'Color','r','LineStyle','none','Marker','o');
+                    riseTimeHandles = plot(time([self.Peak10IndexRising;self.Peak90IndexRising]),data([self.Peak10IndexRising;self.Peak90IndexRising]),'Color','k','LineStyle','--','Marker','o');
+                    fallTimeHandles = plot(time([self.Peak10IndexFalling;self.Peak90IndexFalling]),data([self.Peak10IndexFalling;self.Peak90IndexFalling]),'Color','k','LineStyle','-.','Marker','o');
+                    halfWidthHandles = plot(time([self.Peak50IndexRising;self.Peak50IndexFalling]),data([self.Peak50IndexRising;self.Peak50IndexFalling]),'Color','k','LineStyle',':','Marker','o');
+
+                    legend(self.DataAxis,[peakTimeHandles(1);latencyHandles(1);riseTimeHandles(1);fallTimeHandles(1);halfWidthHandles(1)],{'Peak' 'Latency' 'Rise Time' 'Fall Time' 'Half Width'},'Location','NorthEast');
+
+                    window = str2double(get(findobj(self.Figure,'Tag','tplengtheditbox'),'String')); 
+
+                    xlim(self.DataAxis,[start start+max(window,1/self.SampleRate)]);
+                case 'Raster'
+                    for ii = 1:numel(data)
+                        plot(data{ii},ii*ones(size(data{ii})),'Color','b','Marker','.');
+                    end
+                    
+                    xlabel('Time (s)');
+                    xlim([0 size(self.SelectedTraces,1)/self.SampleRate]);
+                    
+                    ylabel('Trace #');
+                    ylim([0 ii+1]);
+                case 'Inter-Spike Intervals'
+                    colourOrder = get(self.DataAxis,'ColorOrder');
+                    
+                    hs = gobjects(numel(data),1);
+                    
+                    for ii = 1:numel(data)
+                        if isempty(data{ii})
+                            data{ii} = NaN;
+                        end
+                        
+                        [~,hs(ii)] = plotParams(self.DataAxis,data{ii});
+                        set(hs(ii),'Color',colourOrder(mod(ii-1,size(colourOrder,1))+1,:));
+                    end
+                    
+                    xlabel('ISI #');
+                    xlim([0 max(self.NSpikes)+1]);
+                    
+                    ylabel('ISI (s)');
+                    
+                    legend(hs,arrayfun(@(ii) sprintf('Trace %d',ii),1:numel(data),'UniformOutput',false));
+                otherwise
+                    warndlg('Unknown data option %s',self.DataOptions{selection,1});
+            end
             
-            latencyHandles = line(repmat(self.Latencies+start,2,1),repmat(ylim',1,numel(self.Latencies)),'Color','k','LineStyle','-');
-            peakTimeHandles = plot(time(self.PeakIndices),data(self.PeakIndices),'Color','r','LineStyle','none','Marker','o');
-            riseTimeHandles = plot(time([self.Peak10IndexRising;self.Peak90IndexRising]),data([self.Peak10IndexRising;self.Peak90IndexRising]),'Color','k','LineStyle','--','Marker','o');
-            fallTimeHandles = plot(time([self.Peak10IndexFalling;self.Peak90IndexFalling]),data([self.Peak10IndexFalling;self.Peak90IndexFalling]),'Color','k','LineStyle','-.','Marker','o');
-            halfWidthHandles = plot(time([self.Peak50IndexRising;self.Peak50IndexFalling]),data([self.Peak50IndexRising;self.Peak50IndexFalling]),'Color','k','LineStyle',':','Marker','o');
-            
-            legend(self.DataAxis,[peakTimeHandles(1);latencyHandles(1);riseTimeHandles(1);fallTimeHandles(1);halfWidthHandles(1)],{'Peak' 'Latency' 'Rise Time' 'Fall Time' 'Half Width'},'Location','NorthEast');
-        
-            window = str2double(get(findobj(self.Figure,'Tag','tplengtheditbox'),'String')); 
-            
-            xlim(self.DataAxis,[start start+max(window,1/self.SampleRate)]);
+            hold(self.DataAxis,'off');
         end
         
         function saveData(self)
@@ -1331,6 +1364,8 @@ classdef BasicEphysAnalysisGUI < handle
             end
             
             self.SpikeTimes = cellfun(@(indices) indices/self.SampleRate,self.SpikeIndices,'UniformOutput',false);
+            self.ISIs = cellfun(@diff,self.SpikeTimes,'UniformOutput',false);
+            self.FirstLastISIRatio = cellfun(@(isi) ternaryfun(isempty(isi),@() NaN, @() isi(end)/isi(1)),self.ISIs);
             
             self.NSpikes = cellfun(@numel,self.SpikeTimes);
             
