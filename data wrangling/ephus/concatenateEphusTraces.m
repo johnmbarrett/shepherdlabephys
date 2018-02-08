@@ -1,4 +1,4 @@
-function [data,sampleRate,traceNames,isEmpty] = concatenateEphusTraces(files,sweeps,channels,varargin)
+function [data,sampleRate,traceNames,isEmpty,headers] = concatenateEphusTraces(files,sweeps,channels,varargin)
 %CONCATENATEEPHUSTRACES Concatenate traces from .xsg files
 %   DATA = CONCATENATEEPHUSTRACES(FILES) extracts all the traces from each
 %   xsg file in the cell array of filename strings FILES and concatenates 
@@ -24,6 +24,10 @@ function [data,sampleRate,traceNames,isEmpty] = concatenateEphusTraces(files,swe
 %   returns a logical array in which each element is true if the
 %   corresponding files was empty.
 %
+%   [DATA,SAMPLERATE,TRACENAMES,ISEMPTY,HEADERS] = ...
+%   CONCATENATEEPHUSTRACES(...) also returns header structs HEADERS for
+%   each file.
+%
 %   [...] = CONCATENATEEPHUSTRACES(...,PARAM1,VAL1,...) specifes one or
 %   more of the following name-value pair options:
 %
@@ -35,7 +39,7 @@ function [data,sampleRate,traceNames,isEmpty] = concatenateEphusTraces(files,swe
 %                           'acquirer'.
 
 %   Written by John Barrett 2017-07-27 14:14 CDT
-%   Last updated John Barrett 2017-08-18 15:05 CDT
+%   Last updated John Barrett 2018-02-08 15:29 CDT
     parser = inputParser();
     addParameter(parser,'DeleteEmptyFiles',false,@(x) isscalar(x) && islogical(x));
     addParameter(parser,'Program','ephys',@(x) ismember(x,{'ephys' 'acquirer'}));
@@ -51,6 +55,12 @@ function [data,sampleRate,traceNames,isEmpty] = concatenateEphusTraces(files,swe
 
     for ii = 1:numel(files)
         dataStruct = load(files{ii},'-mat'); % TODO : specify files as dir(...) struct
+        
+        if isstruct(dataStruct) && isfield(dataStruct,'header')
+            headers(ii) = dataStruct.header; %#ok<AGROW>
+        else
+            warning('ShepherdLab:concatenateEphusTraces:NoHeaderFound','No header found in file %s, will return empty header struct for this file\n',files{ii});
+        end 
         
         if ii == 1
             sampleRate = getSampleRate(dataStruct);
@@ -178,6 +188,10 @@ function [data,sampleRate,traceNames,isEmpty] = concatenateEphusTraces(files,swe
         end
     end
     
+    if ~exist('headers','var') % every file was missing its header
+        headers = repmat(struct([]),1,numel(files));
+    end
+    
     if ~exist('data','var')
         data = [];
         traceNames = {};
@@ -186,6 +200,7 @@ function [data,sampleRate,traceNames,isEmpty] = concatenateEphusTraces(files,swe
     
     if parser.Results.DeleteEmptyFiles
         data(:,:,isEmpty,:) = [];
+        headers(isEmpty) = [];
         traceNames(:,:,isEmpty,:) = [];
     else
         data(:,:,isEmpty,:) = NaN;
