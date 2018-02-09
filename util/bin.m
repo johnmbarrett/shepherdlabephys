@@ -1,4 +1,16 @@
 function C = bin(A,b,isOneDimensional)    
+%BIN    Bin a matrix by averaging blocks of pixels
+%
+% C = BIN(A,b) bins the M_1 x M_2 x ... x M_n matrix A into a new M_1/b x
+% M_2/b x ... x M_n/b matrix C by taking the average value of each b x b
+% ... x b block of A and assigning the result to the corresponding element 
+% in C.  The behaviour of BIN is undefined and likely version-dependent if 
+% b does not exactly divide the size of any dimension of A.
+%
+% C = BIN(A,b,ISONEDIMENSIONAL) performs one-dimensional binning along each
+% column of A is ISONEDIMENSIONAL is set to true, otherwise it acts exactly
+% as the two-argument version of BIN.
+
     if nargin < 3
         isOneDimensional = false;
     end
