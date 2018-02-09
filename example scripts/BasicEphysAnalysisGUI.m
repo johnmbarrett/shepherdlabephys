@@ -1030,7 +1030,7 @@ classdef BasicEphysAnalysisGUI < handle
             figure;
             hold on;
             
-            splits = [0; find(diff(self.CurrentStepAmplitudes) < 0); numel(self.CurrentStepAmplitudes)]+1;
+            splits = [0 find(diff(self.CurrentStepAmplitudes) < 0) numel(self.CurrentStepAmplitudes)]+1;
             
             isFromRheobase = logical(get(findobj(self.Figure,'Tag','dsplotrheobasecheckbox'),'Value'));
             
