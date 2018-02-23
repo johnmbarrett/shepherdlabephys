@@ -28,7 +28,7 @@ function [amplitude,width,start,number,interval] = extractEphusSquarePulseTrainP
     end
     
     if ~iscell(dataFiles)
-        dataFiles = {dataFiles};
+        dataFiles = num2cell(dataFiles);
     end
     
     nFiles = numel(dataFiles);
