@@ -57,6 +57,8 @@ function [data,sampleRate,traceNames,isEmpty,headers] = concatenateEphusTraces(f
         if ~exist(files{ii},'file')
             warning('ShepherdLab:concatenateEphusTraces:NoFileFound','File %s not found, ignoring...\n',files{ii});
             
+            isEmpty(ii) = true;
+            
             continue
         end
         
