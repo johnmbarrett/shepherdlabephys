@@ -54,6 +54,14 @@ function [data,sampleRate,traceNames,isEmpty,headers] = concatenateEphusTraces(f
     isEmpty = false(numel(files),1);
 
     for ii = 1:numel(files)
+        if ~exist(files{ii},'file')
+            warning('ShepherdLab:concatenateEphusTraces:NoFileFound','File %s not found, ignoring...\n',files{ii});
+            
+            isEmpty(ii) = true;
+            
+            continue
+        end
+        
         dataStruct = load(files{ii},'-mat'); % TODO : specify files as dir(...) struct
         
         if isstruct(dataStruct) && isfield(dataStruct,'header')

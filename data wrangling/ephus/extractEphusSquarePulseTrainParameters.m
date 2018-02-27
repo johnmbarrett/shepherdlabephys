@@ -28,7 +28,7 @@ function [amplitude,width,start,number,interval] = extractEphusSquarePulseTrainP
     end
     
     if ~iscell(dataFiles)
-        dataFiles = {dataFiles};
+        dataFiles = num2cell(dataFiles);
     end
     
     nFiles = numel(dataFiles);
@@ -51,12 +51,18 @@ function [amplitude,width,start,number,interval] = extractEphusSquarePulseTrainP
         parser.parse(varargin{:});
 
         program = lower(parser.Results.Program);
+        
+        if isfield(dataFile,'header')
+            header = dataFile.header;
+        else % TODO : more checking
+            header = dataFile;
+        end
 
         switch program
             case {'ephys' 'stimulator'}
-                stimData = dataFile.header.(program).(program).pulseParameters{1,stimIndex};
+                stimData = header.(program).(program).pulseParameters{1,stimIndex};
             case 'pulsejacker'
-                pulseJacker = dataFile.header.pulseJacker.pulseJacker;
+                pulseJacker = header.pulseJacker.pulseJacker;
 
                 if isempty(pulseJacker.pulseDataMap)
                     stimData = [];
