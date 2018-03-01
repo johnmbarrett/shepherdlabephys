@@ -1,11 +1,12 @@
-function [Rs,Ri,tau,Cm,steadyState] = calculateCellParameters(data,voltageStep,sampleRate,varargin)
+function [Rs,Ri,tau,Cm,steadyState,Racc] = calculateCellParameters(data,voltageStep,sampleRate,varargin)
 %CALCULATECELLPARAMETERS    Calculate various cell parameters
-%   [RS,RI,TAU,CM] = CALCULATECELLPARAMETERS(DATA,VOLTAGESTEP,SAMPLERATE)
-%   calculates the series resistance, RS, the input resistance, RI, the
-%   decay time, TAU, and the membrane capacitance, CM, from the ephys
-%   trace(s) contained in the matrix DATA (one sweep per column, sampled at
-%   SAMPLERATE), which contains a voltage step of amplitude VOLTAGESTEP
-%   volts.
+%   [RS,RI,TAU,CM,STEADYSTATE,RACC] = ...
+%   CALCULATECELLPARAMETERS(DATA,VOLTAGESTEP,SAMPLERATE) calculates the 
+%   series resistance, RS, the input resistance, RI, the decay time, TAU, 
+%   the membrane capacitance, CM, the steady-state current STEADYSTATE, and
+%   the access resistance, RACC, from the ephys trace(s) contained in the 
+%   matrix DATA (one sweep per column, sampled at SAMPLERATE), which 
+%   contains a voltage step of amplitude VOLTAGESTEP volts.
 %
 %   [...] = CALCULATECELLPARAMETERS(...,PARAM1,VAL1,PARAM2,VAL2,...) 
 %   specifies one or more of the following name/value pairs:
@@ -70,6 +71,7 @@ function [Rs,Ri,tau,Cm,steadyState] = calculateCellParameters(data,voltageStep,s
 
     Rs = voltageStep./peakResponse; % V/pA = TOhm
     Ri = voltageStep./steadyState-Rs;
+    Racc = voltageStep./(peakResponse-steadyState);
 
     steadyStateSubtractedData = bsxfun(@minus,data,steadyState);
 
@@ -105,4 +107,5 @@ function [Rs,Ri,tau,Cm,steadyState] = calculateCellParameters(data,voltageStep,s
     
     Rs = Rs*10^6; % convert to MOhms
     Ri = Ri*10^6; % convert to MOhms
+    Racc = Racc*10^6; % convert to MOhms
 end
