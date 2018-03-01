@@ -5,6 +5,8 @@ function [data,sampleRate,traceNames,isEmpty,headers] = concatenateTraces(files,
 %   FILES.  The traces are returned as an NxMxP matrix DATA, where N is the
 %   length of the longest trace, M is the number of traces extracted, and P
 %   is the number of channels (currently fixed at 1 for .xsg files).
+%   Instead of a cell array, FILES maybe a char array with a single file
+%   name.
 %
 %   [DATA,SAMPLERATE] = CONCATENATETRACES(FILES) also returns the rate at 
 %   which the data was sampled in Hz.
@@ -28,6 +30,10 @@ function [data,sampleRate,traceNames,isEmpty,headers] = concatenateTraces(files,
 
 %   Written by John Barrett 2017-08-09 17:39 CDT
 %   Last updated John Barrett 2018-02-08 15:22 CDT
+    if ischar(files)
+        files = {files};
+    end
+
     switch getDataFormat(files{1}) % TODO : files as dir struct
         case 'xsg'
             [data,sampleRate,traceNames,isEmpty,headers] = concatenateEphusTraces(files,varargin{:});
