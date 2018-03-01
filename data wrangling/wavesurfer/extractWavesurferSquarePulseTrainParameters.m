@@ -32,12 +32,13 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
     
     if nargin < 2 || isempty(sweeps) || (isnumeric(sweeps) && any(~isfinite(sweeps(:))))
         if isfield(dataFile,'sweep_0001')
-            % we have the data file, so get the actual number of sweeps
-            sweeps = 1:(numel(fieldnames(dataFile))-1); % TODO : will WaveSurfer data files always and forever comprise a header, a field for each sweep, and no other fields?
+            % we have the data file, so get the actual sweeps
+            fields = fieldnames(dataFile);
+            sweeps = fields(strncmpi('sweep',fields,5));
         else
             % we just have the header to work with, so pull the number of
             % sweeps from that
-            sweeps = 1:header.NSweepsPerRun;
+            sweeps = header.Logging.NextSweepIndex+(1:header.NSweepsPerRun)-1;
         end
     end
     
