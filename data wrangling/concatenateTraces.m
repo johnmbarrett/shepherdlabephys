@@ -5,6 +5,8 @@ function [data,sampleRate,traceNames,isEmpty,headers] = concatenateTraces(files,
 %   FILES.  The traces are returned as an NxMxP matrix DATA, where N is the
 %   length of the longest trace, M is the number of traces extracted, and P
 %   is the number of channels (currently fixed at 1 for .xsg files).
+%   Instead of a cell array, FILES maybe a char array with a single file
+%   name.
 %
 %   [DATA,SAMPLERATE] = CONCATENATETRACES(FILES) also returns the rate at 
 %   which the data was sampled in Hz.
