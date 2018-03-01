@@ -4,7 +4,8 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
 %   AMPLITUDE = EXTRACTWAVESURFERSQUAREPULSETRAINPARAMETERS(DATAFILE)
 %   returns the AMPLITUDE of the square pulse train presented on the first 
 %   sweep of the first channel recorded in DATAFILE, which should be a
-%   struct of the kind returned by ws.loadDataFile.
+%   struct of the kind returned by ws.loadDataFile, or the header field
+%   from such a struct.
 %   
 %   [AMPLITUDE,WIDTH,START,NUMBER,INTERVAL] =
 %   EXTRACTWAVESURFERSQUAREPULSETRAINPARAMETERS(...) additionally returns with
@@ -14,8 +15,10 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
 %
 %   [...] = EXTRACTWAVESURFERSQUAREPULSETRAINPARAMETERS(DATAFILE,SWEEPS)
 %   returns the stimulus paramters for the sweeps specified in the array of
-%   sweep indices SWEEPS.  If SWEEPS is empty or contains an NaN values,
-%   only the stimulus parameters on the first sweep are returned.
+%   sweep indices SWEEPS.  If SWEEPS is empty or contains any non-finite
+%   values, either parameters for all recording sweeps (if 
+%   DATAFILE is the whole data file) or all requested sweeps (if DATAFILE
+%   is just the header) are returned.
 %
 %   [...] = EXTRACTWAVESURFERSQUAREPULSETRAINPARAMETERS(DATAFILE,SWEEPS,...
 %   CHANNELS) returns the stimulus paramters on each channel specified in
@@ -25,10 +28,17 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
 
 %   Written by John Barrett 2017-07-28 14:36 CDT
 %   Last updated John Barrett 2017-08-15 17:41 CDT
-    header = getWavesurferHeader(dataFile);
+    [header,dataFile] = getWavesurferHeader(dataFile);
     
-    if nargin < 2 || isempty(sweeps) || (isnumeric(sweeps) && any(isnan(sweeps(:))))
-        sweeps = 1;
+    if nargin < 2 || isempty(sweeps) || (isnumeric(sweeps) && any(~isfinite(sweeps(:))))
+        if isfield(dataFile,'sweep_0001')
+            % we have the data file, so get the actual number of sweeps
+            sweeps = 1:(numel(fieldnames(dataFile))-1); % TODO : will WaveSurfer data files always and forever comprise a header, a field for each sweep, and no other fields?
+        else
+            % we just have the header to work with, so pull the number of
+            % sweeps from that
+            sweeps = 1:header.NSweepsPerRun;
+        end
     end
     
     if nargin < 3
