@@ -28,6 +28,10 @@ function [data,sampleRate,traceNames,isEmpty,headers] = concatenateTraces(files,
 
 %   Written by John Barrett 2017-08-09 17:39 CDT
 %   Last updated John Barrett 2018-02-08 15:22 CDT
+    if ischar(files)
+        files = {files};
+    end
+
     switch getDataFormat(files{1}) % TODO : files as dir struct
         case 'xsg'
             [data,sampleRate,traceNames,isEmpty,headers] = concatenateEphusTraces(files,varargin{:});
