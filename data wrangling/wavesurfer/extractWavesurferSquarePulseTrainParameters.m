@@ -25,10 +25,7 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
 
 %   Written by John Barrett 2017-07-28 14:36 CDT
 %   Last updated John Barrett 2017-08-15 17:41 CDT
-
-    if ischar(dataFile)
-        dataFile = ws.loadDataFile(dataFile);
-    end
+    header = getWavesurferHeader(dataFile);
     
     if nargin < 2 || isempty(sweeps) || (isnumeric(sweeps) && any(isnan(sweeps(:))))
         sweeps = 1;
@@ -49,9 +46,9 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
     number = nan(nSweeps,nChannels);
     interval = nan(nSweeps,nChannels);
     
-    sampleRate = dataFile.header.Acquisition.SampleRate;
+    sampleRate = header.Acquisition.SampleRate;
     
-    [maps,stimulusLibrary,nMaps] = getSelectedOutputable(dataFile);
+    [maps,stimulusLibrary,nMaps] = getSelectedOutputable(header);
         
     for ii = 1:numel(sweeps)
         if isnumeric(sweeps)
@@ -60,7 +57,7 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
             i = sscanf(sweeps{ii},'sweep_%d');
         end
         
-        i = i-dataFile.header.Logging.NextSweepIndex+1;
+        i = i-header.Logging.NextSweepIndex+1;
 
         map = maps{mod(i-1,nMaps)+1}; % TODO : is this right? each sweep it moves on to the next map? how does that interact with the i parameter in each stimulus?  does it increment every sweep or every run through the sequence?
 
