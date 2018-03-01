@@ -13,7 +13,9 @@ function [maps,stimulusLibrary,nMaps] = getSelectedOutputable(dataFile)
 
 %   Written by John Barrett 2018-02-06 16:56 CDT
 %   Last updated John Barrett 2018-02-06 17:00 CDT
-    stimulusLibrary = dataFile.header.Stimulation.StimulusLibrary;
+    header = getWavesurferHeader(dataFile);
+
+    stimulusLibrary = header.Stimulation.StimulusLibrary;
     
     if isfield(stimulusLibrary,'SelectedOutputable')
         % it's a sequence!  I think
