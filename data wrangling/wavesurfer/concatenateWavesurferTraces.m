@@ -39,6 +39,8 @@ function [data,sampleRate,traceNames,isEmpty,headers] = concatenateWavesurferTra
 %   Last updated John Barrett 2018-02-08 15:33 CDT
     if ischar(files)
         files = {files};
+    elseif isstruct(files)
+        files = num2cell(files);
     end
 
     if nargin < 2
@@ -46,7 +48,11 @@ function [data,sampleRate,traceNames,isEmpty,headers] = concatenateWavesurferTra
     end
     
     for ii = 1:numel(files)
-        dataFile = loadDataFile(files{ii});
+        if ischar(files{ii})
+            dataFile = loadDataFile(files{ii});
+        elseif isstruct(files{ii})
+            dataFile = files{ii};
+        end
         
         if ~exist('headers','var')
             headers = repmat(dataFile.header,1,numel(files));
@@ -88,7 +94,14 @@ function [data,sampleRate,traceNames,isEmpty,headers] = concatenateWavesurferTra
             end
             
             data(:,:,end+1) = traces; %#ok<AGROW>
-            traceNames(1,:,end+1) = cellfun(@(ch) sprintf('File %s %s channel %s',files{ii},strrep(sweep,'_',' '),ch),dataFile.header.Acquisition.ActiveChannelNames,'UniformOutput',false); %#ok<AGROW>
+            
+            if ischar(files{ii})
+                filename = files{ii};
+            else
+                [~,filename] = fileparts(dataFile.header.Logging.CurrentRunAbsoluteFileName);
+            end
+            
+            traceNames(1,:,end+1) = cellfun(@(ch) sprintf('File %s %s channel %s',filename,strrep(sweep,'_',' '),ch),dataFile.header.Acquisition.ActiveChannelNames,'UniformOutput',false); %#ok<AGROW>
         end
     end
     

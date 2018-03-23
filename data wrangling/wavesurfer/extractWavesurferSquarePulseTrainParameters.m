@@ -31,7 +31,7 @@ function [amplitude,width,start,number,interval] = extractWavesurferSquarePulseT
     [header,dataFile] = getWavesurferHeader(dataFile);
     
     if nargin < 2 || isempty(sweeps) || (isnumeric(sweeps) && any(~isfinite(sweeps(:))))
-        if isfield(dataFile,'sweep_0001')
+        if isfield(dataFile,'header')
             % we have the data file, so get the actual sweeps
             fields = fieldnames(dataFile);
             sweeps = fields(strncmpi('sweep',fields,5));
