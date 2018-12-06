@@ -203,3 +203,14 @@ function testDelayedDoubleTriangleResponseWithResponseTimes(testCase)
     verifyEqual(testCase,peak50IndexFalling,251);
     verifyEqual(testCase,fallIntercept,300,'AbsTol',1e-6);
 end
+
+function testMultipage(testCase)
+    n = 1e4;
+    x = zeros(n,2,2);
+    
+    % TODO : test return values
+    calculateTemporalParameters(x,n);
+    calculateTemporalParameters(rand(size(x)),n);
+    
+    verifyTrue(testCase,true);
+end

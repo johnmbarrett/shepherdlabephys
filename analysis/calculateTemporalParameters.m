@@ -86,7 +86,7 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
     peaks(std(traces) == 0) = NaN;
     peakIndices(std(traces) == 0) = NaN;
     
-    if ~all(isnan(peaks)) && traces(find(~isnan(peakIndices),1)) < 0 % TODO : do we every want different polarities on different sweeps
+    if ~all(isnan(peaks(:))) && traces(find(~isnan(peakIndices),1)) < 0 % TODO : do we every want different polarities on different sweeps
         compareRising = @lt;
         compareFalling = @gt;
     else
@@ -149,7 +149,7 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
 
         fallIntercept(ii) = (fallLine(2)-baseline(2))/(-fallLine(1));
 
-        fallTimes(ii) = (fallIntercept-peakIndices(ii))/sampleRate;
+        fallTimes(ii) = (fallIntercept(ii)-peakIndices(ii))/sampleRate;
         
         peak50 = 0.5*peaks(ii);
         
