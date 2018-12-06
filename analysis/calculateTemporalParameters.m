@@ -63,23 +63,14 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
 
 %   Written by John Barrett 2017-07-27 19:01 CDT
 %   Last updated John Barrett 2017-08-15 15:44 CDT
-    parser = inputParser;
-    parser.KeepUnmatched = true;
-    
-    isValidTime = @(x) isnumeric(x) && isscalar(x) && isreal(x) && isfinite(x) && x >= 0 && x <= size(traces,1)/sampleRate;
-    addParameter(parser,'Start',0,isValidTime);
-    addParameter(parser,'Window',size(traces,1)/sampleRate,isValidTime);
-    parser.parse(varargin{:});
-    
-    startIndex = max(1,parser.Results.Start*sampleRate);
-    endIndex = min(size(traces,1),startIndex+parser.Results.Window*sampleRate);
+    [responseStartIndex,responseEndIndex,baselineStartIndex,baselineEndIndex] = getBaselineAndResponseWindows(traces,sampleRate,varargin{:});
     
     time = (1:size(traces,1))'/sampleRate;
     
-    baselineTime = time(1:max(1,startIndex-1),:,:);
-    baselineTraces = traces(1:max(1,startIndex-1),:,:);
+    baselineTime = time(baselineStartIndex:baselineEndIndex,:,:);
+    baselineTraces = traces(baselineStartIndex:baselineEndIndex,:,:);
     
-    traces = traces(startIndex:endIndex,:,:);
+    traces = traces(responseStartIndex:responseEndIndex,:,:);
 
     [peaks,peakIndices] = peak(traces);
     
@@ -122,7 +113,7 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
             continue
         end
         
-        if size(baselineTraces,1) == 1
+        if size(baselineTraces,1) <= 1
             baseline = [0 0];
         else
             baseline = polyfit(baselineTime,baselineTraces(:,ii),1);
@@ -158,7 +149,7 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
         halfWidths(ii) = (peak50IndexFalling(ii)-peak50IndexRising(ii))/sampleRate;
     end
     
-    offset = startIndex-1;
+    offset = responseStartIndex-1;
     
     peakIndices = peakIndices + offset;
     peak10IndexRising = peak10IndexRising + offset;
