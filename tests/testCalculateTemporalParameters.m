@@ -142,3 +142,12 @@ function testDelayedDoubleTriangleResponseWithWindow(testCase)
     verifyEqual(testCase,peak50IndexFalling,251);
     verifyEqual(testCase,fallIntercept,300,'AbsTol',1e-6);
 end
+
+function testInvalidTime(testCase)
+    timeParameters = {'Start' 'Window'};
+    
+    for ii = 1:numel(timeParameters)
+        verifyError(testCase,@() calculateTemporalParameters(1,1,timeParameters{ii},-1),'MATLAB:InputParser:ArgumentFailedValidation');
+        verifyError(testCase,@() calculateTemporalParameters(1,1,timeParameters{ii},2),'MATLAB:InputParser:ArgumentFailedValidation');
+    end
+end

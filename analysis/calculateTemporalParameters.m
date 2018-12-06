@@ -66,9 +66,9 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
     parser = inputParser;
     parser.KeepUnmatched = true;
     
-    isRealFinitePositiveNumericScalar = @(x) validateattributes(x,{'numeric'},{'real' 'finite' 'nonnegative' 'scalar'});
-    addParameter(parser,'Start',0,isRealFinitePositiveNumericScalar);
-    addParameter(parser,'Window',size(traces,1)/sampleRate,isRealFinitePositiveNumericScalar);
+    isValidTime = @(x) isnumeric(x) && isscalar(x) && isreal(x) && isfinite(x) && x >= 0 && x <= size(traces,1)/sampleRate;
+    addParameter(parser,'Start',0,isValidTime);
+    addParameter(parser,'Window',size(traces,1)/sampleRate,isValidTime);
     parser.parse(varargin{:});
     
     startIndex = max(1,parser.Results.Start*sampleRate);
