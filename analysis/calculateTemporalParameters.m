@@ -64,10 +64,7 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
 %   Written by John Barrett 2017-07-27 19:01 CDT
 %   Last updated John Barrett 2017-08-15 15:44 CDT
     parser = inputParser;
-    
-    if verLessThan('matlab','2013b')
-        addParameter = @(varargin) addParamValue(varargin{:});
-    end
+    parser.KeepUnmatched = true;
     
     isRealFinitePositiveNumericScalar = @(x) validateattributes(x,{'numeric'},{'real' 'finite' 'nonnegative' 'scalar'});
     addParameter(parser,'Start',0,isRealFinitePositiveNumericScalar);
