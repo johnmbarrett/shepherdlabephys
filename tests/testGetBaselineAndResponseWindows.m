@@ -129,4 +129,16 @@ function testStartAndEndIndex(testCase)
     verifyEqual(testCase,[rsi rei bsi bei],[n/2+1 n n/8+1 3*n/8]);
 end
 
+function testNoWarnWhenPassingResultsAsTime(testCase)
+    verifyWarningFree(testCase,@() getBaselineAndResponseWindows([1;1],1,'ResultsAsTime',true));
+    verifyWarningFree(testCase,@() getBaselineAndResponseWindows([1;1],1,'ResultsAsTime',true,'BaselineStartIndex',1));
+    verifyWarningFree(testCase,@() getBaselineAndResponseWindows([1;1],1,'ResultsAsTime',true,'BaselineEndIndex',1));
+    verifyWarningFree(testCase,@() getBaselineAndResponseWindows([1;1],1,'ResultsAsTime',true,'ResponseStartIndex',2));
+    verifyWarningFree(testCase,@() getBaselineAndResponseWindows([1;1],1,'ResultsAsTime',true,'ResponseEndIndex',1));
+    verifyWarningFree(testCase,@() getBaselineAndResponseWindows([1;1],1,'ResultsAsTime',true,'BaselineStartTime',1));
+    verifyWarningFree(testCase,@() getBaselineAndResponseWindows([1;1;1],1,'ResultsAsTime',true,'BaselineLength',1));
+    verifyWarningFree(testCase,@() getBaselineAndResponseWindows([1;1],1,'ResultsAsTime',true,'ResponseStartTime',2));
+    verifyWarningFree(testCase,@() getBaselineAndResponseWindows([1;1],1,'ResultsAsTime',true,'ResponseLength',1));
+end
+
 % TODO : test warnings, priority, overlapping
