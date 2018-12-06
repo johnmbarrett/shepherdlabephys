@@ -214,3 +214,13 @@ function testMultipage(testCase)
     
     verifyTrue(testCase,true);
 end
+
+function testHyperdimensionalTraces(testCase)
+    n = 1e4;
+    twos = num2cell(2*ones(1,10));
+    x = zeros(n,twos{:});
+    
+    peaks = calculateTemporalParameters(x,n);
+    
+    verifySize(testCase,peaks,[1 twos{:}]);
+end
