@@ -82,12 +82,14 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
     baselineTime = time(1:max(1,startIndex-1),:,:);
     baselineTraces = traces(1:max(1,startIndex-1),:,:);
     
-    time = time(startIndex:endIndex);
     traces = traces(startIndex:endIndex,:,:);
 
     [peaks,peakIndices] = peak(traces);
     
-    if traces(peakIndices) < 0
+    peaks(std(traces) == 0) = NaN;
+    peakIndices(std(traces) == 0) = NaN;
+    
+    if ~all(isnan(peaks)) && traces(find(~isnan(peakIndices),1)) < 0 % TODO : do we every want different polarities on different sweeps
         compareRising = @lt;
         compareFalling = @gt;
     else
@@ -96,16 +98,17 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
     end 
     
     % TODO : this function returns A LOT.  Is there a better way?
-    latencies = zeros(size(peaks));
-    riseTimes = zeros(size(peaks));
-    fallTimes = zeros(size(peaks));
-    halfWidths = zeros(size(peaks));
-    peak10IndexRising = zeros(size(peaks));
-    peak90IndexRising = zeros(size(peaks));
-    peak90IndexFalling = zeros(size(peaks));
-    peak10IndexFalling = zeros(size(peaks));
-    peak50IndexRising = zeros(size(peaks));
-    peak50IndexFalling = zeros(size(peaks));
+    latencies = nan(size(peaks));
+    riseTimes = nan(size(peaks));
+    fallTimes = nan(size(peaks));
+    halfWidths = nan(size(peaks));
+    peak10IndexRising = nan(size(peaks));
+    peak90IndexRising = nan(size(peaks));
+    peak90IndexFalling = nan(size(peaks));
+    peak10IndexFalling = nan(size(peaks));
+    peak50IndexRising = nan(size(peaks));
+    peak50IndexFalling = nan(size(peaks));
+    fallIntercept = nan(size(peaks));
     
     % TODO : this is a bit of a kludge
     function a = defaultIfEmpty(a,b)
@@ -118,7 +121,15 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
     % refactored into even smaller methods
     sizeTraces = size(traces);
     for ii = 1:prod(sizeTraces(2:end))
-        baseline = polyfit(baselineTime,baselineTraces(:,ii),1);
+        if isnan(peaks(ii))
+            continue
+        end
+        
+        if size(baselineTraces,1) == 1
+            baseline = [0 0];
+        else
+            baseline = polyfit(baselineTime,baselineTraces(:,ii),1);
+        end
         
         peak10 = 0.1*(peaks(ii)-baseline(2))+baseline(2);
         peak90 = 0.9*(peaks(ii)-baseline(2))+baseline(2);
@@ -139,14 +150,14 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
         
         fallLine = polyfit((peak90IndexFalling(ii):peak10IndexFalling(ii))',traces(peak90IndexFalling(ii):peak10IndexFalling(ii),ii),1);
 
-        fallIntercept = (fallLine(2)-baseline(2))/(-fallLine(1));
+        fallIntercept(ii) = (fallLine(2)-baseline(2))/(-fallLine(1));
 
         fallTimes(ii) = (fallIntercept-peakIndices(ii))/sampleRate;
         
         peak50 = 0.5*peaks(ii);
         
         peak50IndexRising(ii) = defaultIfEmpty(1,find(compareRising(traces(:,ii),peak50),1,'first'));
-        peak50IndexFalling(ii) = defaultIfEmpty(1,find(compareFalling(traces(peakIndices(ii):end,ii),peak50),1,'first')-1+peak50IndexRising(ii));
+        peak50IndexFalling(ii) = defaultIfEmpty(1,find(compareFalling(traces(peakIndices(ii):end,ii),peak50),1,'first')-1+peakIndices(ii));
         halfWidths(ii) = (peak50IndexFalling(ii)-peak50IndexRising(ii))/sampleRate;
     end
     
@@ -159,4 +170,5 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
     peak10IndexFalling = peak10IndexFalling + offset;
     peak50IndexRising = peak50IndexRising + offset;
     peak50IndexFalling = peak50IndexFalling + offset;
+    fallIntercept = fallIntercept + offset;
 end
