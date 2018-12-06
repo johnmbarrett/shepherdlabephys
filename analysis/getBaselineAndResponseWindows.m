@@ -62,7 +62,7 @@ function [responseStartIndex,responseEndIndex,baselineStartIndex,baselineEndInde
     parser.parse(varargin{:});
     
     passedParameters = varargin(1:2:end);
-    if any(contains(passedParameters,'Index')) && (any(contains(passedParameters,'Time')) || any(contains(passedParameters,'Length')))
+    if any(contains(passedParameters,'Index')) && (any(contains(passedParameters,'StartTime')) || any(contains(passedParameters,'Length')))
         warning('shepherdlabephys:getBaselineAndResponseWindows:MixedIndicesAndTime','Parameters have been defined using a mix of indices and times. Indices will supercede times.');
     end
     
