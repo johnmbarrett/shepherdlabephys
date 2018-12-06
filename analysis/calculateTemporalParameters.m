@@ -76,10 +76,12 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
     
     time = (1:size(traces,1))'/sampleRate;
     
-    baselineTime = time(baselineStartIndex:baselineEndIndex,:,:);
-    baselineTraces = traces(baselineStartIndex:baselineEndIndex,:,:);
+    colons = repmat({':'},1,ndims(traces)-1);
     
-    traces = traces(responseStartIndex:responseEndIndex,:,:);
+    baselineTime = time(baselineStartIndex:baselineEndIndex,colons{:});
+    baselineTraces = traces(baselineStartIndex:baselineEndIndex,colons{:});
+    
+    traces = traces(responseStartIndex:responseEndIndex,colons{:});
 
     [peaks,peakIndices] = peak(traces);
     
