@@ -53,17 +53,26 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
 %   and 'less than' in the above.
 %
 %   [...] = CALCULATETEMPORALPARAMETERS(...,PARAM1,VAL1,PARAM2,VAL2,...) 
-%   specifies one or more of the following name/value pairs:
+%   specifies one or more of the following name/value pairs, as well as the
+%   standard options for specifying response and baseline windows (see
+%   GETBASELINEANDRESPONSEWINDOWS):
 %
-%      'Start'          Scalar specifying the start of the window for
-%                       calculating the baseline.  Default is 0.
-%      'Window'         Scalar specifying the length of the window for
-%                       calculating the baseline.  Default is
-%                       size(TRACES,1)/SAMPLERATE.
+%      'ResultsAsTime'  Logical scalar specifying whether to return the
+%                       results as times in seconds from the beginning of 
+%                       response window (true) or indices into the traces
+%                       array (false). LATENCIES, RISETIMES, FALLTIMES, and
+%                       HALFWIDTHS are always returned in seconds and
+%                       regardless of the value of this parameter. Default
+%                       is true.
 
 %   Written by John Barrett 2017-07-27 19:01 CDT
 %   Last updated John Barrett 2017-08-15 15:44 CDT
     [responseStartIndex,responseEndIndex,baselineStartIndex,baselineEndIndex] = getBaselineAndResponseWindows(traces,sampleRate,varargin{:});
+    
+    parser = inputParser;
+    parser.KeepUnmatched = true;
+    addParameter(parser,'ResultsAsTime',false,@(x) isscalar(x) && islogical(x));
+    parser.parse(varargin{:});
     
     time = (1:size(traces,1))'/sampleRate;
     
@@ -149,14 +158,25 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
         halfWidths(ii) = (peak50IndexFalling(ii)-peak50IndexRising(ii))/sampleRate;
     end
     
-    offset = responseStartIndex-1;
-    
-    peakIndices = peakIndices + offset;
-    peak10IndexRising = peak10IndexRising + offset;
-    peak90IndexRising = peak90IndexRising + offset;
-    peak90IndexFalling = peak90IndexFalling + offset;
-    peak10IndexFalling = peak10IndexFalling + offset;
-    peak50IndexRising = peak50IndexRising + offset;
-    peak50IndexFalling = peak50IndexFalling + offset;
-    fallIntercept = fallIntercept + offset;
+    if parser.Results.ResultsAsTime
+        peakIndices = peakIndices/sampleRate;
+        peak10IndexRising = peak10IndexRising/sampleRate;
+        peak90IndexRising = peak90IndexRising/sampleRate;
+        peak90IndexFalling = peak90IndexFalling/sampleRate;
+        peak10IndexFalling = peak10IndexFalling/sampleRate;
+        peak50IndexRising = peak50IndexRising/sampleRate;
+        peak50IndexFalling = peak50IndexFalling/sampleRate;
+        fallIntercept = fallIntercept/sampleRate;
+    else
+        offset = responseStartIndex-1;
+
+        peakIndices = peakIndices + offset;
+        peak10IndexRising = peak10IndexRising + offset;
+        peak90IndexRising = peak90IndexRising + offset;
+        peak90IndexFalling = peak90IndexFalling + offset;
+        peak10IndexFalling = peak10IndexFalling + offset;
+        peak50IndexRising = peak50IndexRising + offset;
+        peak50IndexFalling = peak50IndexFalling + offset;
+        fallIntercept = fallIntercept + offset;
+    end
 end

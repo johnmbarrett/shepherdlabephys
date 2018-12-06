@@ -82,6 +82,27 @@ function testDelayedTriangleResponseWithDelayedStart(testCase)
     verifyEqual(testCase,fallIntercept,300,'AbsTol',1e-6);
 end
 
+function testDelayedTriangleResponseWithDelayedStartInSeconds(testCase)
+%As above, but ask for the results in seconds from the start of the
+%response window instead of indices
+    [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10IndexRising,peak90IndexRising,peak90IndexFalling,peak10IndexFalling,peak50IndexRising,peak50IndexFalling,fallIntercept] = ...
+        calculateTemporalParameters([zeros(1,100) 1:100 99:-1:1]',1e2,'Start',1.01,'ResultsAsTime',true);
+    
+    verifyEqual(testCase,peaks,100);
+    verifyEqual(testCase,peakIndices,1);
+    verifyEqual(testCase,latencies,0,'AbsTol',1e-6); % hard to be exact because it relies on polyfit
+    verifyEqual(testCase,riseTimes,1,'AbsTol',1e-6);
+    verifyEqual(testCase,fallTimes,1,'AbsTol',1e-6);
+    verifyEqual(testCase,halfWidths,1);
+    verifyEqual(testCase,peak10IndexRising,0.11); % plus one for all of these because we're using strict inequality
+    verifyEqual(testCase,peak90IndexRising,0.91);
+    verifyEqual(testCase,peak90IndexFalling,1.11);
+    verifyEqual(testCase,peak10IndexFalling,1.91);
+    verifyEqual(testCase,peak50IndexRising,0.51);
+    verifyEqual(testCase,peak50IndexFalling,1.51);
+    verifyEqual(testCase,fallIntercept,2.00,'AbsTol',1e-6);
+end
+
 function testDoubleTriangleResponse(testCase)
 % Complex response that deliberately breaks the algorithm and gives the
 % wrong answers
