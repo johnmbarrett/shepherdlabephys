@@ -142,3 +142,43 @@ function testDelayedDoubleTriangleResponseWithWindow(testCase)
     verifyEqual(testCase,peak50IndexFalling,251);
     verifyEqual(testCase,fallIntercept,300,'AbsTol',1e-6);
 end
+
+function testDelayedDoubleTriangleResponseWithResponseIndices(testCase)
+% As above, use BaselineStartIndex and BaselineEndIndex instead
+    [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10IndexRising,peak90IndexRising,peak90IndexFalling,peak10IndexFalling,peak50IndexRising,peak50IndexFalling,fallIntercept] = ...
+        calculateTemporalParameters([zeros(1,100) 1:100 99:-1:0 1:200 199:-1:0]',1e2,'ResponseStartIndex',101,'ResponseEndIndex',300);
+    
+    verifyEqual(testCase,peaks,100);
+    verifyEqual(testCase,peakIndices,200);
+    verifyEqual(testCase,latencies,0,'AbsTol',1e-6); % hard to be exact because it relies on polyfit
+    verifyEqual(testCase,riseTimes,1,'AbsTol',1e-6);
+    verifyEqual(testCase,fallTimes,1,'AbsTol',1e-6);
+    verifyEqual(testCase,halfWidths,1);
+    verifyEqual(testCase,peak10IndexRising,111); % plus one for all of these because we're using strict inequality
+    verifyEqual(testCase,peak90IndexRising,191);
+    verifyEqual(testCase,peak90IndexFalling,211);
+    verifyEqual(testCase,peak10IndexFalling,291);
+    verifyEqual(testCase,peak50IndexRising,151);
+    verifyEqual(testCase,peak50IndexFalling,251);
+    verifyEqual(testCase,fallIntercept,300,'AbsTol',1e-6);
+end
+
+function testDelayedDoubleTriangleResponseWithResponseTimes(testCase)
+% As above, use BaselineStartTime and BaselineLength instead
+    [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10IndexRising,peak90IndexRising,peak90IndexFalling,peak10IndexFalling,peak50IndexRising,peak50IndexFalling,fallIntercept] = ...
+        calculateTemporalParameters([zeros(1,100) 1:100 99:-1:0 1:200 199:-1:0]',1e2,'ResponseStartTime',1.01,'ResponseLength',2);
+    
+    verifyEqual(testCase,peaks,100);
+    verifyEqual(testCase,peakIndices,200);
+    verifyEqual(testCase,latencies,0,'AbsTol',1e-6); % hard to be exact because it relies on polyfit
+    verifyEqual(testCase,riseTimes,1,'AbsTol',1e-6);
+    verifyEqual(testCase,fallTimes,1,'AbsTol',1e-6);
+    verifyEqual(testCase,halfWidths,1);
+    verifyEqual(testCase,peak10IndexRising,111); % plus one for all of these because we're using strict inequality
+    verifyEqual(testCase,peak90IndexRising,191);
+    verifyEqual(testCase,peak90IndexFalling,211);
+    verifyEqual(testCase,peak10IndexFalling,291);
+    verifyEqual(testCase,peak50IndexRising,151);
+    verifyEqual(testCase,peak50IndexFalling,251);
+    verifyEqual(testCase,fallIntercept,300,'AbsTol',1e-6);
+end
