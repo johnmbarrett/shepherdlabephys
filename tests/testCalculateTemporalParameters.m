@@ -42,6 +42,58 @@ function testTriangleResponse(testCase)
     verifyEqual(testCase,fallIntercept,200,'AbsTol',1e-6);
 end
 
+function testConvexResponse(testCase)
+% This and the below are checking that the algorithm uses ONLY the 10% and
+% 90% peak crossings to calculate the rise/fall times and not the rest of
+% the data
+    [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10IndexRising,peak90IndexRising,peak90IndexFalling,peak10IndexFalling,peak50IndexRising,peak50IndexFalling,fallIntercept] = ...
+        calculateTemporalParameters([0.01:0.01:1 0.99:-0.01:0.1]'.^2,1e2);
+    
+    verifyEqual(testCase,peaks,1);
+    verifyEqual(testCase,peakIndices,100);
+    
+    riseLatency = 0.32-(0.32^2)*(0.95-0.32)/(0.95^2-0.32^2);
+    verifyEqual(testCase,latencies,riseLatency,'AbsTol',1e-6); % hard to be exact because it relies on polyfit
+    verifyEqual(testCase,riseTimes,1-riseLatency,'AbsTol',1e-6);
+    
+    fallTime = 0.69-(0.31^2)*(0.06-0.69)/(0.94^2-0.31^2);
+    verifyEqual(testCase,fallTimes,fallTime,'AbsTol',1e-6);
+    verifyEqual(testCase,halfWidths,1.3-0.71,'AbsTol',1e-6);
+    verifyEqual(testCase,peak10IndexRising,32);
+    verifyEqual(testCase,peak90IndexRising,95);
+    verifyEqual(testCase,peak90IndexFalling,106);
+    verifyEqual(testCase,peak10IndexFalling,169);
+    verifyEqual(testCase,peak50IndexRising,71);
+    verifyEqual(testCase,peak50IndexFalling,130);
+    verifyEqual(testCase,fallIntercept,100*(fallTime+1),'AbsTol',1e-6);
+end
+
+function testConcaveResponse(testCase)
+% This and the below are checking that the algorithm uses ONLY the 10% and
+% 90% peak crossings to calculate the rise/fall times and not the rest of
+% the data
+    [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10IndexRising,peak90IndexRising,peak90IndexFalling,peak10IndexFalling,peak50IndexRising,peak50IndexFalling,fallIntercept] = ...
+        calculateTemporalParameters(sqrt([0.01:0.01:1 0.99:-0.01:0]'),1e2);
+    
+    verifyEqual(testCase,peaks,1);
+    verifyEqual(testCase,peakIndices,100);
+    
+    latency = 0.02-sqrt(0.02)*(0.82-0.02)/(sqrt(0.82)-sqrt(0.02));
+    verifyEqual(testCase,latencies,latency,'AbsTol',1e-6); % hard to be exact because it relies on polyfit
+    verifyEqual(testCase,riseTimes,1-latency,'AbsTol',1e-6);
+    
+    fallTime = 1.00-sqrt(0.00)*(0.20-1.00)/(sqrt(0.80)-sqrt(0.00));
+    verifyEqual(testCase,fallTimes,fallTime,'AbsTol',1e-6);
+    verifyEqual(testCase,halfWidths,1.5);
+    verifyEqual(testCase,peak10IndexRising,2);
+    verifyEqual(testCase,peak90IndexRising,82);
+    verifyEqual(testCase,peak90IndexFalling,120);
+    verifyEqual(testCase,peak10IndexFalling,200);
+    verifyEqual(testCase,peak50IndexRising,26);
+    verifyEqual(testCase,peak50IndexFalling,176);
+    verifyEqual(testCase,fallIntercept,100*(fallTime+1),'AbsTol',1e-6);
+end
+
 function testDelayedTriangleResponse(testCase)
 %Add a delay - should affect the indices and the latencies
     [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10IndexRising,peak90IndexRising,peak90IndexFalling,peak10IndexFalling,peak50IndexRising,peak50IndexFalling,fallIntercept] = ...

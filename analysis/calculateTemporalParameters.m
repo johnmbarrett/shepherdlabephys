@@ -136,7 +136,7 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
         peak10IndexRising(ii) = defaultIfEmpty(1,find(compareRising(traces(:,ii),peak10),1,'first'));
         peak90IndexRising(ii) = defaultIfEmpty(1,find(compareRising(traces(peak10IndexRising(ii):end,ii),peak90),1,'first'))+peak10IndexRising(ii)-1;
         
-        riseLine = polyfit((peak10IndexRising(ii):peak90IndexRising(ii))',traces(peak10IndexRising(ii):peak90IndexRising(ii),ii),1);
+        riseLine = polyfit([peak10IndexRising(ii);peak90IndexRising(ii)],traces([peak10IndexRising(ii);peak90IndexRising(ii)],ii),1);
 
         riseIntercept = (riseLine(2)-baseline(2))/(-riseLine(1));
 
@@ -147,7 +147,7 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
         peak90IndexFalling(ii) = defaultIfEmpty(1,find(compareFalling(traces(peakIndices(ii):end,ii),peak90),1,'first'))+peakIndices(ii)-1;
         peak10IndexFalling(ii) = defaultIfEmpty(1,find(compareFalling(traces(peak90IndexFalling(ii):end,ii),peak10),1,'first'))+peak90IndexFalling(ii)-1;
         
-        fallLine = polyfit((peak90IndexFalling(ii):peak10IndexFalling(ii))',traces(peak90IndexFalling(ii):peak10IndexFalling(ii),ii),1);
+        fallLine = polyfit([peak90IndexFalling(ii);peak10IndexFalling(ii)],traces([peak90IndexFalling(ii);peak10IndexFalling(ii)],ii),1);
 
         fallIntercept(ii) = (fallLine(2)-baseline(2))/(-fallLine(1));
 
