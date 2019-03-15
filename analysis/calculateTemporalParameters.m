@@ -88,14 +88,6 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
     peaks(std(traces) == 0) = NaN;
     peakIndices(std(traces) == 0) = NaN;
     
-    if ~all(isnan(peaks(:))) && traces(find(~isnan(peakIndices),1)) < 0 % TODO : do we every want different polarities on different sweeps
-        compareRising = @lt;
-        compareFalling = @gt;
-    else
-        compareRising = @gt;
-        compareFalling = @lt;
-    end 
-    
     % TODO : this function returns A LOT.  Is there a better way?
     latencies = nan(size(peaks));
     riseTimes = nan(size(peaks));
@@ -108,13 +100,6 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
     peak50IndexRising = nan(size(peaks));
     peak50IndexFalling = nan(size(peaks));
     fallIntercept = nan(size(peaks));
-    
-    % TODO : this is a bit of a kludge
-    function a = defaultIfEmpty(a,b)
-        if ~isempty(b)
-            a = b;
-        end
-    end
     
     % TODO : this method is VERY repetitive and could probably be
     % refactored into even smaller methods
@@ -130,34 +115,7 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
             baseline = polyfit(baselineTime,baselineTraces(:,ii),1);
         end
         
-        peak10 = 0.1*(peaks(ii)-baseline(2))+baseline(2);
-        peak90 = 0.9*(peaks(ii)-baseline(2))+baseline(2);
-
-        peak10IndexRising(ii) = defaultIfEmpty(1,find(compareRising(traces(:,ii),peak10),1,'first'));
-        peak90IndexRising(ii) = defaultIfEmpty(1,find(compareRising(traces(peak10IndexRising(ii):end,ii),peak90),1,'first'))+peak10IndexRising(ii)-1;
-        
-        riseLine = polyfit([peak10IndexRising(ii);peak90IndexRising(ii)],traces([peak10IndexRising(ii);peak90IndexRising(ii)],ii),1);
-
-        riseIntercept = (riseLine(2)-baseline(2))/(-riseLine(1));
-
-        latencies(ii) = riseIntercept/sampleRate; % latency in ms
-        
-        riseTimes(ii) = (peakIndices(ii)-riseIntercept)/sampleRate;
-
-        peak90IndexFalling(ii) = defaultIfEmpty(1,find(compareFalling(traces(peakIndices(ii):end,ii),peak90),1,'first'))+peakIndices(ii)-1;
-        peak10IndexFalling(ii) = defaultIfEmpty(1,find(compareFalling(traces(peak90IndexFalling(ii):end,ii),peak10),1,'first'))+peak90IndexFalling(ii)-1;
-        
-        fallLine = polyfit([peak90IndexFalling(ii);peak10IndexFalling(ii)],traces([peak90IndexFalling(ii);peak10IndexFalling(ii)],ii),1);
-
-        fallIntercept(ii) = (fallLine(2)-baseline(2))/(-fallLine(1));
-
-        fallTimes(ii) = (fallIntercept(ii)-peakIndices(ii))/sampleRate;
-        
-        peak50 = 0.5*peaks(ii);
-        
-        peak50IndexRising(ii) = defaultIfEmpty(1,find(compareRising(traces(:,ii),peak50),1,'first'));
-        peak50IndexFalling(ii) = defaultIfEmpty(1,find(compareFalling(traces(peakIndices(ii):end,ii),peak50),1,'first')-1+peakIndices(ii));
-        halfWidths(ii) = (peak50IndexFalling(ii)-peak50IndexRising(ii))/sampleRate;
+        [latencies(ii),riseTimes(ii),fallTimes(ii),halfWidths(ii),peak10IndexRising(ii),peak90IndexRising(ii),peak90IndexFalling(ii),peak10IndexFalling(ii),peak50IndexRising(ii),peak50IndexFalling(ii),fallIntercept(ii)] = calculateTriangularResponseParameters(traces(:,ii),peakIndices(ii),sampleRate,baseline);
     end
     
     if parser.Results.ResultsAsTime
