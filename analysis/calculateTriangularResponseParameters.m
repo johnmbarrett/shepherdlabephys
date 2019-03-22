@@ -60,9 +60,11 @@ function [latency,riseTime,fallTime,halfWidth,peak10IndexRising,peak90IndexRisin
     if ~isnan(trace(peakIndex)) && trace(peakIndex) < 0 % TODO : do we every want different polarities on different sweeps
         compareRising = @lt;
         compareFalling = @gt;
+        compareFallingEqual = @ge;
     else
         compareRising = @gt;
         compareFalling = @lt;
+        compareFallingEqual = @le;
     end 
     
     % TODO : this is a bit of a kludge
@@ -84,7 +86,7 @@ function [latency,riseTime,fallTime,halfWidth,peak10IndexRising,peak90IndexRisin
     peak10 = 0.1*(trace(peakIndex)-baseline(2))+baseline(2);
     peak90 = 0.9*(trace(peakIndex)-baseline(2))+baseline(2);
 
-    peak10IndexRising = defaultIfEmpty(1,find(compareRising(trace,peak10),1,'first'));
+    peak10IndexRising = defaultIfEmpty(1,find(compareFallingEqual(trace(1:peakIndex-1),peak10) & compareRising(trace(2:peakIndex),peak10),1,'last')+1);
     peak90IndexRising = defaultIfEmpty(1,find(compareRising(trace(peak10IndexRising:end),peak90),1,'first'))+peak10IndexRising-1;
 
     riseLine = polyfit([peak10IndexRising;peak90IndexRising],trace([peak10IndexRising;peak90IndexRising]),1);
