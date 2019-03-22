@@ -108,7 +108,7 @@ function [latency,riseTime,fallTime,halfWidth,peak10IndexRising,peak90IndexRisin
 
     peak50 = 0.5*trace(peakIndex);
 
-    peak50IndexRising = defaultIfEmpty(1,find(compareRising(trace,peak50),1,'first'));
+    peak50IndexRising = defaultIfEmpty(1,find(compareFallingEqual(trace(1:peakIndex-1),peak50) & compareRising(trace(2:peakIndex),peak50),1,'last')+1);
     peak50IndexFalling = defaultIfEmpty(1,find(compareFalling(trace(peakIndex:end),peak50),1,'first')-1+peakIndex);
     halfWidth = (peak50IndexFalling-peak50IndexRising)/sampleRate;
 end

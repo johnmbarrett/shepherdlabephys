@@ -159,21 +159,21 @@ function testDoubleTriangleResponse(testCase)
 % Fake response in the baseline period threw off the old algorithm. Should
 % be fixed now, so let's test that it is.
     [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10IndexRising,peak90IndexRising,peak90IndexFalling,peak10IndexFalling,peak50IndexRising,peak50IndexFalling,fallIntercept] = ...
-        calculateTemporalParameters([1:100 99:-1:0 1:200 199:-1:0]',1e2);
+        calculateTemporalParameters([1:200 199:-1:0 1:300 299:-1:0]',1e2);
     
-    verifyEqual(testCase,peaks,200);
-    verifyEqual(testCase,peakIndices,400);
-    verifyEqual(testCase,latencies,2,'AbsTol',1e-6);
-    verifyEqual(testCase,riseTimes,2,'AbsTol',1e-6);
-    verifyEqual(testCase,fallTimes,2,'AbsTol',1e-6); % this is right because we only look past the peak
-    verifyEqual(testCase,halfWidths,2); % this is right because of strict inequality
-    verifyEqual(testCase,peak10IndexRising,221); % the first triangle goes above 10% of peak
-    verifyEqual(testCase,peak90IndexRising,381);
-    verifyEqual(testCase,peak90IndexFalling,421);
-    verifyEqual(testCase,peak10IndexFalling,581);
-    verifyEqual(testCase,peak50IndexRising,301);
-    verifyEqual(testCase,peak50IndexFalling,501);
-    verifyEqual(testCase,fallIntercept,600,'AbsTol',1e-6);
+    verifyEqual(testCase,peaks,300);
+    verifyEqual(testCase,peakIndices,700);
+    verifyEqual(testCase,latencies,4,'AbsTol',1e-6);
+    verifyEqual(testCase,riseTimes,3,'AbsTol',1e-6);
+    verifyEqual(testCase,fallTimes,3,'AbsTol',1e-6); % this is right because we only look past the peak
+    verifyEqual(testCase,halfWidths,3); % this is right because of strict inequality
+    verifyEqual(testCase,peak10IndexRising,431); % the first triangle goes above 10% of peak
+    verifyEqual(testCase,peak90IndexRising,671);
+    verifyEqual(testCase,peak90IndexFalling,731);
+    verifyEqual(testCase,peak10IndexFalling,971);
+    verifyEqual(testCase,peak50IndexRising,551);
+    verifyEqual(testCase,peak50IndexFalling,851);
+    verifyEqual(testCase,fallIntercept,1000,'AbsTol',1e-6);
 end
 
 function testDoubleTriangleResponseWithWindow(testCase)
