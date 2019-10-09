@@ -57,6 +57,9 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
 %   standard options for specifying response and baseline windows (see
 %   GETBASELINEANDRESPONSEWINDOWS):
 %
+%      'BaselineStyle'  One of 'scalar' to use the mean of the trace during
+%                       the baseline window as the baseline or 'polynomial'
+%                       to use the line of best fit.
 %      'ResultsAsTime'  Logical scalar specifying whether to return the
 %                       results as times in seconds from the beginning of 
 %                       response window (true) or indices into the traces
@@ -71,6 +74,7 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
     
     parser = inputParser;
     parser.KeepUnmatched = true;
+    addParameter(parser,'BaselineStyle','polynomial',@(x) ischar(x) && ismember(x,{'scalar' 'polynomial'}));
     addParameter(parser,'ResultsAsTime',false,@(x) isscalar(x) && islogical(x));
     parser.parse(varargin{:});
     
@@ -111,8 +115,10 @@ function [peaks,peakIndices,latencies,riseTimes,fallTimes,halfWidths,peak10Index
         
         if size(baselineTraces,1) <= 1
             baseline = [0 0];
-        else
+        elseif parser.Results.BaselineStyle(1) == 'p'
             baseline = polyfit(baselineTime,baselineTraces(:,ii),1);
+        else
+            baseline = [0 nanmean(baselineTraces(:,ii))];
         end
         
         [latencies(ii),riseTimes(ii),fallTimes(ii),halfWidths(ii),peak10IndexRising(ii),peak90IndexRising(ii),peak90IndexFalling(ii),peak10IndexFalling(ii),peak50IndexRising(ii),peak50IndexFalling(ii),fallIntercept(ii)] = calculateTriangularResponseParameters(traces(:,ii),peakIndices(ii),sampleRate,baseline);
